@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ produk.nama }} — Albis Antique{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/catalog.css') }}">
+{% endblock %}
+
+{% block content %}
+<!-- ===== DETAIL PRODUK ===== -->
+<section class="section-shell">
+    <div class="container product-detail">
+        <!-- ===== GALERI PRODUK ===== -->
+        <div class="product-gallery">
+            <div class="product-main-image royal-frame">
+                <button class="product-image-zoom" type="button" aria-label="Perbesar foto produk" data-image-zoom>
+                    <img
+                        src="{{ produk.gambar }}"
+                        alt="{{ produk.alt_gambar }}"
+                        referrerpolicy="no-referrer"
+                    >
+                    <span class="zoom-hint" aria-hidden="true">⌕ Perbesar</span>
+                </button>
+            </div>
+
+        </div>
+
+        <!-- ===== INFORMASI PRODUK ===== -->
+        <div class="product-copy">
+            <span class="eyebrow" data-i18n="detail_eyebrow">Detail Koleksi</span>
+            <h1>{{ produk.nama }}</h1>
+            <div class="rating">★★★★★ <span class="muted">{{ produk.rating }} · {{ produk.ulasan }} ulasan</span></div>
+            <p class="detail-price">Rp{{ "{:,.0f}".format(produk.harga).replace(',', '.') }}</p>
+            <p>{{ produk.deskripsi }}</p>
+
+            <!-- ===== AKSI BELANJA ===== -->
+            <div class="detail-actions">
+                <div class="quantity-control" aria-label="Jumlah produk">
+                    <button type="button" aria-label="Kurangi jumlah">−</button>
+                    <strong>1</strong>
+                    <button type="button" aria-label="Tambah jumlah">＋</button>
+                </div>
+                <button
+                    class="button button-primary"
+                    type="button"
+                    data-add-cart="{{ produk.id }}"
+                    data-product-id="{{ produk.id }}"
+                    data-product-name="{{ produk.nama }}"
+                    data-product-price="{{ produk.harga }}"
+                    data-product-image="{{ produk.gambar }}"
+                    data-product-category="{{ produk.kategori }}"
+                    data-product-origin="{{ produk.asal }}"
+                    data-product-url="{{ url_for('main.detail_produk', produk_id=produk.id) }}"
+                    data-i18n="detail_add"
+                >Tambah ke Keranjang</button>
+            </div>
+            <div class="detail-secondary-actions">
+                <button class="button button-gold" type="button" data-i18n="detail_buy">Beli Sekarang</button>
+                <button class="button button-secondary" type="button"
+                    data-auth-action="wishlist"
+                    data-product-id="{{ produk.id }}"
+                    data-product-name="{{ produk.nama }}"
+                    data-product-price="{{ produk.harga }}"
+                    data-product-image="{{ produk.gambar }}"
+                    data-product-category="{{ produk.kategori }}"
+                    data-product-origin="{{ produk.asal }}"
+                    data-product-url="{{ url_for('main.detail_produk', produk_id=produk.id) }}"
+                    data-i18n="detail_wishlist">Simpan ke Wishlist</button>
+            </div>
+
+            <!-- ===== SPESIFIKASI PRODUK ===== -->
+            <div class="spec-grid">
+                <div class="spec-card"><span data-i18n="spec_era">Era</span><strong>{{ produk.era }}</strong></div>
+                <div class="spec-card"><span data-i18n="spec_origin">Asal</span><strong>{{ produk.asal }}</strong></div>
+                <div class="spec-card"><span data-i18n="spec_condition">Kondisi</span><strong>{{ produk.kondisi }}</strong></div>
+                <div class="spec-card"><span data-i18n="spec_material">Material</span><strong>{{ produk.material }}</strong></div>
+                <div class="spec-card"><span data-i18n="spec_authenticity">Autentikasi</span><strong>{{ produk.autentikasi }}</strong></div>
+                <div class="spec-card"><span data-i18n="spec_stock">Stok</span><strong>{{ produk.stok }} item</strong></div>
+            </div>
+            <p class="image-credit"><a href="{{ produk.sumber_gambar }}" target="_blank" rel="noopener noreferrer">Sumber foto produk: Wikimedia Commons</a></p>
+        </div>
+    </div>
+</section>
+
+<!-- ===== PRODUK TERKAIT ===== -->
+<section class="section-shell section-soft">
+    <div class="container">
+        <div class="section-heading">
+            <div><span class="eyebrow">Curated Pairing</span><h2 data-i18n="related_title">Koleksi terkait</h2></div>
+        </div>
+        <div class="product-grid">
+            {% for produk in produk_terkait %}
+            {% include 'partials/product_card.html' %}
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endblock %}

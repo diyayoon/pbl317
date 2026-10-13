@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}Admin — Albis Antique{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/dashboard.css') }}">{% endblock %}
+{% block content %}
+<!-- ===== DASHBOARD ADMIN ===== -->
+<section class="dashboard-shell admin-workspace-shell">
+    <button class="workspace-mobile-toggle" type="button" aria-controls="adminWorkspaceSidebar" aria-expanded="false">☰ <span>Menu admin</span></button>
+    <div class="dashboard-layout">
+        <!-- ===== SIDEBAR ADMIN ===== -->
+        <aside id="adminWorkspaceSidebar" class="dashboard-sidebar admin-sidebar">
+            <div class="admin-sidebar-heading"><span aria-hidden="true">♕</span><div><strong>ALBIS ADMIN</strong><small>Workspace</small></div></div>
+            <nav aria-label="Menu admin">
+                <a href="{{ url_for('main.katalog') }}"><span aria-hidden="true">↗</span> Lihat toko</a>
+                <a class="active" href="{{ url_for('admin.dashboard') }}"><span aria-hidden="true">▦</span> Dashboard</a>
+                <a href="{{ url_for('admin.produk') }}"><span aria-hidden="true">◇</span> Produk</a>
+                <a href="#ringkasan-pengguna" aria-disabled="true" title="Modul menyusul pada tahap backend"><span aria-hidden="true">♙</span> Pengguna <small>Segera</small></a>
+                <a href="#pesanan-terbaru"><span aria-hidden="true">▤</span> Pesanan</a>
+                <a href="#pesanan-terbaru" aria-disabled="true" title="Modul pembayaran menyusul pada tahap backend"><span aria-hidden="true">◇</span> Pembayaran <small>Segera</small></a>
+                <a href="#ringkasan-pengguna" aria-disabled="true" title="Laporan menyusul pada tahap backend"><span aria-hidden="true">▥</span> Laporan <small>Segera</small></a>
+                <a class="workspace-logout-link" href="{{ url_for('auth.logout') }}"><span aria-hidden="true">↪</span> Keluar dari akun</a>
+            </nav>
+            <div class="admin-sidebar-note">Prototipe akademik<br><span>Data contoh · belum terhubung DB</span></div>
+        </aside>
+
+        <!-- ===== KONTEN ADMIN ===== -->
+        <div class="dashboard-content">
+            <div class="admin-page-heading"><div><span class="eyebrow">OVERVIEW / 2026</span><h1 data-i18n="admin_title">Dashboard Admin</h1><p data-i18n="admin_desc">Kelola katalog dan pantau ringkasan aktivitas Albis Antique.</p></div><span class="admin-demo-badge">Mode demo</span></div>
+            <div class="kpi-grid" id="ringkasan-pengguna">
+                <article class="kpi-card"><span>Total Produk</span><strong>{{ ringkasan.produk }}</strong></article>
+                <article class="kpi-card"><span>Total Pengguna</span><strong>{{ ringkasan.pengguna }}</strong></article>
+                <article class="kpi-card"><span>Total Pesanan</span><strong>{{ ringkasan.pesanan }}</strong></article>
+                <article class="kpi-card"><span>Pendapatan</span><strong>Rp{{ "{:,.0f}".format(ringkasan.pendapatan).replace(',', '.') }}</strong></article>
+            </div>
+            <section class="panel admin-orders-panel" id="pesanan-terbaru">
+                <div class="admin-panel-heading"><div><span class="eyebrow">ACTIVITY</span><h2>Pesanan Terbaru</h2><p>Contoh ringkasan pesanan untuk kebutuhan presentasi prototipe.</p></div><span class="admin-panel-count">2 contoh</span></div>
+                <div class="table-wrap"><table class="data-table"><thead><tr><th>ID</th><th>Pelanggan</th><th>Total</th><th>Status</th><th>Aksi</th></tr></thead><tbody><tr><td>#AA-014</td><td>Demo Customer</td><td>Rp1.850.000</td><td><span class="admin-status is-pending">Menunggu persetujuan</span></td><td><button class="button button-secondary button-small" type="button" disabled>Detail</button></td></tr><tr><td>#AA-013</td><td>Collector Two</td><td>Rp2.400.000</td><td><span class="admin-status is-paid">Dibayar</span></td><td><button class="button button-secondary button-small" type="button" disabled>Detail</button></td></tr></tbody></table></div>
+            </section>
+        </div>
+    </div>
+</section>
+{% endblock %}

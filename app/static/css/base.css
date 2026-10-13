@@ -1,0 +1,284 @@
+/* ======================================================================
+   FILE   : base.css
+   ISI    : Variabel warna, reset, tipografi dasar, salju, utilitas umum
+   DAFTAR BAGIAN (cari dengan Ctrl+F: "=====" + nama):
+      1. VARIABEL DESAIN / DESIGN TOKENS
+      2. RESET GLOBAL
+      3. UTILITAS LAYOUT
+      4. AKSESIBILITAS FOCUS
+      5. EFEK SNOWFALL GLOBAL
+      6. REDUCED MOTION
+   ==================================================================== */
+
+/* ===== VARIABEL DESAIN / DESIGN TOKENS ===== */
+
+/* Variabel warna, ukuran, dan font (design tokens) */
+:root {
+    --warna-primer: #D6F6FF;
+    --warna-biru-muda: #EAFBFF;
+    --warna-biru-sekunder: #A9DDF0;
+    --warna-aksen: #61A8D6;
+    --warna-biru-dalam: #397FA8;
+    --warna-teks: #19313D;
+    --warna-latar: #F7FCFE;
+    --warna-putih: #FFFFFF;
+    --warna-emas: #C7A969;
+    --warna-emas-muda: #F4E9CB;
+    --warna-garis: #D4E7EF;
+    --warna-muted: #647B86;
+    --bayangan-lembut: 0 18px 50px rgba(57, 127, 168, 0.12);
+    --bayangan-card: 0 12px 32px rgba(25, 49, 61, 0.08);
+    --radius-kecil: 12px;
+    --radius-sedang: 18px;
+    --radius-besar: 28px;
+    --lebar-konten: 1180px;
+    --font-heading: "Playfair Display", Georgia, "Times New Roman", serif;
+    --font-ui:
+        "Manrope",
+        Inter,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+}
+
+/* ===== RESET GLOBAL ===== */
+
+/* Reset: box-sizing semua elemen */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+/* Dasar halaman: scroll halus */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Latar halaman, font, dan warna teks dasar */
+body {
+    margin: 0;
+    min-height: 100vh;
+    background:
+        radial-gradient(circle at 12% 6%, rgba(214, 246, 255, 0.85), transparent 28rem),
+        radial-gradient(circle at 88% 20%, rgba(169, 221, 240, 0.30), transparent 30rem),
+        var(--warna-latar);
+    color: var(--warna-teks);
+    font-family: var(--font-ui);
+    line-height: 1.65;
+    overflow-x: hidden;
+}
+
+/* Halaman saat menu HP terbuka (scroll dikunci) */
+body.menu-terbuka {
+    overflow: hidden;
+}
+
+/* Tautan polos (tanpa garis bawah) */
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+/* Gambar responsif */
+img {
+    display: block;
+    max-width: 100%;
+}
+
+/* Tombol mewarisi font dan warna / Form mewarisi font */
+button,
+input,
+select,
+textarea {
+    font: inherit;
+}
+
+/* Tombol mewarisi font dan warna */
+button {
+    color: inherit;
+}
+
+/* Warna teks yang diblok */
+::selection {
+    background: var(--warna-primer);
+    color: var(--warna-teks);
+}
+
+/* ===== UTILITAS LAYOUT ===== */
+
+/* Pembungkus konten (lebar maksimum, rata tengah) */
+.container {
+    width: min(var(--lebar-konten), calc(100% - 40px));
+    margin-inline: auto;
+}
+
+/* Jarak atas-bawah setiap section */
+.section-shell {
+    padding: 88px 0;
+    position: relative;
+}
+
+/* Latar section biru lembut */
+.section-soft {
+    background: linear-gradient(180deg, rgba(234, 251, 255, 0.56), rgba(247, 252, 254, 0.10));
+}
+
+/* Kepala section (judul + tautan) */
+.section-heading {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 28px;
+    margin-bottom: 34px;
+}
+
+/* Kepala section (judul + tautan) › judul h2 */
+.section-heading h2 {
+    margin: 7px 0 0;
+    font: 500 clamp(2rem, 4vw, 3.35rem)/1.08 var(--font-heading);
+    letter-spacing: -0.02em;
+}
+
+/* Kepala section (judul + tautan) › paragraf */
+.section-heading p {
+    margin: 8px 0 0;
+    max-width: 640px;
+    color: var(--warna-muted);
+}
+
+/* Label kecil di atas judul */
+.eyebrow {
+    color: var(--warna-biru-dalam);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.20em;
+    text-transform: uppercase;
+}
+
+/* Teks abu-abu redup */
+.muted {
+    color: var(--warna-muted);
+}
+
+/* Teks tersembunyi (hanya untuk screen reader) */
+.visually-hidden {
+    position: absolute !important;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* ===== AKSESIBILITAS FOCUS ===== */
+
+/* Cincin fokus keyboard */
+:focus-visible {
+    outline: 3px solid rgba(97, 168, 214, 0.35);
+    outline-offset: 3px;
+}
+
+/* ===== EFEK SNOWFALL GLOBAL ===== */
+
+/* Wadah salju (menutupi seluruh layar) */
+.snowfall {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    overflow: hidden;
+    pointer-events: none;
+    contain: layout paint style;
+}
+
+/* Satu butir salju */
+.snowflake {
+    position: absolute;
+    top: -32px;
+    line-height: 1;
+    text-shadow: 0 1px 7px rgba(57, 127, 168, 0.28);
+    animation: jatuh-salju linear forwards;
+    user-select: none;
+}
+
+/* Salju putih */
+.snowflake-white {
+    color: rgba(255, 255, 255, 0.96);
+    text-shadow: 0 0 7px rgba(57, 127, 168, 0.55);
+}
+
+/* Salju biru muda */
+.snowflake-soft {
+    color: rgba(97, 168, 214, 0.72);
+}
+
+/* Salju biru tua */
+.snowflake-deep {
+    color: rgba(57, 127, 168, 0.62);
+}
+
+/* Animasi: Salju jatuh sambil berputar */
+@keyframes jatuh-salju {
+    0% {
+        transform: translate3d(0, -4vh, 0) rotate(0deg);
+    }
+    100% {
+        transform: translate3d(var(--drift), 112vh, 0) rotate(420deg);
+        opacity: 0.08;
+    }
+}
+
+/* ===== REDUCED MOTION ===== */
+
+@media (prefers-reduced-motion: reduce) {
+    /* Dasar halaman: scroll halus */
+    html {
+        scroll-behavior: auto;
+    }
+
+    /* Reset: box-sizing semua elemen */
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+    }
+
+    /* Wadah salju (menutupi seluruh layar) */
+    .snowfall {
+        display: none;
+    }
+}
+
+
+/* ===== DESIGN SYSTEM POLISH BATCH 2: SECTION CONTINUITY ===== */
+body {
+    background:
+        radial-gradient(ellipse at 12% 7%, rgba(214,246,255,.66), transparent 34rem),
+        radial-gradient(ellipse at 88% 20%, rgba(169,221,240,.22), transparent 36rem),
+        linear-gradient(180deg, #f5fbfd 0%, #edf8fc 54%, #f5fbfd 100%);
+}
+.section-shell,
+.section-soft {
+    background: transparent;
+}
+.section-shell {
+    padding-block: clamp(46px, 5vw, 68px);
+}
+.section-heading {
+    margin-bottom: clamp(22px, 3vw, 32px);
+}
+.site-footer {
+    margin-top: 0;
+}
+
+/* ===== PAGE FRAME: FOOTER MENEMPEL DI BAWAH TANPA STRIP PUTIH ===== */
+body { display: flex; flex-direction: column; }
+#konten-utama { flex: 1 0 auto; width: 100%; }
+.site-footer, footer { flex-shrink: 0; }

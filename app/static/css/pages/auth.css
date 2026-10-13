@@ -1,0 +1,350 @@
+/* ======================================================================
+   FILE   : pages/auth.css
+   ISI    : Halaman login dan daftar
+   DAFTAR BAGIAN (cari dengan Ctrl+F: "=====" + nama):
+      1. HALAMAN AUTENTIKASI
+   ==================================================================== */
+
+/* ===== HALAMAN AUTENTIKASI ===== */
+
+/* Layout login/daftar */
+.auth-shell {
+    min-height: calc(100vh - 78px);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+
+/* Login: panel visual kiri */
+.auth-visual {
+    position: relative;
+    padding: 70px 70px 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: white;
+    overflow: hidden;
+    background: linear-gradient(145deg, #193b52, #397fa8 58%, #86cce7);
+}
+
+/* Login: panel visual kiri › hiasan sebelum */
+.auth-visual::before {
+    content: "";
+    position: absolute;
+    width: 520px;
+    height: 520px;
+    border-radius: 50%;
+    top: -200px;
+    right: -180px;
+    background: radial-gradient(circle, rgba(255,255,255,.26), transparent 68%);
+}
+
+/* Login: panel visual kiri › hiasan sesudah */
+.auth-visual::after {
+    content: "❄";
+    position: absolute;
+    right: 12%;
+    top: 22%;
+    font-size: 8rem;
+    color: rgba(255,255,255,.12);
+}
+
+/* Login: teks sambutan */
+.auth-message {
+    position: relative;
+    z-index: 2;
+    max-width: 560px;
+}
+
+/* Login: teks sambutan › Label kecil di atas judul */
+.auth-message .eyebrow {
+    color: #d7f4ff;
+}
+
+/* Login: teks sambutan › judul h1 */
+.auth-message h1 {
+    margin: 10px 0 14px;
+    font: 500 clamp(2.8rem,5vw,4.5rem)/1.04 var(--font-heading);
+}
+
+/* Login: teks sambutan › paragraf */
+.auth-message p {
+    max-width: 460px;
+    margin-inline: auto;
+    color: rgba(255,255,255,.78);
+}
+
+/* Login: area form */
+.auth-form-area {
+    padding: 70px 9vw;
+    display: grid;
+    place-items: center;
+    background: rgba(255,255,255,.76);
+}
+
+/* Login: kartu form */
+.auth-card {
+    width: min(470px, 100%);
+}
+
+/* Login: kartu form › judul h2 */
+.auth-card h2 {
+    margin: 0 0 8px;
+    font: 600 2.2rem var(--font-heading);
+}
+
+/* Login: kartu form › paragraf */
+.auth-card > p {
+    margin: 0 0 28px;
+    color: var(--warna-muted);
+}
+
+/* Login & daftar: judul dan subjudul kartu rata tengah */
+.auth-card h2,
+.auth-card > p {
+    text-align: center;
+}
+
+/* Login: kartu form › form */
+.auth-card form {
+    display: grid;
+    gap: 16px;
+}
+
+/* Login: baris "ingat saya" */
+.auth-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: .78rem;
+}
+
+/* Login: catatan bawah form */
+.auth-note {
+    margin-top: 22px;
+    text-align: center;
+    color: var(--warna-muted);
+    font-size: .8rem;
+}
+
+/* Login: catatan bawah form › tautan */
+.auth-note a {
+    color: var(--warna-biru-dalam);
+    font-weight: 800;
+}
+
+/* ===== HALAMAN DAFTAR: TATA LETAK DAN VALIDASI ===== */
+
+/* Footer menempel langsung ke bawah panel (tanpa jarak 40px yang bikin terlihat terpotong) */
+.halaman-penuh .site-footer {
+    margin-top: 0;
+}
+
+/* Area form daftar: lebih lega ke samping, lebih rapat ke atas-bawah karena field lebih banyak */
+.auth-form-daftar {
+    padding: 48px 5vw;
+}
+
+/* Kartu form daftar: lebih lebar agar dua kolom muat */
+.auth-card-daftar {
+    width: min(600px, 100%);
+}
+
+/* Baris dua kolom (username + password, nama + tanggal lahir) */
+.form-baris-dua {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+/* Kolom form: cegah isi melebar keluar dari grid */
+.form-baris-dua > .form-field,
+.auth-card form > .form-field {
+    min-width: 0;
+}
+
+/* Pesan error di bawah kolom */
+.field-error {
+    margin: 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    font-size: .76rem;
+    font-weight: 700;
+    line-height: 1.4;
+    color: #b4232f;
+}
+
+/* Pesan error: ikon peringatan kecil di depan teks */
+.field-error::before {
+    content: "!";
+    flex: none;
+    width: 15px;
+    height: 15px;
+    margin-top: 1px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: #d14b55;
+    color: #fff;
+    font-size: .62rem;
+    font-weight: 800;
+}
+
+/* Pesan error disembunyikan jika kosong */
+.field-error[hidden] {
+    display: none;
+}
+
+/* Kolom tidak valid: border merah dan cincin lembut */
+.form-control.is-invalid {
+    border-color: #d14b55;
+    box-shadow: 0 0 0 4px rgba(209,75,85,.12);
+}
+
+/* Kolom valid: border hijau */
+.form-control.is-valid {
+    border-color: #4aa57a;
+}
+
+/* Petunjuk kecil di baris label (misalnya aturan nomor telepon) */
+.field-hint {
+    margin: 0;
+    font-size: .72rem;
+    color: var(--warna-muted);
+}
+
+/* Baris label: nama kolom di kiri, info kecil (hitungan / petunjuk) di kanan */
+.label-baris {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+/* Baris label › label tidak punya jarak ekstra sendiri */
+.label-baris label {
+    margin: 0;
+}
+
+/* Hitungan karakter (alamat dan password) di baris label */
+.char-count {
+    margin: 0;
+    font-size: .72rem;
+    color: var(--warna-muted);
+    transition: color .2s ease;
+}
+
+/* Hitungan karakter: berubah hijau saat syarat panjang terpenuhi */
+.char-count.tercapai {
+    color: #2f8f64;
+    font-weight: 700;
+}
+
+/* Kolom password: pembungkus untuk tombol mata dan garis kemajuan */
+.password-wrap {
+    position: relative;
+}
+
+/* Kolom password: sisakan ruang untuk tombol mata di kanan */
+.password-wrap .form-control {
+    padding-right: 54px;
+}
+
+/* Tombol mata: tahan untuk melihat password */
+.password-toggle {
+    position: absolute;
+    top: 50%;
+    right: 7px;
+    width: 38px;
+    height: 38px;
+    transform: translateY(-50%);
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--warna-biru-dalam);
+    cursor: pointer;
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+}
+
+/* Tombol mata › saat hover */
+.password-toggle:hover {
+    background: rgba(97,168,214,.14);
+}
+
+/* Tombol mata › saat ditahan (password terlihat) */
+.password-toggle[aria-pressed="true"] {
+    background: rgba(97,168,214,.22);
+    color: var(--warna-biru-dalam);
+}
+
+/* Ikon mata terbuka: hanya tampil saat tombol ditahan */
+.password-toggle .ikon-mata {
+    display: none;
+}
+
+/* Ikon mata terbuka › saat ditahan */
+.password-toggle[aria-pressed="true"] .ikon-mata {
+    display: block;
+}
+
+/* Ikon mata dicoret › disembunyikan saat tombol ditahan */
+.password-toggle[aria-pressed="true"] .ikon-mata-coret {
+    display: none;
+}
+
+/* Garis kemajuan panjang password: menempel di dasar kolom, tidak menambah tinggi form */
+.strength-meter {
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    bottom: 5px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+    pointer-events: none;
+}
+
+/* Satu segmen garis kemajuan */
+.strength-meter span {
+    height: 3px;
+    border-radius: 3px;
+    background: rgba(97,168,214,.18);
+    transition: background .25s ease;
+}
+
+/* Segmen aktif: warna naik seiring panjang password (merah, oranye, hijau muda, hijau) */
+.strength-meter[data-level="1"] span:nth-child(-n+1) {
+    background: #d14b55;
+}
+
+.strength-meter[data-level="2"] span:nth-child(-n+2) {
+    background: #e0a13a;
+}
+
+.strength-meter[data-level="3"] span:nth-child(-n+3) {
+    background: #7fb84a;
+}
+
+.strength-meter[data-level="4"] span:nth-child(-n+4) {
+    background: #2f8f64;
+}
+
+/* Tombol daftar saat sedang mengirim */
+.button[disabled] {
+    opacity: .65;
+    cursor: wait;
+}
+
+/* HP: dua kolom jadi satu kolom */
+@media (max-width: 640px) {
+    .form-baris-dua {
+        grid-template-columns: 1fr;
+    }
+}

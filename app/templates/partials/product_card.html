@@ -1,0 +1,48 @@
+<article class="product-card"
+    data-product
+    data-id="{{ produk.id }}"
+    data-name="{{ produk.nama|lower }}"
+    data-search="{{ (produk.nama ~ ' ' ~ produk.kategori ~ ' ' ~ produk.era ~ ' ' ~ produk.asal ~ ' ' ~ produk.kondisi ~ ' ' ~ produk.material ~ ' ' ~ produk.deskripsi)|lower }}"
+    data-category="{{ produk.slug_kategori }}"
+    data-era="{{ produk.era }}"
+    data-condition="{{ produk.kondisi }}"
+    data-price="{{ produk.harga }}"
+    data-rating="{{ produk.rating }}"
+    data-image="{{ produk.gambar }}"
+    data-origin="{{ produk.asal }}"
+    data-detail-url="{{ url_for('main.detail_produk', produk_id=produk.id) }}">
+
+    <!-- ===== VISUAL PRODUK ===== -->
+    <a class="product-visual" href="{{ url_for('main.detail_produk', produk_id=produk.id) }}">
+        <span class="product-badge">{{ produk.era }}</span>
+        <span class="product-status">{{ produk.kondisi }}</span>
+        <img
+            class="product-image"
+            src="{{ produk.gambar }}"
+            alt="{{ produk.alt_gambar }}"
+            loading="lazy"
+            referrerpolicy="no-referrer"
+            onerror="this.classList.add('is-fallback'); this.removeAttribute('src');"
+        >
+    </a>
+
+    <!-- ===== AKSI CEPAT PRODUK ===== -->
+    <div class="product-actions-float">
+        <button type="button" aria-label="Tambahkan ke wishlist" data-auth-action="wishlist">♡</button>
+        <button type="button" data-add-cart="{{ produk.id }}" data-auth-action="cart" aria-label="Tambahkan ke keranjang">＋</button>
+    </div>
+
+    <!-- ===== INFORMASI PRODUK ===== -->
+    <div class="product-content">
+        <div class="product-meta">
+            <span>{{ produk.kategori }}</span>
+            <span>{{ produk.asal }}</span>
+        </div>
+        <h3><a href="{{ url_for('main.detail_produk', produk_id=produk.id) }}">{{ produk.nama }}</a></h3>
+        <div class="rating" aria-label="Rating {{ produk.rating }} dari 5">★★★★★ <span class="muted">{{ produk.rating }}</span></div>
+        <div class="product-bottom">
+            <strong class="price">Rp{{ "{:,.0f}".format(produk.harga).replace(',', '.') }}</strong>
+            <span class="stock-tag">{{ produk.stok }} item</span>
+        </div>
+    </div>
+</article>

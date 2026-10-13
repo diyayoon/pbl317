@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+{% block title %}Checkout — Albis Antique{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/dashboard.css') }}">{% endblock %}
+{% block content %}
+<section class="section-shell checkout-page">
+    <div class="container checkout-container">
+        <div class="section-heading">
+            <div><span class="eyebrow">Secure Checkout</span><h2>Checkout</h2><p>Periksa koleksi, isi alamat pengiriman, lalu buat pesanan demo.</p></div>
+        </div>
+
+        <div id="checkoutSuccess" class="checkout-success" role="status" hidden>
+            <span class="checkout-success-icon" aria-hidden="true">✓</span>
+            <div><h3>Pesanan demo berhasil dibuat.</h3><p>Pesanan tersimpan di browser ini. Belum ada pembayaran sungguhan atau penyimpanan database.</p><p id="checkoutSuccessOrder" class="checkout-success-order"></p></div>
+            <a class="button button-primary" href="{{ url_for('customer.pesanan') }}">Lihat riwayat pesanan</a>
+        </div>
+
+        <div id="checkoutEmpty" class="glass-card checkout-empty" hidden>
+            <div class="saved-empty-icon" aria-hidden="true">🛍</div>
+            <h3>Keranjangmu masih kosong.</h3>
+            <p>Tambahkan koleksi dari katalog sebelum melanjutkan checkout.</p>
+            <a class="button button-primary" href="{{ url_for('main.katalog') }}">Jelajahi Katalog</a>
+        </div>
+
+        <form id="checkoutForm" class="checkout-layout" novalidate>
+            <div class="glass-card checkout-form-card">
+                <div class="checkout-card-heading"><span>01</span><div><h3>Informasi pengiriman</h3><p>Masukkan alamat lengkap penerima.</p></div></div>
+                <div class="form-field">
+                    <label for="checkoutName">Nama penerima</label>
+                    <input class="form-control" id="checkoutName" name="nama" autocomplete="name" required minlength="2" placeholder="Nama lengkap penerima">
+                    <small class="checkout-field-error" data-error-for="nama"></small>
+                </div>
+                <div class="form-field">
+                    <label for="checkoutPhone">Nomor telepon</label>
+                    <input class="form-control" id="checkoutPhone" name="telepon" autocomplete="tel" inputmode="tel" required placeholder="Contoh: 628123456789">
+                    <small class="checkout-field-error" data-error-for="telepon"></small>
+                </div>
+                <div class="form-field">
+                    <label for="checkoutAddress">Alamat pengiriman</label>
+                    <textarea class="form-control" id="checkoutAddress" name="alamat" autocomplete="street-address" required minlength="10" maxlength="255" rows="4" placeholder="Jalan, nomor rumah, kelurahan, kota, kode pos"></textarea>
+                    <small class="checkout-field-error" data-error-for="alamat"></small>
+                </div>
+                <div class="form-field">
+                    <label for="checkoutPayment">Metode pembayaran (simulasi)</label>
+                    <select class="form-control" id="checkoutPayment" name="pembayaran" required>
+                        <option value="Transfer Bank">Transfer Bank</option>
+                        <option value="QRIS">QRIS</option>
+                    </select>
+                    <small class="checkout-payment-note">Pilihan ini hanya dicatat untuk demo; belum terhubung ke payment gateway.</small>
+                </div>
+                <button class="button button-primary" id="checkoutSubmit" type="submit">Buat Pesanan Demo</button>
+                <p class="checkout-demo-disclaimer">Mode prototipe: pesanan disimpan di localStorage browser, bukan database. Jangan masukkan data sensitif asli.</p>
+            </div>
+
+            <aside class="glass-card checkout-summary-card">
+                <div class="checkout-card-heading"><span>02</span><div><h3>Ringkasan pesanan</h3><p>Pastikan pilihanmu sudah benar.</p></div></div>
+                <div id="checkoutItems" class="checkout-items" aria-live="polite"></div>
+                <div class="checkout-total-row"><span>Subtotal</span><strong id="checkoutSubtotal">Rp0</strong></div>
+                <div class="checkout-total-row"><span>Pengiriman</span><strong>Gratis (demo)</strong></div>
+                <div class="checkout-grand-total"><span>Total</span><strong id="checkoutTotal">Rp0</strong></div>
+                <a class="checkout-edit-cart" href="{{ url_for('customer.keranjang') }}">← Kembali ke keranjang</a>
+            </aside>
+        </form>
+    </div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>
+(() => {
+  const CART_KEY = 'albis_antique_cart_demo';
+  const ORDER_KEY = 'albis_antique_orders_demo';
+  const money = value => `Rp${Number(value || 0).toLocaleString('id-ID')}`;
+  const read = key => { try { return JSON.parse(localStorage.getItem(key)) || []; } catch { return []; } };
+  const write = (key, value) => localStorage.setItem(key, JSON.stringify(value));
+  const cart = read(CART_KEY);
+  const form = document.getElementById('checkoutForm');
+  const empty = document.getElementById('checkoutEmpty');
+  const success = document.getElementById('checkoutSuccess');
+  const itemsNode = document.getElementById('checkoutItems');
+  const totalNode = document.getElementById('checkoutTotal');
+  const subtotalNode = document.getElementById('checkoutSubtotal');
+  const total = cart.reduce((sum, item) => sum + Number(item.harga || 0) * Number(item.jumlah || 1), 0);
+
+  function text(tag, className, value) {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    node.textContent = value;
+    return node;
+  }
+  function showEmpty() {
+    form.hidden = true;
+    empty.hidden = false;
+  }
+  if (!cart.length) {
+    showEmpty();
+  } else {
+    cart.forEach(item => {
+      const row = document.createElement('div'); row.className = 'checkout-item';
+      if (item.gambar) {
+        const img = document.createElement('img'); img.src = item.gambar; img.alt = item.nama || 'Foto produk'; img.loading = 'lazy'; row.append(img);
+      } else row.append(text('span','checkout-item-placeholder','✧'));
+      const copy = document.createElement('div'); copy.className = 'checkout-item-copy';
+      copy.append(text('strong','',item.nama || 'Produk Albis Antique'));
+      copy.append(text('small','',`${Number(item.jumlah || 1)} item × ${money(item.harga)}`));
+      row.append(copy, text('strong','checkout-item-price',money(Number(item.harga || 0) * Number(item.jumlah || 1))));
+      itemsNode.append(row);
+    });
+    subtotalNode.textContent = money(total);
+    totalNode.textContent = money(total);
+  }
+
+  form.addEventListener('submit', event => {
+    event.preventDefault();
+    if (!cart.length) return showEmpty();
+    const data = new FormData(form);
+    const name = String(data.get('nama') || '').trim();
+    const phone = String(data.get('telepon') || '').replace(/[\s()+-]/g,'');
+    const address = String(data.get('alamat') || '').trim();
+    const errors = {
+      nama: name.length < 2 ? 'Nama penerima minimal 2 karakter.' : '',
+      telepon: !/^62\d{8,13}$/.test(phone) ? 'Nomor telepon harus diawali 62 dan berisi 10–15 angka.' : '',
+      alamat: address.length < 10 ? 'Alamat minimal 10 karakter.' : ''
+    };
+    form.querySelectorAll('[data-error-for]').forEach(node => node.textContent = errors[node.dataset.errorFor] || '');
+    if (Object.values(errors).some(Boolean)) {
+      const first = form.querySelector('[data-error-for]:not(:empty)');
+      if (first) form.querySelector(`[name="${first.dataset.errorFor}"]`)?.focus();
+      return;
+    }
+    const orders = read(ORDER_KEY);
+    const orderId = `AA-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`;
+    const order = {
+      id: orderId, date: new Date().toISOString(), nama: name, telepon: phone,
+      alamat: address, pembayaran: data.get('pembayaran'), total,
+      status: 'Menunggu pembayaran',
+      items: cart.map(item => ({...item}))
+    };
+    orders.unshift(order);
+    write(ORDER_KEY, orders);
+    write(CART_KEY, []);
+    const badge = document.getElementById('cartBadge');
+    if (badge) { badge.textContent = '0'; badge.hidden = true; }
+    form.hidden = true;
+    empty.hidden = true;
+    success.hidden = false;
+    document.getElementById('checkoutSuccessOrder').textContent = `Nomor pesanan: #${orderId} · Total ${money(total)} · Metode ${order.pembayaran}`;
+    success.scrollIntoView({behavior:'smooth', block:'center'});
+  });
+})();
+</script>
+{% endblock %}

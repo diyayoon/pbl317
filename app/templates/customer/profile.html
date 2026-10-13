@@ -1,0 +1,243 @@
+{% extends 'base.html' %}
+
+{% block title %}Profil — Albis Antique{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/dashboard.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/profile.css') }}">
+{% endblock %}
+
+{% block content %}
+{# Daftar tab: (kunci, judul). Kunci dipakai sebagai id panel dan hash URL (#alamat). #}
+{% set daftar_tab = [
+    ('profil', 'Profil'),
+    ('alamat', 'Alamat'),
+    ('privasi', 'Privasi'),
+    ('keamanan', 'Keamanan'),
+    ('preferensi', 'Preferensi'),
+] %}
+
+<!-- ===== PROFIL PELANGGAN ===== -->
+<section class="section-shell profil-halaman" id="halamanProfil">
+    <div class="container" style="max-width:760px;">
+        <!-- ===== JUDUL HALAMAN ===== -->
+        <div class="section-heading">
+            <div>
+                <span class="eyebrow">Account Settings</span>
+                <h2>Profil Pribadi</h2>
+                <p>Form ini akan dihubungkan ke tabel pengguna dan alamat pada tahap backend.</p>
+            </div>
+        </div>
+
+        <!-- ===== TAB PENGATURAN ===== -->
+        <div class="profil-tab" role="tablist" aria-label="Pengaturan akun">
+            {% for kunci, judul in daftar_tab %}
+            <button
+                class="profil-tab-tombol"
+                id="tab-{{ kunci }}"
+                type="button"
+                role="tab"
+                aria-controls="panel-{{ kunci }}"
+                aria-selected="{{ 'true' if loop.first else 'false' }}"
+                tabindex="{{ '0' if loop.first else '-1' }}"
+                data-tab="{{ kunci }}"
+            >{{ judul }}</button>
+            {% endfor %}
+        </div>
+
+        <div class="glass-card profil-kartu">
+            <!-- ===== PANEL: PROFIL ===== -->
+            <section class="profil-panel" id="panel-profil" role="tabpanel" aria-labelledby="tab-profil">
+                <h3>Edit profil</h3>
+                <p class="profil-bantuan">Atur identitas akun yang tampil di Albis Antique.</p>
+
+                <!-- ===== FOTO PROFIL ===== -->
+                <div class="profil-foto">
+                    <div class="avatar-bulat" id="avatarBulat" aria-live="polite"></div>
+                    <div class="profil-foto-aksi">
+                        <div class="form-field">
+                            <label for="inputFoto">Foto profil</label>
+                            <input
+                                class="form-control"
+                                id="inputFoto"
+                                type="file"
+                                accept="image/png,image/jpeg,image/webp"
+                            >
+                        </div>
+                        <p class="profil-bantuan">PNG, JPG, atau WEBP maksimal 5 MB. Setelah memilih file, geser dan zoom foto sebelum disimpan.</p>
+                        <button class="button button-secondary button-small" id="hapusFoto" type="button" hidden>Hapus foto</button>
+                    </div>
+                </div>
+
+                <!-- ===== FORM IDENTITAS ===== -->
+                <form class="profil-form" id="formProfil" novalidate>
+                    <div class="form-field">
+                        <label for="namaLengkap">Nama lengkap</label>
+                        <input
+                            class="form-control"
+                            id="namaLengkap"
+                            name="nama"
+                            autocomplete="name"
+                            maxlength="100"
+                            aria-describedby="galatNama"
+                        >
+                        <p class="field-error" id="galatNama" hidden></p>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="emailProfil">Email</label>
+                        <input
+                            class="form-control"
+                            id="emailProfil"
+                            name="email"
+                            type="email"
+                            autocomplete="email"
+                            maxlength="254"
+                            aria-describedby="galatEmail"
+                        >
+                        <p class="field-error" id="galatEmail" hidden></p>
+                    </div>
+
+                    <div>
+                        <button class="button button-primary" type="submit">Simpan Perubahan</button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- ===== PANEL: ALAMAT ===== -->
+            <section class="profil-panel" id="panel-alamat" role="tabpanel" aria-labelledby="tab-alamat" hidden>
+                <div class="profil-panel-kepala">
+                    <div>
+                        <h3>Alamat saya</h3>
+                        <p class="profil-bantuan">Alamat tersimpan bisa dipilih kembali saat checkout.</p>
+                    </div>
+                    <button class="button button-primary button-small" id="alamatBaru" type="button">+ Tambah alamat</button>
+                </div>
+
+                <div class="daftar-alamat" id="daftarAlamat"></div>
+
+                <!-- ===== FORM TAMBAH / EDIT ALAMAT ===== -->
+                <form class="form-alamat" id="formAlamat" novalidate hidden>
+                    <h4 id="judulFormAlamat">Tambah alamat</h4>
+                    <div class="form-baris">
+                        <div class="form-field">
+                            <label for="alamatLabel">Label alamat <span class="profil-opsional">(opsional)</span></label>
+                            <input class="form-control" id="alamatLabel" maxlength="30" placeholder="Rumah / Kantor" aria-describedby="galatLabel">
+                            <p class="field-error" id="galatLabel" hidden></p>
+                        </div>
+
+                        <div class="form-field">
+                            <label for="alamatPenerima">Nama penerima</label>
+                            <input class="form-control" id="alamatPenerima" maxlength="100" autocomplete="name" placeholder="Nama lengkap penerima" aria-describedby="galatPenerima">
+                            <p class="field-error" id="galatPenerima" hidden></p>
+                        </div>
+
+                        <div class="form-field">
+                            <label for="alamatTelepon">Nomor telepon</label>
+                            <input class="form-control" id="alamatTelepon" inputmode="tel" autocomplete="tel" placeholder="Contoh: 628123456789" aria-describedby="galatTelepon">
+                            <p class="field-error" id="galatTelepon" hidden></p>
+                        </div>
+
+                        <div class="form-field">
+                            <label for="alamatKodePos">Kode pos</label>
+                            <input class="form-control" id="alamatKodePos" inputmode="numeric" autocomplete="postal-code" placeholder="29444" aria-describedby="galatKodePos">
+                            <p class="field-error" id="galatKodePos" hidden></p>
+                        </div>
+
+                        <div class="form-field">
+                            <label for="alamatProvinsi">Provinsi</label>
+                            <input class="form-control" id="alamatProvinsi" maxlength="100" placeholder="Kepulauan Riau" aria-describedby="galatProvinsi">
+                            <p class="field-error" id="galatProvinsi" hidden></p>
+                        </div>
+
+                        <div class="form-field">
+                            <label for="alamatKota">Kota / Kabupaten</label>
+                            <input class="form-control" id="alamatKota" maxlength="100" placeholder="Batam" aria-describedby="galatKota">
+                            <p class="field-error" id="galatKota" hidden></p>
+                        </div>
+
+                        <div class="form-field form-lebar">
+                            <label for="alamatKecamatan">Kecamatan / Kelurahan</label>
+                            <input class="form-control" id="alamatKecamatan" maxlength="100" placeholder="Contoh: Batam Kota / Teluk Tering" aria-describedby="galatKecamatan">
+                            <p class="field-error" id="galatKecamatan" hidden></p>
+                        </div>
+
+                        <div class="form-field form-lebar">
+                            <label for="alamatLengkap">Alamat lengkap</label>
+                            <textarea class="form-control" id="alamatLengkap" maxlength="255" placeholder="Nama jalan, nomor rumah/kos, RT/RW, patokan, lantai, atau detail lain" aria-describedby="galatLengkap"></textarea>
+                            <p class="field-error" id="galatLengkap" hidden></p>
+                        </div>
+                    </div>
+
+                    <div class="form-aksi">
+                        <button class="button button-secondary button-small" id="batalAlamat" type="button">Batal</button>
+                        <button class="button button-primary button-small" type="submit">Simpan alamat</button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- ===== PANEL: PRIVASI, KEAMANAN, PREFERENSI (BELUM AKTIF) ===== -->
+            {% for kunci, judul in daftar_tab[2:] %}
+            <section class="profil-panel" id="panel-{{ kunci }}" role="tabpanel" aria-labelledby="tab-{{ kunci }}" hidden>
+                <h3>{{ judul }}</h3>
+                <div class="profil-placeholder">
+                    Pengaturan {{ judul|lower }} akan diaktifkan pada tahap backend.
+                </div>
+            </section>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- ===== BAR PERUBAHAN BELUM DISIMPAN ===== -->
+<div class="bar-perubahan" id="barPerubahan" role="status" aria-live="polite" hidden>
+    <p>Ada perubahan yang belum disimpan.</p>
+    <div class="bar-aksi">
+        <button class="bar-reset" id="resetProfil" type="button">Reset</button>
+        <button class="button button-gold button-small" id="simpanDariBar" type="button">Simpan</button>
+    </div>
+</div>
+
+<!-- ===== EDITOR FOTO PROFIL (GESER + ZOOM) ===== -->
+<div class="editor-foto" id="editorFoto" role="dialog" aria-modal="true" aria-labelledby="judulEditorFoto" hidden>
+    <div class="editor-foto-kartu">
+        <div class="editor-foto-kepala">
+            <div>
+                <span class="eyebrow">Foto</span>
+                <h3 id="judulEditorFoto">Sesuaikan foto profil</h3>
+            </div>
+            <button class="editor-tutup" id="tutupEditorFoto" type="button" aria-label="Tutup editor foto">✕</button>
+        </div>
+
+        <div class="editor-foto-isi">
+            <div class="editor-panggung" id="panggungFoto">
+                <img id="gambarFoto" alt="Pratinjau foto profil" draggable="false">
+            </div>
+
+            <div class="editor-kontrol">
+                <div class="form-field">
+                    <label for="zoomFoto">Zoom <span id="nilaiZoom">1.00×</span></label>
+                    <input id="zoomFoto" type="range" min="1" max="3" step="0.01" value="1">
+                </div>
+                <p class="profil-bantuan">Geser foto untuk memindahkan, scroll atau cubit untuk zoom. Bagian dalam lingkaran yang akan tampil.</p>
+                <div class="editor-rotasi" aria-label="Rotasi foto">
+                    <button id="putarKiriFoto" type="button">↶ Putar kiri 90°</button>
+                    <button id="putarKananFoto" type="button">↷ Putar kanan 90°</button>
+                </div>
+                <div class="form-aksi">
+                    <button class="button button-secondary button-small" id="resetEditorFoto" type="button">Reset</button>
+                    <button class="button button-secondary button-small" id="batalEditorFoto" type="button">Batal</button>
+                    <button class="button button-primary button-small" id="pakaiFoto" type="button">Pakai foto</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== TOAST PEMBERITAHUAN ===== -->
+<div class="toast-profil" id="toastProfil" role="status" aria-live="polite" hidden></div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/profil.js') }}" defer></script>
+{% endblock %}

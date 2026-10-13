@@ -1,0 +1,71 @@
+# ======================================================================
+# Stack Albis Antique: nginx (pintu masuk) -> web (Flask/gunicorn) -> db (PostgreSQL)
+# Identitas nginx SAMA dengan container lama: service "nginx", container "my-nginx", port 8080.
+#
+# WAJIB diisi di Portainer (Stack > Environment variables), atau di file .env bila dijalankan lokal:
+#   SECRET_KEY         string acak panjang, contoh:  python -c "import secrets; print(secrets.token_hex(32))"
+# Opsional (ada nilai bawaan): POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB
+# ======================================================================
+services:
+  # ===== PINTU MASUK (REVERSE PROXY) =====
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: my-nginx
+    ports:
+      - "8080:80"        # akses lewat http://10.99.0.20:8080
+    depends_on:
+      web:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # ===== APLIKASI FLASK (TIDAK DIBUKA KE LUAR, HANYA DIAKSES NGINX) =====
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: albis-web
+    environment:
+      SECRET_KEY: ${SECRET_KEY:?SECRET_KEY wajib diisi, lihat komentar di bagian atas docker-compose.yml}
+      # Di dalam Docker, host database adalah nama service ("db"), bukan localhost.
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-albis_antique}
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      # Foto produk yang diupload admin (instance/uploads) tetap ada walau container dibuat ulang.
+      - instance_data:/app/instance
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/', timeout=3)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # ===== DATABASE POSTGRESQL (TIDAK DIBUKA KE LUAR) =====
+  db:
+    image: postgres:17-alpine
+    container_name: albis-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-albis_antique}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-albis_antique}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  db_data:
+  instance_data:

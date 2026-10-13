@@ -1,0 +1,77 @@
+ {% extends 'base.html' %}
+{% block title %}Ruang Koleksi Saya — Albis Antique{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/dashboard.css') }}">{% endblock %}
+{% block content %}
+<section class="customer-dashboard-content">
+<div class="customer-eyebrow"><span aria-hidden="true">✦</span> YOUR PRIVATE COLLECTION</div>
+            <header class="customer-welcome">
+                <div>
+                    <h1>Selamat datang kembali.</h1>
+                    <p>Semua koleksi tersimpan dan perjalanan belanjamu, dalam satu tempat.</p>
+                </div>
+                <div class="customer-welcome-seal" aria-hidden="true">
+                    <span>♕</span>
+                    <small>ALBIS<br>ANTIQUE</small>
+                </div>
+            </header>
+
+            <div class="customer-stat-grid" aria-label="Ringkasan akun">
+                <article class="customer-stat-card">
+                    <span class="customer-stat-icon" aria-hidden="true">♧</span>
+                    <span class="customer-stat-label">Pesanan aktif</span>
+                    <strong>02</strong>
+                    <small>Perjalanan koleksimu</small>
+                </article>
+                <article class="customer-stat-card">
+                    <span class="customer-stat-icon" aria-hidden="true">♡</span>
+                    <span class="customer-stat-label">Wishlist</span>
+                    <strong>06</strong>
+                    <small>Barang yang kamu sukai</small>
+                </article>
+                <article class="customer-stat-card">
+                    <span class="customer-stat-icon" aria-hidden="true">♙</span>
+                    <span class="customer-stat-label">Alamat tersimpan</span>
+                    <strong>02</strong>
+                    <small>Tujuan pengiriman</small>
+                </article>
+            </div>
+
+            <section class="customer-orders-panel">
+                <div class="customer-panel-heading">
+                    <div>
+                        <span class="customer-section-kicker">YOUR JOURNEY</span>
+                        <h2>Pesanan terbaru</h2>
+                        <p>Ikuti perjalanan benda pilihanmu hingga tiba di rumah.</p>
+                    </div>
+                    <a class="customer-text-link" href="{{ url_for('customer.pesanan') }}">Semua pesanan <span aria-hidden="true">→</span></a>
+                </div>
+                <div class="customer-order-list">
+                    <article class="customer-order-item">
+                        <div class="customer-order-emblem" aria-hidden="true">♜</div>
+                        <div class="customer-order-info">
+                            <span class="customer-order-number">ORDER #AA-2026-014</span>
+                            <h3>Koleksi pilihan Albis Antique</h3>
+                            <p>04 Okt 2026 <span aria-hidden="true">·</span> 1 item</p>
+                        </div>
+                        <div class="customer-order-total">
+                            <strong>Rp1.850.000</strong>
+                            <span class="customer-order-status is-processing">Sedang diproses</span>
+                        </div>
+                    </article>
+                    <article class="customer-order-item">
+                        <div class="customer-order-emblem" aria-hidden="true">♜</div>
+                        <div class="customer-order-info">
+                            <span class="customer-order-number">ORDER #AA-2026-011</span>
+                            <h3>Koleksi vintage pilihan</h3>
+                            <p>26 Sep 2026 <span aria-hidden="true">·</span> 1 item</p>
+                        </div>
+                        <div class="customer-order-total">
+                            <strong>Rp2.750.000</strong>
+                            <span class="customer-order-status is-complete">Selesai</span>
+                        </div>
+                    </article>
+                </div>
+            </section>
+            <p class="customer-demo-note"><span aria-hidden="true">✧</span> Ringkasan ini masih menggunakan data demo dan akan terhubung ke akun database setelah integrasi backend.</p>
+</section>
+{% endblock %}

@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% block title %}Kelola Produk — Albis Antique{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/dashboard.css') }}">{% endblock %}
+{% block content %}
+<!-- ===== HALAMAN KELOLA PRODUK ===== -->
+<section class="dashboard-shell admin-workspace-shell">
+    <button class="workspace-mobile-toggle" type="button" aria-controls="adminWorkspaceSidebar" aria-expanded="false">☰ <span>Menu admin</span></button>
+    <div class="dashboard-layout">
+        <!-- ===== SIDEBAR ADMIN (KONSISTEN DENGAN DASHBOARD) ===== -->
+        <aside id="adminWorkspaceSidebar" class="dashboard-sidebar admin-sidebar">
+            <div class="admin-sidebar-heading"><span aria-hidden="true">♕</span><div><strong>ALBIS ADMIN</strong><small>Workspace</small></div></div>
+            <nav aria-label="Menu admin">
+                <a href="{{ url_for('main.katalog') }}"><span aria-hidden="true">↗</span> Lihat toko</a>
+                <a href="{{ url_for('admin.dashboard') }}"><span aria-hidden="true">▦</span> Dashboard</a>
+                <a class="active" href="{{ url_for('admin.produk') }}"><span aria-hidden="true">◇</span> Produk</a>
+                <a href="#" aria-disabled="true" title="Modul menyusul pada tahap backend"><span aria-hidden="true">♙</span> Pengguna <small>Segera</small></a>
+                <a href="#" aria-disabled="true" title="Modul pesanan menyusul pada tahap backend"><span aria-hidden="true">▤</span> Pesanan <small>Segera</small></a>
+                <a href="#" aria-disabled="true" title="Modul pembayaran menyusul pada tahap backend"><span aria-hidden="true">◇</span> Pembayaran <small>Segera</small></a>
+                <a href="#" aria-disabled="true" title="Laporan menyusul pada tahap backend"><span aria-hidden="true">▥</span> Laporan <small>Segera</small></a>
+                <a class="workspace-logout-link" href="{{ url_for('auth.logout') }}"><span aria-hidden="true">↪</span> Keluar dari akun</a>
+            </nav>
+            <div class="admin-sidebar-note">Prototipe akademik<br><span>Data contoh · belum terhubung DB</span></div>
+        </aside>
+
+        <!-- ===== FORM TAMBAH PRODUK ===== -->
+        <div class="dashboard-content">
+            <span class="eyebrow">Royal Inventory</span>
+            <h1>Tambah Produk Antik</h1>
+            <p>Form ini sudah menyiapkan input foto. Penyimpanan data produk ke PostgreSQL akan dihubungkan pada tahap backend.</p>
+
+            <form class="panel product-admin-form" method="post" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <!-- ===== INFORMASI DASAR ===== -->
+                <div class="form-grid-two">
+                    <div class="form-field">
+                        <label for="nama">Nama produk</label>
+                        <input
+                            class="form-control"
+                            id="nama"
+                            name="nama"
+                            placeholder="Contoh: Victorian Pocket Watch"
+                        >
+                    </div>
+                    <div class="form-field">
+                        <label for="kategori">Kategori</label>
+                        <select class="form-control" id="kategori" name="kategori">
+                            <option>Jam & Timepiece</option><option>Kamera Vintage</option><option>Porselen & Keramik</option><option>Perhiasan Antik</option><option>Buku & Manuskrip</option><option>Musik Vintage</option><option>Dekorasi & Interior</option><option>Travel Collectibles</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- ===== FOTO PRODUK ===== -->
+                <div class="form-field">
+                    <label for="foto_produk">Foto produk</label>
+                    <input
+                        class="form-control file-input"
+                        id="foto_produk"
+                        name="foto_produk"
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        required
+                    >
+                    <small class="muted">Format: JPG/JPEG/PNG/WEBP. Untuk implementasi final tambahkan validasi MIME/magic bytes dan batas ukuran.</small>
+                </div>
+
+                <!-- ===== PREVIEW FOTO ===== -->
+                <div class="upload-preview" id="uploadPreview">
+                    {% if nama_file_tersimpan %}
+                    <img
+                        src="{{ url_for('admin.foto_produk', nama_file=nama_file_tersimpan) }}"
+                        alt="Preview foto produk yang baru diunggah"
+                    >
+                    {% else %}
+                    <span>Preview foto akan tampil di sini.</span>
+                    {% endif %}
+                </div>
+
+                <!-- ===== AKSI FORM ===== -->
+                <button class="button button-primary" type="submit">Simpan Foto Prototipe</button>
+            </form>
+        </div>
+    </div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>
+/* ===== PREVIEW FOTO PRODUK SEBELUM UPLOAD ===== */
+document.getElementById('foto_produk')?.addEventListener('change', (event) => {
+    const file = event.target.files?.[0];
+    const preview = document.getElementById('uploadPreview');
+    if (!file || !preview) return;
+    const reader = new FileReader();
+    reader.addEventListener('load', () => {
+        preview.replaceChildren();
+        const gambar = document.createElement('img');
+        gambar.src = reader.result;
+        gambar.alt = 'Preview foto produk';
+        preview.appendChild(gambar);
+    });
+    reader.readAsDataURL(file);
+});
+</script>
+{% endblock %}

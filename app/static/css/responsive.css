@@ -1,0 +1,640 @@
+/* ======================================================================
+   FILE   : responsive.css
+   ISI    : Penyesuaian tablet dan HP (dimuat paling akhir)
+   DAFTAR BAGIAN (cari dengan Ctrl+F: "=====" + nama):
+      1. RESPONSIVE: LAPTOP & TABLET BESAR
+      2. RESPONSIVE: TABLET
+      3. RESPONSIVE: PONSEL
+   ==================================================================== */
+
+/* ===== RESPONSIVE: LAPTOP & TABLET BESAR ===== */
+
+@media (max-width: 1100px) {
+    /* Grid kartu produk */
+    .product-grid {
+        grid-template-columns: repeat(3, minmax(0,1fr));
+    }
+
+    /* Hero: grid teks kiri + showcase kanan */
+    .hero-grid {
+        gap: 42px;
+    }
+
+    /* Hero: bingkai lengkung produk unggulan */
+    .hero-showcase {
+        min-height: 455px;
+    }
+
+    /* Footer: isi utama (kolom-kolom) */
+    .footer-main {
+        grid-template-columns: 1.4fr 1fr 1fr;
+    }
+
+    /* Footer: kolom tautan › item terakhir */
+    .footer-column:last-child {
+        grid-column: 2 / -1;
+    }
+
+    /* Dashboard: grid kartu angka */
+    .kpi-grid {
+        grid-template-columns: repeat(2,1fr);
+    }
+}
+
+/* ===== RESPONSIVE: TABLET ===== */
+
+@media (max-width: 900px) {
+    /* Pembungkus konten (lebar maksimum, rata tengah) */
+    .container {
+        width: min(var(--lebar-konten), calc(100% - 30px));
+    }
+
+    /* Jarak atas-bawah setiap section */
+    .section-shell {
+        padding: 70px 0;
+    }
+
+    /* Baris navigasi */
+    .navbar {
+        min-height: 70px;
+    }
+
+    /* Daftar menu navigasi */
+    .nav-links {
+        position: fixed;
+        inset: 70px 15px auto 15px;
+        display: none;
+        padding: 14px;
+        border: 1px solid var(--warna-garis);
+        border-radius: 16px;
+        background: rgba(247,252,254,.97);
+        box-shadow: var(--bayangan-lembut);
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    /* Daftar menu navigasi › saat terbuka */
+    .nav-links.is-open {
+        display: flex;
+    }
+
+    /* Daftar menu navigasi › tautan */
+    .nav-links a {
+        padding: 12px;
+    }
+
+    /* Tombol menu (hamburger) untuk HP */
+    .mobile-menu-button {
+        display: grid;
+    }
+
+    /* .nav-login */
+    .nav-login {
+        display: none;
+    }
+
+    /* Hero: grid teks kiri + showcase kanan / Layout detail produk dkk. */
+    .hero-grid,
+    .product-detail,
+    .auth-shell {
+        grid-template-columns: 1fr;
+    }
+
+    /* Hero beranda (latar + jarak) */
+    .hero {
+        padding-top: 58px;
+    }
+
+    /* Hero: bingkai lengkung produk unggulan */
+    .hero-showcase {
+        min-height: 410px;
+        max-width: 650px;
+        width: 100%;
+        margin-inline: auto;
+    }
+
+    /* Grid kartu kategori */
+    .category-grid {
+        grid-template-columns: repeat(2,1fr);
+    }
+
+    /* Grid kartu produk */
+    .product-grid {
+        grid-template-columns: repeat(2, minmax(0,1fr));
+    }
+
+    /* Banner promo */
+    .promo-banner {
+        grid-template-columns: 1fr;
+    }
+
+    /* Grid kartu highlight */
+    .highlight-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    /* Layout katalog: filter kiri + produk kanan */
+    .catalog-layout {
+        grid-template-columns: 1fr;
+    }
+
+    /* Panel filter */
+    .filter-panel {
+        position: static;
+        display: none;
+    }
+
+    /* Panel filter › saat terbuka */
+    .filter-panel.is-open {
+        display: block;
+    }
+
+    /* Tombol buka filter (HP) */
+    .filter-mobile-toggle {
+        display: inline-flex;
+    }
+
+    /* Foto utama detail produk */
+    .product-main-image {
+        min-height: 460px;
+    }
+
+    /* Login: panel visual kiri */
+    .auth-visual {
+        min-height: 390px;
+        padding: 54px 32px;
+    }
+
+    /* Login: area form */
+    .auth-form-area {
+        padding: 54px 30px;
+    }
+
+    /* Dashboard: sidebar + konten */
+    .dashboard-layout {
+        grid-template-columns: 1fr;
+    }
+
+    /* Dashboard: menu samping */
+    .dashboard-sidebar {
+        position: static;
+    }
+
+    /* Dashboard: menu samping › menu */
+    .dashboard-sidebar nav {
+        grid-template-columns: repeat(3,1fr);
+    }
+
+    /* Footer: isi utama (kolom-kolom) */
+    .footer-main {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    /* Footer: kolom tautan › item terakhir */
+    .footer-column:last-child {
+        grid-column: auto;
+    }
+}
+
+/* ===== RESPONSIVE: PONSEL ===== */
+
+@media (max-width: 620px) {
+    /* Pembungkus konten (lebar maksimum, rata tengah) */
+    .container {
+        width: min(var(--lebar-konten), calc(100% - 22px));
+    }
+
+    /* Jarak atas-bawah setiap section */
+    .section-shell {
+        padding: 54px 0;
+    }
+
+    /* Teks nama brand › teks kecil */
+    .brand-copy small {
+        display: none;
+    }
+
+    /* Lingkaran logo */
+    .brand-crest {
+        width: 35px;
+        height: 35px;
+    }
+
+    /* Tombol aksi di kanan navbar */
+    .nav-actions {
+        margin-left: auto;
+    }
+
+    /* .nav-wishlist */
+    .nav-wishlist {
+        display: none;
+    }
+
+    /* Tombol ganti bahasa ID/EN */
+    .language-toggle {
+        width: 42px;
+    }
+
+    /* Hero: blok teks › judul h1 */
+    .hero-copy h1 {
+        font-size: clamp(2.8rem, 15vw, 4rem);
+    }
+
+    /* Hero: baris tombol › Tombol dasar */
+    .hero-actions .button {
+        width: 100%;
+    }
+
+    /* Hero: baris angka ringkas */
+    .hero-trust {
+        justify-content: space-between;
+        gap: 10px;
+    }
+
+    /* Hero: baris angka ringkas › kotak */
+    .hero-trust div {
+        min-width: 0;
+    }
+
+    /* Hero: bingkai lengkung produk unggulan */
+    .hero-showcase {
+        min-height: 340px;
+        border-radius: 130px 130px 24px 24px;
+    }
+
+    /* Hero: objek emoji lama */
+    .hero-object {
+        width: 160px;
+        height: 160px;
+        font-size: 5rem;
+    }
+
+    /* Kepala section (judul + tautan) */
+    .section-heading {
+        align-items: start;
+    }
+
+    /* Kepala section (judul + tautan) › Tautan teks biru */
+    .section-heading .text-link {
+        white-space: nowrap;
+    }
+
+    /* Grid kartu kategori */
+    .category-grid {
+        gap: 10px;
+    }
+
+    /* Kartu kategori */
+    .category-card {
+        min-height: 158px;
+        padding: 16px;
+        border-radius: 18px;
+    }
+
+    /* Kartu kategori › watermark lebih kecil di HP */
+    .category-card::before {
+        font-size: 5.6rem;
+        right: -10px;
+        bottom: -18px;
+    }
+
+    /* Ikon kategori */
+    .category-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 14px;
+        font-size: 1.45rem;
+    }
+
+    /* Nama kategori di HP */
+    .category-card strong {
+        font-size: 1rem;
+    }
+
+    /* Panah dan nomor disembunyikan di HP agar tidak sesak */
+    .category-number {
+        display: none;
+    }
+
+    /* Grid kartu produk */
+    .product-grid {
+        gap: 11px;
+    }
+
+    /* Isi teks kartu produk */
+    .product-content {
+        padding: 13px;
+    }
+
+    /* Isi teks kartu produk › judul h3 */
+    .product-content h3 {
+        font-size: .96rem;
+    }
+
+    /* Baris kategori dan asal produk */
+    .product-meta {
+        display: block;
+        font-size: .59rem;
+    }
+
+    /* Baris kategori dan asal produk › span:last-child, item terakhir */
+    .product-meta span:last-child {
+        display: none;
+    }
+
+    /* Baris harga dan stok */
+    .product-bottom {
+        align-items: start;
+        flex-direction: column;
+        gap: 3px;
+    }
+
+    /* Harga produk */
+    .price {
+        font-size: .86rem;
+    }
+
+    /* Tombol cepat yang muncul saat hover kartu */
+    .product-actions-float {
+        opacity: 1;
+        transform: none;
+    }
+
+    /* Banner promo */
+    .promo-banner {
+        padding: 32px 24px;
+    }
+
+    /* Grid kartu highlight */
+    .highlight-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* Bar jumlah produk + urutan */
+    .catalog-toolbar {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    /* Bar jumlah produk + urutan › pilihan */
+    .catalog-toolbar select {
+        width: 100%;
+    }
+
+    /* Foto utama detail produk */
+    .product-main-image {
+        min-height: 330px;
+        font-size: 7rem;
+    }
+
+    /* Baris gambar mini */
+    .product-thumbs {
+        grid-template-columns: repeat(4,1fr);
+    }
+
+    /* Teks detail produk › judul h1 */
+    .product-copy h1 {
+        font-size: 2.65rem;
+    }
+
+    /* Tombol beli/keranjang */
+    .detail-actions {
+        grid-template-columns: 1fr;
+    }
+
+    /* Tombol tambahan (wishlist, dll.) / Grid spesifikasi produk */
+    .detail-secondary-actions,
+    .spec-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* Login: area form */
+    .auth-form-area {
+        padding: 42px 18px;
+    }
+
+    /* Login: panel visual kiri */
+    .auth-visual {
+        min-height: 330px;
+        padding: 42px 22px;
+    }
+
+    /* Dashboard: menu samping › menu */
+    .dashboard-sidebar nav {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    /* Dashboard: grid kartu angka */
+    .kpi-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+
+    /* Dashboard: kartu angka */
+    .kpi-card {
+        padding: 15px;
+    }
+
+    /* Footer: isi utama (kolom-kolom) */
+    .footer-main {
+        grid-template-columns: 1fr;
+        gap: 28px;
+    }
+
+    /* Footer: baris bawah (copyright) */
+    .footer-bottom {
+        align-items: start;
+        flex-direction: column;
+        justify-content: center;
+        padding: 18px 0;
+    }
+}
+
+
+/* ===== BATCH 6: WORKSPACE SIDEBAR MENEMPEL, BUKAN KARTU MENGAMBANG ===== */
+.workspace-mobile-toggle { display: none; }
+.workspace-logout-link { margin-top: 12px; border-top: 1px solid #dcecf3 !important; padding-top: 16px !important; color: #537080 !important; }
+.customer-workspace-shell { padding: 0; min-height: 100vh; }
+.customer-workspace-layout { display: block; width: 100%; max-width: none; margin: 0; padding: 0; }
+.customer-workspace-layout > .workspace-sidebar,
+.customer-home .customer-sidebar,
+.admin-workspace-page .admin-sidebar {
+    position: fixed !important; inset: 0 auto 0 0; z-index: 40;
+    width: 258px; height: 100vh; max-height: 100vh; overflow-y: auto;
+    border-radius: 0 !important; border: 0; border-right: 1px solid #d4e8f1;
+    background: rgba(250,254,255,.98) !important; padding: 24px 16px; box-shadow: none !important;
+}
+.customer-workspace-content { margin-left: 258px; padding: 28px clamp(20px,3vw,48px) 48px; min-height: 100vh; }
+.customer-workspace-content > .section-shell { padding: 8px 0 26px; }
+.customer-home { min-height: 100vh; padding: 0 !important; }
+.customer-home .customer-layout { display: block; width: 100%; max-width: none; margin: 0; }
+.customer-home .customer-content { margin-left: 258px; padding: 34px clamp(20px,3vw,48px) 52px; min-width: 0; }
+.dashboard-shell.admin-workspace-shell { min-height: 100vh; padding: 0 !important; }
+.admin-workspace-shell .dashboard-layout { display: block; width: 100%; max-width: none; margin: 0; }
+.admin-workspace-shell .dashboard-content { margin-left: 258px; padding: 30px clamp(20px,3vw,48px) 54px; min-width: 0; }
+.admin-workspace-shell .admin-sidebar { top: 0; }
+.customer-workspace-page #konten-utama, .admin-workspace-page #konten-utama { min-height: 100vh; }
+.customer-workspace-page .customer-workspace-content .section-shell > .container { width: 100%; max-width: none; }
+@media (max-width: 900px) {
+    .workspace-mobile-toggle { display: inline-flex; align-items: center; gap: 9px; position: fixed; top: 12px; left: 12px; z-index: 60; padding: 10px 13px; border: 1px solid #c9e5f1; border-radius: 12px; color: #234253; background: #f8fdff; font: 700 .82rem var(--font-body,sans-serif); cursor: pointer; }
+    .customer-workspace-layout > .workspace-sidebar, .customer-home .customer-sidebar, .admin-workspace-page .admin-sidebar { width: min(290px,86vw); transform: translateX(-105%); transition: transform .22s ease; z-index: 55; padding-top: 68px; border-right: 1px solid #cfe5ef; }
+    .customer-workspace-layout > .workspace-sidebar.is-open, .customer-home .customer-sidebar.is-open, .admin-workspace-page .admin-sidebar.is-open { transform: translateX(0); }
+    .customer-workspace-content, .customer-home .customer-content, .admin-workspace-shell .dashboard-content { margin-left: 0; padding: 70px 18px 34px; }
+    .customer-home .customer-layout, .admin-workspace-shell .dashboard-layout { padding: 0; }
+    .customer-home .customer-content { padding-top: 70px; }
+}
+@media (prefers-reduced-motion: reduce) { .customer-workspace-layout > .workspace-sidebar, .customer-home .customer-sidebar, .admin-workspace-page .admin-sidebar { transition: none; } }
+
+/* ===== BATCH 7: FIX CUSTOMER WORKSPACE WIDTH + NATURAL HERO PHOTOS ===== */
+/* The dashboard layout had an earlier !important grid rule. Force a full-width
+   content canvas so the fixed sidebar does not squeeze headings to one letter. */
+.customer-home .customer-layout {
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+.customer-home .customer-sidebar,
+.customer-workspace-layout > .workspace-sidebar,
+.admin-workspace-page .admin-sidebar {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: auto !important;
+    bottom: 0 !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    align-self: auto !important;
+}
+.customer-home .customer-content {
+    display: block !important;
+    width: auto !important;
+    min-width: 0 !important;
+    margin-left: 258px !important;
+    padding: 34px clamp(20px, 3vw, 48px) 52px !important;
+}
+.customer-home .customer-content > * { min-width: 0; }
+.customer-home .customer-welcome h1 {
+    max-width: 100%;
+    overflow-wrap: normal;
+    word-break: normal;
+}
+
+/* Let each product image keep its own aspect ratio. Fixed-width image boxes made
+   portrait photos look like rigid rectangles and hid the rounded corners. */
+.hero-showcase .slider-visual {
+    min-height: 250px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: visible;
+    border-radius: 22px;
+}
+.hero-showcase .slider-slide .hero-object-image {
+    display: block !important;
+    width: auto !important;
+    height: auto !important;
+    max-width: min(78%, 340px) !important;
+    max-height: 238px !important;
+    margin: 0 auto !important;
+    object-fit: contain !important;
+    object-position: center !important;
+    border-radius: 18px !important;
+    box-shadow: none !important;
+}
+@media (max-width: 900px) {
+    .customer-home .customer-content {
+        margin-left: 0 !important;
+        padding: 70px 18px 34px !important;
+    }
+    .hero-showcase .slider-visual { min-height: 220px; }
+    .hero-showcase .slider-slide .hero-object-image {
+        max-width: min(76%, 320px) !important;
+        max-height: 210px !important;
+    }
+}
+@media (max-width: 560px) {
+    .hero-showcase .slider-visual { min-height: 190px; }
+    .hero-showcase .slider-slide .hero-object-image {
+        max-width: min(74%, 280px) !important;
+        max-height: 180px !important;
+        border-radius: 15px !important;
+    }
+}
+
+
+/* ===== FINAL STABILITY PATCH: CUSTOMER / ADMIN WORKSPACES ===== */
+.customer-workspace-shell {
+    display: block;
+    width: 100%;
+    min-height: 100vh;
+    padding: 0 !important;
+}
+.customer-workspace-layout {
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+.customer-workspace-layout > .workspace-sidebar,
+.admin-workspace-page .admin-sidebar {
+    top: 0 !important;
+    left: 0 !important;
+    bottom: 0 !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+}
+.customer-workspace-content {
+    display: block;
+    width: auto;
+    min-width: 0;
+    margin-left: 258px;
+    padding: 30px clamp(20px, 3vw, 48px) 48px;
+    min-height: 100vh;
+}
+.customer-dashboard-content {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+    padding: 0 0 28px;
+}
+.customer-dashboard-content > * { min-width: 0; }
+.admin-workspace-shell .dashboard-content {
+    display: block;
+    width: auto;
+    min-width: 0;
+    margin: 0 0 0 258px !important;
+    padding: 30px clamp(20px, 3vw, 48px) 54px !important;
+}
+.admin-workspace-shell .dashboard-layout { min-height: 100vh; }
+.customer-workspace-page #konten-utama,
+.admin-workspace-page #konten-utama {
+    min-height: 100vh;
+    padding-top: 0;
+}
+@media (max-width: 900px) {
+    .customer-workspace-content {
+        width: auto;
+        margin-left: 0;
+        padding: 70px 18px 34px;
+    }
+    .admin-workspace-shell .dashboard-content {
+        width: auto;
+        margin-left: 0 !important;
+        padding: 70px 18px 34px !important;
+    }
+    .customer-workspace-layout > .workspace-sidebar,
+    .admin-workspace-page .admin-sidebar {
+        transform: translateX(-105%);
+    }
+    .customer-workspace-layout > .workspace-sidebar.is-open,
+    .admin-workspace-page .admin-sidebar.is-open {
+        transform: translateX(0);
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .flash-message { animation: none; }
+}

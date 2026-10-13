@@ -1,0 +1,17 @@
+<aside id="customerWorkspaceSidebar" class="dashboard-sidebar customer-sidebar workspace-sidebar">
+    <div class="customer-sidebar-brand">
+        <span class="customer-sidebar-crest" aria-hidden="true">♕</span>
+        <span>MY ACCOUNT</span>
+        <small>Ruang pribadi kolektor</small>
+    </div>
+    <nav aria-label="Menu akun pelanggan">
+        <a href="{{ url_for('main.katalog') }}"><span aria-hidden="true">⌕</span> Jelajahi katalog</a>
+        <a class="{% if request.endpoint == 'customer.dashboard' %}active{% endif %}" href="{{ url_for('customer.dashboard') }}"><span aria-hidden="true">⌂</span> Ringkasan</a>
+        <a class="{% if request.endpoint == 'customer.pesanan' %}active{% endif %}" href="{{ url_for('customer.pesanan') }}"><span aria-hidden="true">♧</span> Pesanan</a>
+        <a class="{% if request.endpoint == 'customer.wishlist' %}active{% endif %}" href="{{ url_for('customer.wishlist') }}"><span aria-hidden="true">♡</span> Wishlist</a>
+        <a class="{% if request.endpoint in ['customer.keranjang', 'customer.checkout'] %}active{% endif %}" href="{{ url_for('customer.keranjang') }}"><span aria-hidden="true">♙</span> Keranjang</a>
+        <a class="{% if request.endpoint == 'customer.profil' %}active{% endif %}" href="{{ url_for('customer.profil') }}"><span aria-hidden="true">♔</span> Profil</a>
+        <a class="{% if request.endpoint == 'customer.profil' and request.args.get('tab') == 'keamanan' %}active{% endif %}" href="{{ url_for('customer.profil') }}#keamanan"><span aria-hidden="true">♧</span> Keamanan</a>
+        <a class="workspace-logout-link" href="{{ url_for('auth.logout') }}"><span aria-hidden="true">↪</span> Keluar dari akun</a>
+    </nav>
+</aside>

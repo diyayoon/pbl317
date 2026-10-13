@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block title %}Masuk — Albis Antique{% endblock %}
+
+{% block body_class %}halaman-penuh{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/auth.css') }}">
+{% endblock %}
+
+{% block content %}
+<!-- ===== LAYOUT AUTENTIKASI ===== -->
+<section class="auth-shell">
+    <!-- ===== VISUAL / BRANDING ===== -->
+    <div class="auth-visual">
+        <div class="auth-message">
+            <span class="eyebrow" data-i18n="login_eyebrow">Akses Kolektor</span>
+            <h1 data-i18n="login_visual_title">Masuk ke ruang koleksi pribadi Anda.</h1>
+            <p data-i18n="login_visual_desc">Kelola wishlist, keranjang, riwayat pesanan, alamat, dan profil dalam satu tempat.</p>
+        </div>
+    </div>
+
+    <!-- ===== FORM LOGIN ===== -->
+    <div class="auth-form-area">
+        <div class="auth-card">
+            <h2 data-i18n="login_title">Selamat datang kembali</h2>
+            <p data-i18n="login_desc">Masuk menggunakan akun yang telah terdaftar.</p>
+            {% if demo_auth_enabled %}
+            <aside class="demo-account-note" role="note" style="margin: 1rem 0; padding: .9rem 1rem; border: 1px solid #c9e7f4; border-radius: 14px; background: rgba(214,246,255,.42); color: #244b68; font-size: .9rem;">
+                <strong>Mode demo sementara</strong>
+                <p style="margin:.4rem 0 .6rem">Pilih salah satu akun berikut. Akun ini hanya untuk pengujian lokal dan tidak memakai database.</p>
+                <p style="margin:.2rem 0"><strong>Customer</strong>: customer@albis.local</p>
+                <p style="margin:.2rem 0"><strong>Password</strong>: AlbisCustomer123!</p>
+                <hr style="border:0;border-top:1px solid #c9e7f4;margin:.6rem 0">
+                <p style="margin:.2rem 0"><strong>Admin</strong>: admin@albis.local</p>
+                <p style="margin:.2rem 0"><strong>Password</strong>: AlbisAdmin123!</p>
+            </aside>
+            {% endif %}
+            <form method="post" novalidate>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="form-field">
+                    <label for="email" data-i18n="email">Email</label>
+                    <input
+                        class="form-control"
+                        id="email"
+                        name="email"
+                        type="email"
+                        autocomplete="email"
+                        required
+                    >
+                </div>
+                <div class="form-field">
+                    <label for="password" data-i18n="password">Kata sandi</label>
+                    <div class="password-wrap">
+                        <input
+                            class="form-control"
+                            id="password"
+                            name="password"
+                            type="password"
+                            autocomplete="current-password"
+                            required
+                        >
+                        <!-- Tombol mata: TAHAN untuk melihat, lepas untuk menyembunyikan (sama seperti halaman daftar) -->
+                        <button
+                            class="password-toggle"
+                            id="togglePassword"
+                            type="button"
+                            aria-controls="password"
+                            aria-pressed="false"
+                            aria-label="Tahan untuk melihat kata sandi"
+                            title="Tahan untuk melihat kata sandi"
+                        >
+                            <svg class="ikon-mata-coret" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M17.94 17.94A10.9 10.9 0 0 1 12 19c-6.4 0-10-7-10-7a18.5 18.5 0 0 1 4.06-5.06M9.9 4.24A10.1 10.1 0 0 1 12 5c6.4 0 10 7 10 7a18.6 18.6 0 0 1-2.16 3.19M14.12 14.12a3 3 0 1 1-4.24-4.24"/>
+                                <path d="M1 1l22 22"/>
+                            </svg>
+                            <svg class="ikon-mata" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="auth-row">
+                    <label><input type="checkbox" name="remember"> <span data-i18n="remember">Ingat saya</span></label>
+                    <a class="text-link" href="#" data-i18n="forgot">Lupa kata sandi?</a>
+                </div>
+                <button
+                    class="button button-primary button-full"
+                    type="submit"
+                    data-i18n="login_button"
+                >Masuk</button>
+            </form>
+            <p class="auth-note"><span data-i18n="no_account">Belum punya akun?</span> <a href="{{ url_for('auth.register') }}" data-i18n="register_link">Daftar</a></p>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/tombol_mata.js') }}" defer></script>
+{% endblock %}

@@ -1,0 +1,10 @@
+{% with pesan = get_flashed_messages(with_categories=true) %}
+    {% if pesan %}
+        <!-- ===== PESAN FLASH (info / success / warning / error) ===== -->
+        <div class="flash-wrapper" role="status" aria-live="polite">
+            {% for kategori, isi in pesan %}
+                <div class="flash-message flash-{{ kategori }}">{{ isi }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endwith %}

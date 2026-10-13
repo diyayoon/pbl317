@@ -1,0 +1,26 @@
+# Berkas yang TIDAK perlu masuk ke image aplikasi (build context = root proyek)
+
+# environment Python lokal (venv dari Windows tidak bisa dipakai di Linux)
+venv/
+.venv/
+.venv-*/
+
+# cache Python
+__pycache__/
+*.pyc
+
+# rahasia: diberikan lewat environment compose, jangan masuk ke image
+.env
+
+# bukan bagian aplikasi
+.git/
+.gitignore
+.dockerignore
+Dockerfile
+docker-compose.yml
+nginx/
+tests/
+pytest.ini
+docs/
+*.md
+instance/

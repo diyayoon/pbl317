@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block title %}Katalog — Albis Antique{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/catalog.css') }}">
+{% endblock %}
+
+{% block content %}
+<!-- ===== HERO KATALOG ===== -->
+<section class="page-hero">
+    <div class="container">
+        <span class="eyebrow" data-i18n="catalog_eyebrow">Galeri Antik</span>
+        <h1 data-i18n="catalog_title">Katalog Barang Antik</h1>
+        <p data-i18n="catalog_desc">Cari dan saring koleksi berdasarkan kata kunci, kategori, era, kondisi, dan rentang harga.</p>
+    </div>
+</section>
+
+<!-- ===== KATALOG DAN FILTER ===== -->
+<section class="section-shell">
+    <div class="container catalog-layout">
+        <!-- ===== FILTER SIDEBAR ===== -->
+        <aside class="filter-panel" id="filterPanel">
+            <div class="filter-header">
+                <h2 data-i18n="filter_title">Filter Koleksi</h2>
+            </div>
+            <div class="filter-stack">
+                <div class="form-field">
+                    <label for="catalogSearch" data-i18n="search_label">Cari produk</label>
+                    <input
+                        class="form-control"
+                        id="catalogSearch"
+                        type="search"
+                        placeholder="Pocket watch, porcelain..."
+                    >
+                </div>
+                <div class="form-field">
+                    <label for="catalogCategory" data-i18n="category_label">Kategori</label>
+                    <select class="form-control" id="catalogCategory">
+                        <option value="" data-i18n="all_option">Semua</option>
+                        {% for kategori in kategori_unggulan %}
+                        <option
+                            value="{{ kategori.slug }}"
+                            {% if kategori_awal == kategori.slug %}selected{% endif %}
+                        >{{ kategori.nama }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-field">
+                    <label for="catalogEra" data-i18n="era_label">Era</label>
+                    <select class="form-control" id="catalogEra">
+                        <option value="" data-i18n="all_option">Semua</option>
+                        <option value="1800s">1800s</option>
+                        <option value="1900–1949">1900–1949</option>
+                        <option value="1950–1999">1950–1999</option>
+                    </select>
+                </div>
+                <div class="form-field">
+                    <label for="catalogCondition" data-i18n="condition_label">Kondisi</label>
+                    <select class="form-control" id="catalogCondition">
+                        <option value="" data-i18n="all_option">Semua</option>
+                        <option value="Excellent">Excellent</option>
+                        <option value="Good">Good</option>
+                        <option value="Fair">Fair</option>
+                    </select>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ===== DAFTAR PRODUK ===== -->
+        <div>
+            <div class="catalog-toolbar">
+                <div>
+                    <button
+                        class="button button-secondary button-small filter-mobile-toggle"
+                        id="filterMobileToggle"
+                        type="button"
+                        data-i18n="filter_button"
+                    >Tampilkan Filter</button>
+                    <span><strong id="productCount">{{ produk|length }}</strong> <span data-i18n="product_found">produk ditemukan</span></span>
+                </div>
+                <label>
+                    <span class="visually-hidden" data-i18n="sort_label">Urutkan</span>
+                    <select id="catalogSort">
+                        <option value="popular" data-i18n="sort_popular">Paling populer</option>
+                        <option value="newest" data-i18n="sort_new">Terbaru</option>
+                        <option value="price-low" data-i18n="sort_low">Harga terendah</option>
+                        <option value="price-high" data-i18n="sort_high">Harga tertinggi</option>
+                    </select>
+                </label>
+            </div>
+
+            <!-- ===== GRID PRODUK ===== -->
+            <div class="product-grid" id="catalogGrid">
+                {% for produk in produk %}
+                {% include 'partials/product_card.html' %}
+                {% endfor %}
+            </div>
+
+            <!-- ===== EMPTY STATE ===== -->
+            <div class="catalog-empty" id="catalogEmpty">
+                <h2>Tidak ada koleksi yang sesuai.</h2>
+                <p>Ubah kata kunci atau filter untuk menampilkan hasil lain.</p>
+            </div>
+
+            <!-- Pagination dibuat dinamis berdasarkan hasil filter dan jumlah produk. -->
+            <nav class="pagination" id="catalogPagination" aria-label="Paginasi katalog" hidden></nav>
+        </div>
+    </div>
+</section>
+{% endblock %}

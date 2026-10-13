@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="Health category icon">
+  <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#45B98B"/><stop offset="1" stop-color="#E2F5FF"/></linearGradient></defs>
+  <g fill="url(#g)" stroke="#0759B8" stroke-width="3.2" stroke-linejoin="round" stroke-linecap="round"><path d="M50 86C38 72 18 58 18 37c0-13 17-20 32-5 15-15 32-8 32 5 0 21-20 35-32 49z"/><path d="M50 29v28M36 43h28"/></g>
+</svg>

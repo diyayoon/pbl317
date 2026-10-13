@@ -1,0 +1,46 @@
+<footer class="site-footer">
+    <div class="container footer-main">
+        <!-- ===== IDENTITAS FOOTER ===== -->
+        <section class="footer-brand">
+            <h2>Albis Antique</h2>
+            <p data-i18n="footer_desc">Galeri digital untuk menjelajahi benda antik, cerita, dan koleksi lintas era.</p>
+        </section>
+
+        <!-- ===== TAUTAN EKSPLORASI ===== -->
+        <section class="footer-column">
+            <h3 data-i18n="footer_explore">Jelajahi</h3>
+            <a href="{{ url_for('main.katalog') }}" data-i18n="footer_catalog">Katalog</a>
+            <a href="{{ url_for('main.beranda') }}#categories" data-i18n="footer_categories">Kategori</a>
+            <a href="{{ url_for('main.beranda') }}#about" data-i18n="nav_about">Tentang</a>
+        </section>
+
+        <!-- ===== TAUTAN AKUN DAN BANTUAN ===== -->
+        {# Ini hanya tampilan. Pembatasan akses sebenarnya tetap wajib di route (login_required + role_required). #}
+        {% set sebagai_customer = current_user is defined and current_user.is_authenticated and current_user.role == 'customer' %}
+        <section class="footer-column">
+            <h3 data-i18n="footer_help">Bantuan</h3>
+            {% if sebagai_customer %}
+            <a href="{{ url_for('customer.pesanan') }}" data-i18n="footer_orders">Pesanan saya</a>
+            <a href="{{ url_for('customer.keranjang') }}">Keranjang</a>
+            <a href="{{ url_for('customer.profil') }}" data-i18n="footer_security">Profil & keamanan</a>
+            {% else %}
+            <a href="{{ url_for('auth.login') }}">Masuk / Daftar</a>
+            <a href="{{ url_for('main.katalog') }}">Cara menjelajahi katalog</a>
+            <a href="{{ url_for('main.beranda') }}#about">Tentang proyek</a>
+            {% endif %}
+        </section>
+
+        <!-- ===== INFORMASI PROYEK ===== -->
+        <section class="footer-column">
+            <h3 data-i18n="footer_project">Proyek</h3>
+            <p data-i18n="footer_note">Prototipe e-commerce untuk proyek pembelajaran.</p>
+            <p>Proyek mahasiswa · Flask & Jinja · UI responsif</p>
+        </section>
+    </div>
+
+    <!-- ===== FOOTER BAWAH ===== -->
+    <div class="container footer-bottom">
+        <span>© 2026 Albis Antique · Proyek pembelajaran.</span>
+        <span>Prototipe akademik — bukan toko komersial aktif.</span>
+    </div>
+</footer>

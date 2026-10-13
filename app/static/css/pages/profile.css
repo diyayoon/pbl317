@@ -1,0 +1,624 @@
+/* ======================================================================
+   FILE   : pages/profile.css
+   ISI    : Halaman Profil Pribadi pelanggan (tab, foto, alamat, editor foto)
+   DAFTAR BAGIAN (cari dengan Ctrl+F: "=====" + nama):
+      1. DASAR HALAMAN
+      2. TAB PENGATURAN
+      3. FOTO PROFIL
+      4. FORM
+      5. BUKU ALAMAT
+      6. BAR PERUBAHAN BELUM DISIMPAN
+      7. EDITOR FOTO
+      8. TOAST
+      9. RESPONSIVE
+   ==================================================================== */
+
+/* ===== DASAR HALAMAN ===== */
+
+/* Atribut hidden harus menang atas display bawaan kelas lain */
+.profil-halaman [hidden],
+.bar-perubahan[hidden],
+.editor-foto[hidden],
+.toast-profil[hidden] {
+    display: none !important;
+}
+
+/* Kartu utama berisi panel-panel */
+.profil-kartu {
+    padding: 30px;
+    border-radius: 20px;
+}
+
+/* Panel: judul */
+.profil-panel h3 {
+    margin: 0;
+    font-family: var(--font-heading);
+    font-size: 1.5rem;
+}
+
+/* Panel: teks bantuan kecil */
+.profil-bantuan {
+    margin: 6px 0 0;
+    color: var(--warna-muted);
+    font-size: .82rem;
+    line-height: 1.55;
+}
+
+/* Label "(opsional)" */
+.profil-opsional {
+    color: var(--warna-muted);
+    font-weight: 600;
+}
+
+/* Panel yang belum aktif */
+.profil-placeholder {
+    margin-top: 18px;
+    padding: 20px;
+    border-radius: 14px;
+    background: var(--warna-biru-muda);
+    color: var(--warna-teks);
+    font-size: .88rem;
+}
+
+/* ===== TAB PENGATURAN ===== */
+
+/* Baris tab: bisa digeser ke samping di layar sempit */
+.profil-tab {
+    display: flex;
+    gap: 8px;
+    margin: 0 0 16px;
+    padding-bottom: 4px;
+    overflow-x: auto;
+    scrollbar-width: thin;
+}
+
+/* Tombol tab */
+.profil-tab-tombol {
+    flex: none;
+    min-height: 42px;
+    padding: 0 18px;
+    border: 1px solid var(--warna-garis);
+    border-radius: 999px;
+    background: var(--warna-putih);
+    color: var(--warna-muted);
+    font-size: .82rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: background .2s ease, border-color .2s ease, color .2s ease;
+}
+
+/* Tombol tab › hover */
+.profil-tab-tombol:hover {
+    border-color: var(--warna-biru-sekunder);
+    color: var(--warna-teks);
+}
+
+/* Tombol tab › aktif */
+.profil-tab-tombol[aria-selected="true"] {
+    border-color: var(--warna-aksen);
+    background: var(--warna-primer);
+    color: var(--warna-teks);
+}
+
+/* ===== FOTO PROFIL ===== */
+
+/* Baris foto: pratinjau + pilih file */
+.profil-foto {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    margin: 22px 0 26px;
+}
+
+/* Pratinjau foto bulat */
+.avatar-bulat {
+    flex: none;
+    width: 112px;
+    height: 112px;
+    border: 4px solid var(--warna-putih);
+    border-radius: 50%;
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+    background: var(--warna-biru-muda);
+    box-shadow: 0 0 0 4px var(--warna-primer);
+    color: var(--warna-biru-sekunder);
+}
+
+/* Pratinjau foto › gambar */
+.avatar-bulat img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Pratinjau foto › ikon bawaan */
+.avatar-bulat svg {
+    width: 72px;
+    height: 72px;
+}
+
+/* Kolom aksi foto */
+.profil-foto-aksi {
+    min-width: 0;
+    flex: 1;
+    display: grid;
+    gap: 4px;
+}
+
+/* Tombol hapus foto */
+.profil-foto-aksi .button {
+    justify-self: start;
+    margin-top: 8px;
+}
+
+/* ===== FORM ===== */
+
+/* Form identitas */
+.profil-form {
+    display: grid;
+    gap: 14px;
+}
+
+/* Pesan error di bawah kolom (sama dengan auth.css) */
+.profil-halaman .field-error {
+    margin: 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    font-size: .76rem;
+    font-weight: 700;
+    line-height: 1.4;
+    color: #b4232f;
+}
+
+/* Pesan error › ikon peringatan kecil */
+.profil-halaman .field-error::before {
+    content: "!";
+    flex: none;
+    width: 15px;
+    height: 15px;
+    margin-top: 1px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: #d14b55;
+    color: #fff;
+    font-size: .62rem;
+    font-weight: 800;
+}
+
+/* Kolom tidak valid (sama dengan auth.css) */
+.profil-halaman .form-control.is-invalid {
+    border-color: #d14b55;
+    box-shadow: 0 0 0 4px rgba(209, 75, 85, .12);
+}
+
+/* Grid dua kolom untuk form alamat */
+.form-baris {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+/* Kolom grid: cegah isi melebar keluar */
+.form-baris > .form-field {
+    min-width: 0;
+}
+
+/* Kolom selebar dua kolom */
+.form-lebar {
+    grid-column: 1 / -1;
+}
+
+/* Baris tombol di bawah form */
+.form-aksi {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+/* ===== BUKU ALAMAT ===== */
+
+/* Kepala panel alamat: judul + tombol tambah */
+.profil-panel-kepala {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+/* Daftar kartu alamat */
+.daftar-alamat {
+    display: grid;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+/* Kartu alamat */
+.kartu-alamat {
+    padding: 18px;
+    border: 1px solid var(--warna-garis);
+    border-radius: 16px;
+    background: var(--warna-putih);
+}
+
+/* Kartu alamat › alamat utama */
+.kartu-alamat.is-utama {
+    border-color: var(--warna-aksen);
+    background: var(--warna-biru-muda);
+}
+
+/* Kartu alamat › judul + lencana */
+.kartu-alamat-judul {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Kartu alamat › nama label */
+.kartu-alamat-judul strong {
+    font-size: .95rem;
+}
+
+/* Lencana "Utama" */
+.lencana-utama {
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: var(--warna-emas-muda);
+    color: #6f5a24;
+    font-size: .66rem;
+    font-weight: 800;
+    letter-spacing: .04em;
+}
+
+/* Kartu alamat › teks */
+.kartu-alamat p {
+    margin: 6px 0 0;
+    color: var(--warna-muted);
+    font-size: .84rem;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+}
+
+/* Kartu alamat › penerima dan telepon */
+.kartu-alamat p.kartu-alamat-penerima {
+    color: var(--warna-teks);
+    font-weight: 700;
+}
+
+/* Kartu alamat › baris tombol */
+.kartu-alamat-aksi {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 14px;
+}
+
+/* Tombol hapus */
+.button-bahaya {
+    color: #b4232f;
+}
+
+/* Tombol hapus › hover */
+.button-bahaya:hover {
+    border-color: #d14b55;
+}
+
+/* Belum ada alamat */
+.alamat-kosong {
+    padding: 24px;
+    border: 1px dashed var(--warna-biru-sekunder);
+    border-radius: 16px;
+    color: var(--warna-muted);
+    font-size: .86rem;
+    text-align: center;
+}
+
+/* Form tambah / edit alamat */
+.form-alamat {
+    margin-top: 20px;
+    padding: 20px;
+    border: 1px solid var(--warna-garis);
+    border-radius: 16px;
+    background: var(--warna-latar);
+}
+
+/* Form alamat › judul */
+.form-alamat h4 {
+    margin: 0 0 14px;
+    font-size: 1rem;
+}
+
+/* ===== BAR PERUBAHAN BELUM DISIMPAN ===== */
+
+/* Bar melayang di bawah layar */
+.bar-perubahan {
+    position: fixed;
+    left: 50%;
+    bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+    z-index: 150;
+    width: min(92vw, 720px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 12px 16px 12px 20px;
+    border-radius: 16px;
+    background: var(--warna-teks);
+    color: #fff;
+    box-shadow: 0 18px 50px rgba(25, 49, 61, .35);
+    transform: translateX(-50%);
+}
+
+/* Bar › teks */
+.bar-perubahan p {
+    margin: 0;
+    font-size: .88rem;
+    font-weight: 700;
+}
+
+/* Bar › kelompok tombol */
+.bar-aksi {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Bar › tombol reset */
+.bar-reset {
+    min-height: 40px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--warna-primer);
+    font-size: .84rem;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+/* Bar › tombol reset › hover */
+.bar-reset:hover {
+    background: rgba(255, 255, 255, .1);
+}
+
+/* Bar bergoyang saat pengguna mencoba pindah tab sebelum menyimpan */
+.bar-perubahan.is-goyang {
+    animation: bar-goyang .45s ease;
+}
+
+@keyframes bar-goyang {
+    0%, 100% { transform: translateX(-50%); }
+    20% { transform: translateX(calc(-50% - 8px)); }
+    40% { transform: translateX(calc(-50% + 8px)); }
+    60% { transform: translateX(calc(-50% - 5px)); }
+    80% { transform: translateX(calc(-50% + 5px)); }
+}
+
+/* ===== EDITOR FOTO ===== */
+
+/* Latar gelap editor */
+.editor-foto {
+    position: fixed;
+    inset: 0;
+    z-index: 300;
+    display: grid;
+    place-items: center;
+    padding: 16px;
+    background: rgba(25, 49, 61, .58);
+    overflow-y: auto;
+}
+
+/* Kartu editor */
+.editor-foto-kartu {
+    width: min(100%, 720px);
+    padding: 22px;
+    border-radius: 24px;
+    background: var(--warna-putih);
+    box-shadow: 0 30px 80px rgba(25, 49, 61, .35);
+}
+
+/* Kepala editor: judul + tombol tutup */
+.editor-foto-kepala {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+/* Kepala editor › judul */
+.editor-foto-kepala h3 {
+    margin: 4px 0 0;
+    font-family: var(--font-heading);
+    font-size: 1.4rem;
+}
+
+/* Tombol tutup editor */
+.editor-tutup {
+    flex: none;
+    width: 40px;
+    height: 40px;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--warna-muted);
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+/* Tombol tutup editor › hover */
+.editor-tutup:hover {
+    background: var(--warna-biru-muda);
+}
+
+/* Isi editor: panggung + kontrol */
+.editor-foto-isi {
+    display: grid;
+    grid-template-columns: minmax(240px, 340px) 1fr;
+    gap: 22px;
+    align-items: start;
+    margin-top: 18px;
+}
+
+/* Panggung: area foto yang bisa digeser */
+.editor-panggung {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 20px;
+    overflow: hidden;
+    background: var(--warna-biru-muda);
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+}
+
+/* Panggung › saat digeser */
+.editor-panggung:active {
+    cursor: grabbing;
+}
+
+/* Panggung › foto */
+.editor-panggung img {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    max-width: none;
+    pointer-events: none;
+    user-select: none;
+}
+
+/* Panggung › lingkaran panduan: gelap di luar, terang di dalam */
+.editor-panggung::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, .95);
+    box-shadow: 0 0 0 999px rgba(25, 49, 61, .38);
+    pointer-events: none;
+}
+
+/* Kontrol editor */
+.editor-kontrol {
+    min-width: 0;
+}
+
+/* Kontrol editor › nilai zoom */
+.editor-kontrol label span {
+    margin-left: 6px;
+    color: var(--warna-biru-dalam);
+}
+
+/* Kontrol editor › slider zoom */
+.editor-kontrol input[type="range"] {
+    width: 100%;
+    accent-color: var(--warna-aksen);
+}
+
+/* ===== TOAST ===== */
+
+/* Pemberitahuan singkat */
+.toast-profil {
+    position: fixed;
+    left: 50%;
+    top: calc(88px + env(safe-area-inset-top, 0px));
+    z-index: 400;
+    max-width: min(92vw, 420px);
+    padding: 12px 18px;
+    border: 1px solid var(--warna-garis);
+    border-radius: 14px;
+    background: var(--warna-putih);
+    box-shadow: var(--bayangan-card);
+    color: var(--warna-teks);
+    font-size: .86rem;
+    font-weight: 700;
+    transform: translateX(-50%);
+}
+
+/* Toast › pesan kegagalan */
+.toast-profil.is-galat {
+    border-color: #d14b55;
+    color: #b4232f;
+}
+
+/* ===== RESPONSIVE ===== */
+
+@media (max-width: 720px) {
+    /* Kartu lebih rapat */
+    .profil-kartu {
+        padding: 20px;
+    }
+
+    /* Foto: susun ke bawah */
+    .profil-foto {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .profil-foto-aksi {
+        width: 100%;
+    }
+
+    /* Form alamat: satu kolom */
+    .form-baris {
+        grid-template-columns: 1fr;
+    }
+
+    /* Bar perubahan: teks di atas, tombol di bawah */
+    .bar-perubahan {
+        flex-direction: column;
+        align-items: stretch;
+        text-align: center;
+    }
+
+    .bar-aksi {
+        justify-content: center;
+    }
+
+    /* Editor foto: satu kolom */
+    .editor-foto-isi {
+        grid-template-columns: 1fr;
+    }
+
+    .editor-panggung {
+        max-width: 340px;
+        margin-inline: auto;
+    }
+}
+
+/* Kurangi gerak untuk pengguna yang memintanya */
+@media (prefers-reduced-motion: reduce) {
+    .bar-perubahan.is-goyang {
+        animation: none;
+    }
+}
+
+
+/* ===== PROFILE PAGE SPACING POLISH ===== */
+.profil-halaman { padding-top: 28px; }
+.profil-halaman > .container { width: min(100% - 32px, 900px) !important; }
+.profil-halaman .section-heading { margin-bottom: 20px; }
+.profil-kartu { position: relative; isolation: isolate; }
+.editor-rotasi {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 12px 0 16px;
+}
+.editor-rotasi button {
+    min-height: 38px;
+    padding: 0 13px;
+    border: 1px solid var(--warna-garis);
+    border-radius: 999px;
+    background: #fff;
+    color: var(--warna-biru-dalam);
+    font-size: .8rem;
+    font-weight: 800;
+    cursor: pointer;
+}
+.editor-rotasi button:hover { border-color: var(--warna-emas); color: #9b7a37; }

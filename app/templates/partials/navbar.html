@@ -1,0 +1,70 @@
+<header class="site-header">
+    <nav class="navbar container" aria-label="Navigasi utama">
+        <!-- ===== BRAND / LOGO ===== -->
+        <a class="brand" href="{{ url_for('main.beranda') }}" aria-label="Albis Antique - Beranda">
+            <span class="brand-crest" aria-hidden="true">
+                <img
+                    src="{{ url_for('static', filename='images/logo-snowflake-sm.png') }}"
+                    alt=""
+                    width="22"
+                    height="24"
+                >
+            </span>
+            <span class="brand-copy">
+                <strong>Albis Antique</strong>
+                <small>Maison of Timeless Pieces</small>
+            </span>
+        </a>
+
+        <!-- ===== MENU DESKTOP / MOBILE ===== -->
+        <div class="nav-links" id="navLinks">
+            <a href="{{ url_for('main.beranda') }}" data-i18n="nav_home">Beranda</a>
+            <a href="{{ url_for('main.katalog') }}" data-i18n="nav_shop">Katalog</a>
+            <a href="{{ url_for('main.beranda') }}#categories" data-i18n="nav_categories">Kategori</a>
+            <a href="{{ url_for('main.beranda') }}#about" data-i18n="nav_about">Tentang</a>
+        </div>
+
+        <!-- ===== AKSI NAVIGASI ===== -->
+        <div class="nav-actions">
+            <button
+                class="icon-button language-toggle"
+                id="languageToggle"
+                type="button"
+                aria-label="Ganti bahasa"
+            >EN</button>
+            <a
+                class="icon-button"
+                href="{{ url_for('customer.keranjang') }}"
+                aria-label="Keranjang"
+            >
+                <span aria-hidden="true">🛍</span>
+                <span class="cart-badge" id="cartBadge">0</span>
+            </a>
+            {% if current_user.is_authenticated %}
+                {% if current_user.role == 'admin' %}
+                <a class="icon-button nav-account-icon" href="{{ url_for('admin.dashboard') }}" aria-label="Buka panel admin" title="Panel Admin">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/><path d="M17 5.5h3m-1.5-1.5v3"/></svg>
+                </a>
+                {% else %}
+                <a class="icon-button nav-account-icon" href="{{ url_for('customer.dashboard') }}" aria-label="Akun saya" title="Akun Saya">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>
+                </a>
+                {% endif %}
+                <a class="icon-button nav-logout-icon" href="{{ url_for('auth.logout') }}" aria-label="Keluar dari akun" title="Keluar">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 4H5.5A1.5 1.5 0 0 0 4 5.5v13A1.5 1.5 0 0 0 5.5 20H10"/><path d="M14 16l4-4-4-4"/><path d="M18 12H9"/></svg>
+                </a>
+            {% else %}
+                <a class="icon-button nav-login-icon" href="{{ url_for('auth.login') }}" aria-label="Masuk ke akun" title="Masuk">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h4.5A1.5 1.5 0 0 1 20 5.5v13a1.5 1.5 0 0 1-1.5 1.5H14"/><path d="M10 16l4-4-4-4"/><path d="M14 12H4"/></svg>
+                </a>
+            {% endif %}
+            <button
+                class="mobile-menu-button"
+                id="mobileMenuButton"
+                type="button"
+                aria-label="Buka menu"
+                aria-expanded="false"
+            >☰</button>
+        </div>
+    </nav>
+</header>

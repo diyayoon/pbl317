@@ -1,0 +1,18 @@
+# Environment Python lokal
+.venv/
+.venv-*/
+venv/
+
+# Cache dan hasil tes
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+*.log
+
+# Secret dan file lokal
+.env
+instance/
+uploads/*
+!uploads/.gitkeep
