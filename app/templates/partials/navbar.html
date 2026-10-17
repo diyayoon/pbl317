@@ -32,27 +32,40 @@
                 type="button"
                 aria-label="Ganti bahasa"
             >EN</button>
-            <a
-                class="icon-button"
-                href="{{ url_for('customer.keranjang') }}"
-                aria-label="Keranjang"
-            >
+            {% if not current_user.is_authenticated or current_user.role == 'customer' %}
+            <a class="icon-button" href="{{ url_for('customer.keranjang') }}" data-auth-action="cart" aria-label="Keranjang" title="Keranjang belanja">
                 <span aria-hidden="true">🛍</span>
-                <span class="cart-badge" id="cartBadge">0</span>
+                <span class="cart-badge" id="cartBadge" hidden>0</span>
             </a>
+            {% endif %}
             {% if current_user.is_authenticated %}
                 {% if current_user.role == 'admin' %}
                 <a class="icon-button nav-account-icon" href="{{ url_for('admin.dashboard') }}" aria-label="Buka panel admin" title="Panel Admin">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/><path d="M17 5.5h3m-1.5-1.5v3"/></svg>
                 </a>
                 {% else %}
-                <a class="icon-button nav-account-icon" href="{{ url_for('customer.dashboard') }}" aria-label="Akun saya" title="Akun Saya">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>
+                <a
+                    class="icon-button nav-account-icon nav-profile-link"
+                    href="{{ url_for('customer.dashboard') }}"
+                    data-nav-profile
+                    aria-label="Akun {{ current_user.nama }}"
+                    title="Akun {{ current_user.nama }}"
+                >
+                    <span class="nav-profile-avatar" aria-hidden="true">
+                        <img id="navProfileImage" alt="" hidden>
+                        <span class="nav-profile-fallback" id="navProfileFallback">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>
+                        </span>
+                    </span>
+                    <span class="nav-profile-name" id="navProfileName">{{ current_user.nama }}</span>
                 </a>
                 {% endif %}
-                <a class="icon-button nav-logout-icon" href="{{ url_for('auth.logout') }}" aria-label="Keluar dari akun" title="Keluar">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 4H5.5A1.5 1.5 0 0 0 4 5.5v13A1.5 1.5 0 0 0 5.5 20H10"/><path d="M14 16l4-4-4-4"/><path d="M18 12H9"/></svg>
-                </a>
+                <form class="nav-logout-form" action="{{ url_for('auth.logout') }}" method="post">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="icon-button nav-logout-icon" type="submit" aria-label="Keluar dari akun" title="Keluar">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 4H5.5A1.5 1.5 0 0 0 4 5.5v13A1.5 1.5 0 0 0 5.5 20H10"/><path d="M14 16l4-4-4-4"/><path d="M18 12H9"/></svg>
+                    </button>
+                </form>
             {% else %}
                 <a class="icon-button nav-login-icon" href="{{ url_for('auth.login') }}" aria-label="Masuk ke akun" title="Masuk">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h4.5A1.5 1.5 0 0 1 20 5.5v13a1.5 1.5 0 0 1-1.5 1.5H14"/><path d="M10 16l4-4-4-4"/><path d="M14 12H4"/></svg>

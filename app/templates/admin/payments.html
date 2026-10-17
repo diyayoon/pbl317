@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block title %}Pembayaran — Albis Antique{% endblock %}
+
+{% block styles %}
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/pages/dashboard.css') }}"
+>
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-shell admin-workspace-shell">
+    <button
+        class="workspace-mobile-toggle"
+        type="button"
+        aria-controls="adminWorkspaceSidebar"
+        aria-expanded="false"
+    >
+        ☰ <span>Menu admin</span>
+    </button>
+
+    <div class="dashboard-layout">
+        {% include 'partials/admin_sidebar.html' %}
+
+        <div class="dashboard-content" data-admin-view="payments">
+            <header class="admin-page-heading">
+                <div>
+                    <span class="eyebrow">PAYMENT REVIEW</span>
+                    <h1>Pembayaran</h1>
+                    <p>{{ 'Periksa bukti pembayaran yang diunggah pelanggan.' if database_enabled else 'Tinjau bukti pembayaran yang dicatat pada demo browser.' }}</p>
+                </div>
+                <span class="admin-demo-badge">{{ 'PostgreSQL' if database_enabled else 'Mode demo' }}</span>
+            </header>
+
+            <div class="admin-prototype-banner">
+                {% if database_enabled %}
+                <strong>Workflow pembayaran aktif.</strong> Bukti disimpan di server, divalidasi di backend, dan keputusan admin memperbarui status pembayaran serta pesanan pada PostgreSQL.
+                {% else %}
+                <strong>Perhatian:</strong> mode demo hanya menyimpan nama file bukti, bukan file aslinya. Persetujuan hanya mengubah status demo browser.
+                {% endif %}
+            </div>
+
+            <section class="panel">
+                <div class="admin-panel-heading">
+                    <div>
+                        <h2>Menunggu pemeriksaan</h2>
+                        <p>{{ 'Daftar pembayaran dan bukti file dari database.' if database_enabled else 'Pesanan yang mempunyai catatan bukti pembayaran demo.' }}</p>
+                    </div>
+                </div>
+
+                <div class="table-wrap">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">ID Pesanan</th>
+                                <th scope="col">Pelanggan</th>
+                                <th scope="col">Nama file</th>
+                                <th scope="col">Total</th>
+                                <th scope="col">Status</th>
+                                <th scope="col">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminPaymentsBody">
+                            <tr>
+                                <td colspan="6" class="table-empty">Memuat pembayaran demo...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/admin-demo.js') }}" defer></script>
+{% endblock %}

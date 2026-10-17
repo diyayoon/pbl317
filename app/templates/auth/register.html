@@ -1,61 +1,56 @@
 {% extends 'base.html' %}
 
 {% block title %}Daftar — Albis Antique{% endblock %}
-
-{% block body_class %}halaman-penuh{% endblock %}
+{% block body_class %}halaman-penuh auth-page{% endblock %}
 
 {% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/auth.css') }}">
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/pages/auth.css') }}"
+>
 {% endblock %}
 
 {% block content %}
-{# Nilai lama dan pesan error dikirim dari route (nilai = isian pengguna, galat = pesan error per kolom). #}
 {% set nilai = nilai or {} %}
 {% set galat = galat or {} %}
 
-<!-- ===== LAYOUT REGISTRASI ===== -->
 <section class="auth-shell">
-    <!-- ===== VISUAL / BRANDING ===== -->
-    <div class="auth-visual">
-        <div class="auth-message">
-            <span class="eyebrow">New Collector</span>
-            <h1>Mulai ruang koleksi pribadi Anda.</h1>
-            <p>Simpan produk favorit, kelola alamat, dan pantau pesanan dari satu dashboard yang konsisten.</p>
-        </div>
-    </div>
-
-    <!-- ===== FORM REGISTRASI ===== -->
     <div class="auth-form-area auth-form-daftar">
         <div class="auth-card auth-card-daftar">
+            
+            <div class="auth-message auth-message-register">
+                <span class="eyebrow">New Collector</span>
+                <h1>Mulai ruang koleksi pribadi Anda.</h1>
+            </div>
+
+            <br class="auth-divider" aria-hidden="true">
             <h2 data-i18n="register_title">Buat akun baru</h2>
-            <p data-i18n="register_desc">Daftar untuk menyimpan koleksi favorit dan melakukan checkout.</p>
+            <p data-i18n="register_desc">Daftar untuk mengelola profil dan melanjutkan checkout.</p>
 
             <form id="formRegister" method="post" novalidate>
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-                <!-- ===== BARIS 1: USERNAME + PASSWORD ===== -->
                 <div class="form-baris-dua">
-                    <!-- Username -->
                     <div class="form-field">
-                        <label for="username" data-i18n="username">Username</label>
+                        <label for="email" data-i18n="email">Email</label>
                         <input
-                            class="form-control{% if galat.username %} is-invalid{% endif %}"
-                            id="username"
-                            name="username"
-                            type="text"
-                            value="{{ nilai.username or '' }}"
-                            placeholder="Contoh: albis_collector"
-                            data-i18n-placeholder="username_placeholder"
-                            autocomplete="username"
-                            maxlength="30"
-                            aria-describedby="usernameError"
-                            {% if galat.username %}aria-invalid="true"{% endif %}
+                            class="form-control{% if galat.email %} is-invalid{% endif %}"
+                            id="email"
+                            name="email"
+                            type="email"
+                            value="{{ nilai.email or '' }}"
+                            autocomplete="email"
+                            maxlength="254"
+                            placeholder="nama@email.com"
+                            aria-describedby="emailError"
+                            {% if galat.email %}aria-invalid="true"{% endif %}
                             required
                         >
-                        <p class="field-error" id="usernameError" role="alert" {% if not galat.username %}hidden{% endif %}>{{ galat.username or '' }}</p>
+                        <p class="field-error" id="emailError" role="alert" {% if not galat.email %}hidden{% endif %}>
+                            {{ galat.email or '' }}
+                        </p>
                     </div>
 
-                    <!-- Password (tidak pernah diisi ulang dari server) -->
                     <div class="form-field">
                         <div class="label-baris">
                             <label for="password" data-i18n="password">Kata sandi</label>
@@ -67,15 +62,14 @@
                                 id="password"
                                 name="password"
                                 type="password"
-                                placeholder="Minimal 16 karakter"
-                                data-i18n-placeholder="password_placeholder"
                                 autocomplete="new-password"
                                 maxlength="128"
+                                placeholder="Minimal 16 karakter"
+                                data-i18n-placeholder="password_placeholder"
                                 aria-describedby="passwordError"
                                 {% if galat.password %}aria-invalid="true"{% endif %}
                                 required
                             >
-                            <!-- Tombol mata: TAHAN untuk melihat, lepas untuk menyembunyikan -->
                             <button
                                 class="password-toggle"
                                 id="togglePassword"
@@ -85,27 +79,48 @@
                                 aria-label="Tahan untuk melihat kata sandi"
                                 title="Tahan untuk melihat kata sandi"
                             >
-                                <svg class="ikon-mata-coret" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <svg
+                                    class="ikon-mata-coret"
+                                    viewBox="0 0 24 24"
+                                    width="20"
+                                    height="20"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    aria-hidden="true"
+                                >
                                     <path d="M17.94 17.94A10.9 10.9 0 0 1 12 19c-6.4 0-10-7-10-7a18.5 18.5 0 0 1 4.06-5.06M9.9 4.24A10.1 10.1 0 0 1 12 5c6.4 0 10 7 10 7a18.6 18.6 0 0 1-2.16 3.19M14.12 14.12a3 3 0 1 1-4.24-4.24"/>
                                     <path d="M1 1l22 22"/>
                                 </svg>
-                                <svg class="ikon-mata" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <svg
+                                    class="ikon-mata"
+                                    viewBox="0 0 24 24"
+                                    width="20"
+                                    height="20"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    aria-hidden="true"
+                                >
                                     <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/>
                                     <circle cx="12" cy="12" r="3"/>
                                 </svg>
                             </button>
-                            <!-- Garis kemajuan panjang password (4 segmen), menempel di dasar kolom -->
                             <div class="strength-meter" id="strengthMeter" data-level="0" aria-hidden="true">
                                 <span></span><span></span><span></span><span></span>
                             </div>
                         </div>
-                        <p class="field-error" id="passwordError" role="alert" {% if not galat.password %}hidden{% endif %}>{{ galat.password or '' }}</p>
+                        <p class="field-error" id="passwordError" role="alert" {% if not galat.password %}hidden{% endif %}>
+                            {{ galat.password or '' }}
+                        </p>
                     </div>
                 </div>
 
-                <!-- ===== BARIS 2: NAMA + TANGGAL LAHIR ===== -->
                 <div class="form-baris-dua">
-                    <!-- Nama -->
                     <div class="form-field">
                         <label for="nama" data-i18n="name">Nama lengkap</label>
                         <input
@@ -114,39 +129,42 @@
                             name="nama"
                             type="text"
                             value="{{ nilai.nama or '' }}"
+                            autocomplete="name"
+                            minlength="3"
+                            maxlength="100"
                             placeholder="Masukkan nama lengkap"
                             data-i18n-placeholder="name_placeholder"
-                            autocomplete="name"
-                            maxlength="100"
                             aria-describedby="namaError"
                             {% if galat.nama %}aria-invalid="true"{% endif %}
                             required
                         >
-                        <p class="field-error" id="namaError" role="alert" {% if not galat.nama %}hidden{% endif %}>{{ galat.nama or '' }}</p>
+                        <p class="field-error" id="namaError" role="alert" {% if not galat.nama %}hidden{% endif %}>
+                            {{ galat.nama or '' }}
+                        </p>
                     </div>
 
-                    <!-- Tanggal lahir -->
                     <div class="form-field">
-                        <label for="tanggalLahir" data-i18n="birthdate">Tanggal lahir</label>
+                        <label for="konfirmasiPassword">Konfirmasi kata sandi</label>
                         <input
-                            class="form-control{% if galat.tanggal_lahir %} is-invalid{% endif %}"
-                            id="tanggalLahir"
-                            name="tanggal_lahir"
-                            type="date"
-                            value="{{ nilai.tanggal_lahir or '' }}"
-                            autocomplete="bday"
-                            aria-describedby="tanggalLahirError"
-                            {% if galat.tanggal_lahir %}aria-invalid="true"{% endif %}
+                            class="form-control{% if galat.konfirmasi_password %} is-invalid{% endif %}"
+                            id="konfirmasiPassword"
+                            name="konfirmasi_password"
+                            type="password"
+                            autocomplete="new-password"
+                            maxlength="128"
+                            aria-describedby="konfirmasiPasswordError"
+                            {% if galat.konfirmasi_password %}aria-invalid="true"{% endif %}
                             required
                         >
-                        <p class="field-error" id="tanggalLahirError" role="alert" {% if not galat.tanggal_lahir %}hidden{% endif %}>{{ galat.tanggal_lahir or '' }}</p>
+                        <p class="field-error" id="konfirmasiPasswordError" role="alert" {% if not galat.konfirmasi_password %}hidden{% endif %}>
+                            {{ galat.konfirmasi_password or '' }}
+                        </p>
                     </div>
                 </div>
 
-                <!-- ===== ALAMAT ===== -->
                 <div class="form-field">
                     <div class="label-baris">
-                        <label for="alamat" data-i18n="address">Alamat</label>
+                        <label for="alamat" data-i18n="address">Alamat utama</label>
                         <span class="char-count" id="alamatCount" aria-hidden="true">0 / 255</span>
                     </div>
                     <textarea
@@ -157,26 +175,27 @@
                         placeholder="Jalan, nomor, kelurahan, kota, kode pos"
                         data-i18n-placeholder="address_placeholder"
                         autocomplete="street-address"
+                        minlength="10"
                         maxlength="255"
                         aria-describedby="alamatError"
                         {% if galat.alamat %}aria-invalid="true"{% endif %}
                         required
                     >{{ nilai.alamat or '' }}</textarea>
-                    <p class="field-error" id="alamatError" role="alert" {% if not galat.alamat %}hidden{% endif %}>{{ galat.alamat or '' }}</p>
+                    <p class="field-error" id="alamatError" role="alert" {% if not galat.alamat %}hidden{% endif %}>
+                        {{ galat.alamat or '' }}
+                    </p>
                 </div>
 
-                <!-- ===== NOMOR TELEPON ===== -->
                 <div class="form-field">
                     <div class="label-baris">
                         <label for="telepon" data-i18n="phone">Nomor telepon</label>
-                        <span class="field-hint" id="teleponHint" data-i18n="phone_hint">Awalan 0 atau +62 otomatis jadi 62</span>
                     </div>
                     <input
                         class="form-control{% if galat.telepon %} is-invalid{% endif %}"
                         id="telepon"
                         name="telepon"
                         type="tel"
-                        inputmode="numeric"
+                        inputmode="tel"
                         value="{{ nilai.telepon or '' }}"
                         placeholder="Contoh: 628123456789"
                         data-i18n-placeholder="phone_placeholder"
@@ -186,16 +205,21 @@
                         {% if galat.telepon %}aria-invalid="true"{% endif %}
                         required
                     >
-                    <p class="field-error" id="teleponError" role="alert" {% if not galat.telepon %}hidden{% endif %}>{{ galat.telepon or '' }}</p>
+                    <p class="field-error" id="teleponError" role="alert" {% if not galat.telepon %}hidden{% endif %}>
+                        {{ galat.telepon or '' }}
+                    </p>
                 </div>
 
                 <button
                     class="button button-primary button-full"
                     type="submit"
                     data-i18n="register_button"
-                >Daftar</button>
+                >
+                    Daftar
+                </button>
             </form>
 
+            <br class="auth-divider" aria-hidden="true">
             <p class="auth-note">
                 <span data-i18n="have_account">Sudah punya akun?</span>
                 <a href="{{ url_for('auth.login') }}" data-i18n="login_link">Masuk</a>

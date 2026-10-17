@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block title %}Pesanan — Albis Antique{% endblock %}
+
+{% block styles %}
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/pages/dashboard.css') }}"
+>
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-shell admin-workspace-shell">
+    <button
+        class="workspace-mobile-toggle"
+        type="button"
+        aria-controls="adminWorkspaceSidebar"
+        aria-expanded="false"
+    >
+        ☰ <span>Menu admin</span>
+    </button>
+
+    <div class="dashboard-layout">
+        {% include 'partials/admin_sidebar.html' %}
+
+        <div class="dashboard-content" data-admin-view="orders">
+            <header class="admin-page-heading">
+                <div>
+                    <span class="eyebrow">ORDER MANAGEMENT</span>
+                    <h1>Pesanan</h1>
+                    <p>{{ 'Kelola status pesanan nyata yang tersimpan di PostgreSQL.' if database_enabled else 'Tinjau pesanan demo yang dibuat dari browser ini.' }}</p>
+                </div>
+                <span class="admin-demo-badge">{{ 'PostgreSQL' if database_enabled else 'Mode demo' }}</span>
+            </header>
+
+            <div class="admin-prototype-banner">
+                {% if database_enabled %}
+                <strong>Data pesanan tersimpan di PostgreSQL.</strong> Perubahan status dikirim ke backend dan dicatat di database.
+                {% else %}
+                <strong>Transaksi belum persisten.</strong> Daftar demo mengumpulkan pesanan prototipe dari localStorage browser ini, bukan PostgreSQL.
+                {% endif %}
+            </div>
+
+            <section class="panel">
+                <div class="admin-panel-heading">
+                    <div>
+                        <h2>Daftar pesanan</h2>
+                        <p>{{ 'Perbarui status pesanan; status selesai membutuhkan pembayaran disetujui.' if database_enabled else 'Gunakan daftar ini untuk memeriksa status demo.' }}</p>
+                    </div>
+                    <div class="admin-table-search">
+                        <label class="visually-hidden" for="adminOrderSearch">Cari pesanan</label>
+                        <input
+                            class="form-control"
+                            id="adminOrderSearch"
+                            type="search"
+                            placeholder="Cari ID / pelanggan..."
+                        >
+                    </div>
+                </div>
+
+                <div class="table-wrap">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">ID</th>
+                                <th scope="col">Pelanggan</th>
+                                <th scope="col">Item</th>
+                                <th scope="col">Total</th>
+                                <th scope="col">Status</th>
+                                <th scope="col">Bukti</th>
+                                {% if database_enabled %}<th scope="col">Ubah status</th>{% endif %}
+                            </tr>
+                        </thead>
+                        <tbody id="adminOrdersBody">
+                            <tr>
+                                <td colspan="{{ 7 if database_enabled else 6 }}" class="table-empty">{{ 'Memuat pesanan dari database...' if database_enabled else 'Memuat pesanan demo...' }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/admin-demo.js') }}" defer></script>
+{% endblock %}

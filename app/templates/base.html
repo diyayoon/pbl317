@@ -1,7 +1,6 @@
 <!doctype html>
 <html lang="id" data-theme="albis-frost">
 <head>
-    <!-- ===== META DASAR ===== -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta
@@ -9,9 +8,9 @@
         content="Albis Antique — e-commerce barang antik bernuansa frost-blue dan aksen monarki yang elegan."
     >
     <meta name="theme-color" content="#F7FCFE">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{% block title %}Albis Antique{% endblock %}</title>
 
-    <!-- ===== FONT ===== -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -19,73 +18,108 @@
         rel="stylesheet"
     >
 
-    <!-- ===== CSS GLOBAL ===== -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
-
-    <!-- ===== CSS KHUSUS HALAMAN ===== -->
     {% block styles %}{% endblock %}
-
-    <!-- ===== EFEK VISUAL + RESPONSIVE (harus paling akhir agar menang atas CSS halaman) ===== -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/efek.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}">
 </head>
-<body class="{% block body_class %}{% endblock %} {% if request.endpoint in ['customer.dashboard', 'customer.pesanan', 'customer.wishlist', 'customer.keranjang', 'customer.profil', 'customer.checkout'] %}customer-workspace-page{% endif %} {% if request.endpoint and request.endpoint.startswith('admin.') %}admin-workspace-page{% endif %}" data-authenticated="{{ 'true' if current_user.is_authenticated else 'false' }}" data-login-url="{{ url_for('auth.login') }}">
-    <!-- ===== EFEK SNOWFALL GLOBAL ===== -->
+{% set customer_workspace_endpoints = [
+    'customer.dashboard', 'customer.pesanan', 'customer.keranjang',
+    'customer.profil', 'customer.checkout', 'customer.keamanan'
+] %}
+{% set admin_workspace_endpoints = [
+    'admin.dashboard', 'admin.produk', 'admin.pengguna',
+    'admin.pesanan', 'admin.pembayaran', 'admin.laporan'
+] %}
+{% set is_customer_workspace = request.endpoint in customer_workspace_endpoints %}
+{% set is_admin_workspace = request.endpoint in admin_workspace_endpoints %}
+{% set workspace_body_classes = (
+    ('customer-workspace-page ' if is_customer_workspace else '')
+    ~ ('admin-workspace-page' if is_admin_workspace else '')
+) %}
+<body
+    class="{% block body_class %}{% endblock %} {{ workspace_body_classes }}"
+    data-authenticated="{{ 'true' if current_user.is_authenticated else 'false' }}"
+    data-database-enabled="{{ 'true' if database_enabled else 'false' }}"
+    data-user-avatar="{{ current_user.avatar_data if current_user.is_authenticated and current_user.avatar_data else '' }}"
+    data-user-role="{{ current_user.role if current_user.is_authenticated else '' }}"
+    data-user-id="{{ current_user.get_id() if current_user.is_authenticated else '' }}"
+    data-user-name="{{ current_user.nama if current_user.is_authenticated else '' }}"
+    data-user-email="{{ current_user.email if current_user.is_authenticated else '' }}"
+    data-user-phone="{{ current_user.telepon if current_user.is_authenticated else '' }}"
+    data-user-address="{{ current_user.alamat if current_user.is_authenticated and current_user.alamat else '' }}"
+    data-login-url="{{ url_for('auth.login') }}"
+>
     <div id="snowfall" class="snowfall" aria-hidden="true"></div>
 
-    <!-- ===== NAVIGASI UTAMA: PUBLIK SAJA; WORKSPACE MEMAKAI SIDEBAR ===== -->
-    {% if request.endpoint not in ['customer.dashboard', 'customer.pesanan', 'customer.wishlist', 'customer.keranjang', 'customer.profil', 'customer.checkout', 'admin.dashboard', 'admin.produk'] %}
+    {% if not is_customer_workspace and not is_admin_workspace %}
         {% include 'partials/navbar.html' %}
     {% endif %}
 
-    <!-- ===== KONTEN UTAMA ===== -->
     <main id="konten-utama">
         {% include 'partials/flash.html' %}
-        {% if request.endpoint in ['customer.dashboard', 'customer.pesanan', 'customer.wishlist', 'customer.keranjang', 'customer.profil', 'customer.checkout'] %}
-        <section class="customer-workspace-shell">
-            <button class="workspace-mobile-toggle" type="button" aria-controls="customerWorkspaceSidebar" aria-expanded="false">☰ <span>Menu akun</span></button>
-            <div class="customer-workspace-layout">
-                {% include 'partials/customer_sidebar.html' %}
-                <div class="customer-workspace-content">
+
+        {% if is_customer_workspace %}
+            <section class="customer-workspace-shell">
+                <button
+                    class="workspace-mobile-toggle"
+                    type="button"
+                    aria-controls="customerWorkspaceSidebar"
+                    aria-expanded="false"
+                >
+                    ☰ <span>Menu akun</span>
+                </button>
+                <div class="customer-workspace-layout">
+                    {% include 'partials/customer_sidebar.html' %}
+                    <div class="customer-workspace-content">
         {% endif %}
+
         {% block content %}{% endblock %}
-        {% if request.endpoint in ['customer.dashboard', 'customer.pesanan', 'customer.wishlist', 'customer.keranjang', 'customer.profil', 'customer.checkout'] %}
+
+        {% if is_customer_workspace %}
+                    </div>
                 </div>
-            </div>
-        </section>
+            </section>
         {% endif %}
     </main>
 
-    <!-- ===== FOOTER PUBLIK: WORKSPACE AKUN/ADMIN TIDAK MEMAKAI FOOTER PUBLIK ===== -->
-    {% if request.endpoint not in ['customer.dashboard', 'customer.pesanan', 'customer.wishlist', 'customer.keranjang', 'customer.profil', 'customer.checkout', 'admin.dashboard', 'admin.produk'] %}
+    {% if not is_customer_workspace and not is_admin_workspace %}
         {% include 'partials/footer.html' %}
     {% endif %}
 
-    <!-- ===== JAVASCRIPT GLOBAL ===== -->
     <script src="{{ url_for('static', filename='js/language.js') }}" defer></script>
     <script src="{{ url_for('static', filename='js/snowfall.js') }}" defer></script>
     <script src="{{ url_for('static', filename='js/catalog.js') }}" defer></script>
     <script src="{{ url_for('static', filename='js/efek.js') }}" defer></script>
     <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
-
-    <!-- ===== JAVASCRIPT KHUSUS HALAMAN ===== -->
     {% block scripts %}{% endblock %}
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('.workspace-mobile-toggle').forEach((button) => {
-    const sidebarId = button.getAttribute('aria-controls');
-    const sidebar = sidebarId ? document.getElementById(sidebarId) : null;
-    if (!sidebar) return;
-    const close = () => { sidebar.classList.remove('is-open'); button.setAttribute('aria-expanded', 'false'); };
-    button.addEventListener('click', () => {
-      const open = sidebar.classList.toggle('is-open');
-      button.setAttribute('aria-expanded', String(open));
+
+    <script>
+    document.addEventListener("DOMContentLoaded", () => {
+        document.querySelectorAll(".workspace-mobile-toggle").forEach(button => {
+            const sidebarId = button.getAttribute("aria-controls");
+            const sidebar = sidebarId ? document.getElementById(sidebarId) : null;
+            if (!sidebar) return;
+
+            const closeSidebar = () => {
+                sidebar.classList.remove("is-open");
+                button.setAttribute("aria-expanded", "false");
+            };
+
+            button.addEventListener("click", () => {
+                const isOpen = sidebar.classList.toggle("is-open");
+                button.setAttribute("aria-expanded", String(isOpen));
+            });
+
+            sidebar.querySelectorAll("a").forEach(link => {
+                link.addEventListener("click", closeSidebar);
+            });
+            document.addEventListener("keydown", event => {
+                if (event.key === "Escape") closeSidebar();
+            });
+        });
     });
-    sidebar.querySelectorAll('a').forEach(link => link.addEventListener('click', close));
-    document.addEventListener('keydown', event => { if (event.key === 'Escape') close(); });
-  });
-});
-</script>
+    </script>
 </body>
 </html>

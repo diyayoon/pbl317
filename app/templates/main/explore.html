@@ -3,7 +3,7 @@
 {% block title %}Katalog — Albis Antique{% endblock %}
 
 {% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/catalog.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/catalog.css') }}?v=20261015-price-range">
 {% endblock %}
 
 {% block content %}
@@ -64,6 +64,39 @@
                         <option value="Fair">Fair</option>
                     </select>
                 </div>
+                <div class="form-field">
+                    <div class="price-filter-title">Rentang harga (Rp)</div>
+                    <div class="price-filter-grid">
+                        <div class="price-filter-field">
+                            <label class="visually-hidden" for="catalogPriceMin">Harga minimum</label>
+                            <input
+                                class="form-control"
+                                id="catalogPriceMin"
+                                type="number"
+                                min="0"
+                                step="1000"
+                                inputmode="numeric"
+                                placeholder="Minimum"
+                            >
+                        </div>
+                        <span class="price-filter-separator" aria-hidden="true">–</span>
+                        <div class="price-filter-field">
+                            <label class="visually-hidden" for="catalogPriceMax">Harga maksimum</label>
+                            <input
+                                class="form-control"
+                                id="catalogPriceMax"
+                                type="number"
+                                min="0"
+                                step="1000"
+                                inputmode="numeric"
+                                placeholder="Maksimum"
+                            >
+                        </div>
+                    </div>
+                    <small class="field-hint">Isi minimum, maksimum, atau keduanya.</small>
+                    <small class="field-error" id="catalogPriceError" role="status" hidden>Harga minimum tidak boleh lebih tinggi daripada harga maksimum.</small>
+                </div>
+                <button class="button button-secondary button-small catalog-filter-reset" id="catalogFilterReset" type="button">Reset filter</button>
             </div>
         </aside>
 

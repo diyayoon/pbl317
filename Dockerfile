@@ -16,9 +16,9 @@ WORKDIR /app
 
 # ===== DEPENDENSI (LAYER DI-CACHE) =====
 # requirements.txt disalin lebih dulu agar layer ini tidak dibangun ulang saat hanya kode yang berubah.
-# gunicorn belum ada di requirements.txt, jadi dipasang terpisah.
+# Gunicorn tercatat di requirements.txt agar dependency aplikasi transparan.
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt "gunicorn>=23,<26"
+RUN pip install --no-cache-dir -r requirements.txt
 
 # ===== KODE APLIKASI =====
 # venv, .git, tests, dan .env dikecualikan lewat .dockerignore.

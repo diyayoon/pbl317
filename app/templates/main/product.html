@@ -1,98 +1,83 @@
 {% extends 'base.html' %}
-
-{% block title %}{{ produk.nama }} — Albis Antique{% endblock %}
-
-{% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/catalog.css') }}">
-{% endblock %}
-
+{% set item = produk if produk else {
+    'id': produk_id, 'nama': 'Memuat koleksi…', 'gambar': '', 'alt_gambar': 'Foto produk antik',
+    'rating': 0, 'ulasan': 0, 'harga': 0, 'deskripsi': '', 'era': '', 'asal': '',
+    'kondisi': '', 'material': '', 'autentikasi': '', 'stok': 0, 'kategori': '', 'sumber_gambar': ''
+} %}
+{% block title %}{{ item.nama }} — Albis Antique{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/catalog.css') }}">{% endblock %}
 {% block content %}
-<!-- ===== DETAIL PRODUK ===== -->
 <section class="section-shell">
-    <div class="container product-detail">
-        <!-- ===== GALERI PRODUK ===== -->
-        <div class="product-gallery">
-            <div class="product-main-image royal-frame">
-                <button class="product-image-zoom" type="button" aria-label="Perbesar foto produk" data-image-zoom>
-                    <img
-                        src="{{ produk.gambar }}"
-                        alt="{{ produk.alt_gambar }}"
-                        referrerpolicy="no-referrer"
-                    >
-                    <span class="zoom-hint" aria-hidden="true">⌕ Perbesar</span>
-                </button>
-            </div>
-
-        </div>
-
-        <!-- ===== INFORMASI PRODUK ===== -->
-        <div class="product-copy">
-            <span class="eyebrow" data-i18n="detail_eyebrow">Detail Koleksi</span>
-            <h1>{{ produk.nama }}</h1>
-            <div class="rating">★★★★★ <span class="muted">{{ produk.rating }} · {{ produk.ulasan }} ulasan</span></div>
-            <p class="detail-price">Rp{{ "{:,.0f}".format(produk.harga).replace(',', '.') }}</p>
-            <p>{{ produk.deskripsi }}</p>
-
-            <!-- ===== AKSI BELANJA ===== -->
-            <div class="detail-actions">
-                <div class="quantity-control" aria-label="Jumlah produk">
-                    <button type="button" aria-label="Kurangi jumlah">−</button>
-                    <strong>1</strong>
-                    <button type="button" aria-label="Tambah jumlah">＋</button>
+    <div class="container product-detail" id="productDetailRoot" data-product-id="{{ item.id }}">
+        <div class="product-detail-content" data-product-detail-content {% if not produk %}hidden{% endif %}>
+            <div class="product-gallery">
+                <div class="product-main-image royal-frame">
+                    <button class="product-image-zoom" type="button" aria-label="Perbesar foto produk" data-image-zoom>
+                        <img id="detailProductImage" src="{{ item.gambar }}" alt="{{ item.alt_gambar }}" referrerpolicy="no-referrer">
+                        <span class="zoom-hint" aria-hidden="true">⌕ Perbesar</span>
+                    </button>
                 </div>
-                <button
-                    class="button button-primary"
-                    type="button"
-                    data-add-cart="{{ produk.id }}"
-                    data-product-id="{{ produk.id }}"
-                    data-product-name="{{ produk.nama }}"
-                    data-product-price="{{ produk.harga }}"
-                    data-product-image="{{ produk.gambar }}"
-                    data-product-category="{{ produk.kategori }}"
-                    data-product-origin="{{ produk.asal }}"
-                    data-product-url="{{ url_for('main.detail_produk', produk_id=produk.id) }}"
-                    data-i18n="detail_add"
-                >Tambah ke Keranjang</button>
             </div>
-            <div class="detail-secondary-actions">
-                <button class="button button-gold" type="button" data-i18n="detail_buy">Beli Sekarang</button>
-                <button class="button button-secondary" type="button"
-                    data-auth-action="wishlist"
-                    data-product-id="{{ produk.id }}"
-                    data-product-name="{{ produk.nama }}"
-                    data-product-price="{{ produk.harga }}"
-                    data-product-image="{{ produk.gambar }}"
-                    data-product-category="{{ produk.kategori }}"
-                    data-product-origin="{{ produk.asal }}"
-                    data-product-url="{{ url_for('main.detail_produk', produk_id=produk.id) }}"
-                    data-i18n="detail_wishlist">Simpan ke Wishlist</button>
-            </div>
+            <div class="product-copy">
+                <span class="eyebrow" data-i18n="detail_eyebrow">Detail Koleksi</span>
+                <h1 id="detailProductName">{{ item.nama }}</h1>
+                <div class="rating" id="detailProductRatingLine">★★★★★ <span class="muted" id="detailProductRating">{{ item.rating }} · {{ item.ulasan }} ulasan</span></div>
+                <p class="detail-price" id="detailProductPrice">Rp{{ "{:,.0f}".format(item.harga).replace(',', '.') }}</p>
+                <p id="detailProductDescription">{{ item.deskripsi }}</p>
 
-            <!-- ===== SPESIFIKASI PRODUK ===== -->
-            <div class="spec-grid">
-                <div class="spec-card"><span data-i18n="spec_era">Era</span><strong>{{ produk.era }}</strong></div>
-                <div class="spec-card"><span data-i18n="spec_origin">Asal</span><strong>{{ produk.asal }}</strong></div>
-                <div class="spec-card"><span data-i18n="spec_condition">Kondisi</span><strong>{{ produk.kondisi }}</strong></div>
-                <div class="spec-card"><span data-i18n="spec_material">Material</span><strong>{{ produk.material }}</strong></div>
-                <div class="spec-card"><span data-i18n="spec_authenticity">Autentikasi</span><strong>{{ produk.autentikasi }}</strong></div>
-                <div class="spec-card"><span data-i18n="spec_stock">Stok</span><strong>{{ produk.stok }} item</strong></div>
+                {% if not current_user.is_authenticated or current_user.role == 'customer' %}
+                <div class="detail-actions">
+                    <div class="quantity-control" aria-label="Jumlah produk">
+                        <button type="button" aria-label="Kurangi jumlah">−</button>
+                        <strong>1</strong>
+                        <button type="button" aria-label="Tambah jumlah">＋</button>
+                    </div>
+                    <button class="button button-primary" type="button"
+                        id="detailAddToCart" data-add-cart="{{ item.id }}" data-product-id="{{ item.id }}"
+                        data-product-name="{{ item.nama }}" data-product-price="{{ item.harga }}"
+                        data-product-image="{{ item.gambar }}" data-product-category="{{ item.kategori }}"
+                        data-product-origin="{{ item.asal }}" data-product-stock="{{ item.stok }}"
+                        data-product-url="{{ url_for('main.detail_produk', produk_id=item.id) }}" data-i18n="detail_add">Tambah ke Keranjang</button>
+                </div>
+                <div class="detail-secondary-actions">
+                    <button class="button button-gold" type="button" id="detailBuyNow" data-buy-now
+                        data-product-id="{{ item.id }}" data-product-name="{{ item.nama }}" data-product-price="{{ item.harga }}"
+                        data-product-image="{{ item.gambar }}" data-product-category="{{ item.kategori }}"
+                        data-product-origin="{{ item.asal }}" data-product-stock="{{ item.stok }}"
+                        data-product-url="{{ url_for('main.detail_produk', produk_id=item.id) }}"
+                        data-checkout-url="{{ url_for('customer.checkout') }}" data-i18n="detail_buy">Beli Sekarang</button>
+                </div>
+                {% else %}
+                <p class="admin-store-preview-note">Mode admin: halaman toko hanya untuk pratinjau katalog. Pengelolaan produk, harga, dan stok tersedia di panel admin.</p>
+                {% endif %}
+
+                <div class="spec-grid">
+                    <div class="spec-card"><span data-i18n="spec_era">Era</span><strong id="detailProductEra">{{ item.era }}</strong></div>
+                    <div class="spec-card"><span data-i18n="spec_origin">Asal</span><strong id="detailProductOrigin">{{ item.asal }}</strong></div>
+                    <div class="spec-card"><span data-i18n="spec_condition">Kondisi</span><strong id="detailProductCondition">{{ item.kondisi }}</strong></div>
+                    <div class="spec-card"><span data-i18n="spec_material">Material</span><strong id="detailProductMaterial">{{ item.material }}</strong></div>
+                    <div class="spec-card"><span data-i18n="spec_authenticity">Autentikasi</span><strong id="detailProductAuthenticity">{{ item.autentikasi }}</strong></div>
+                    <div class="spec-card"><span data-i18n="spec_stock">Stok</span><strong id="detailProductStock">{{ item.stok }} item</strong></div>
+                </div>
+                <p class="image-credit" id="detailProductCredit"><a id="detailProductCreditLink" href="{{ item.sumber_gambar or '#' }}" target="_blank" rel="noopener noreferrer">Sumber foto produk: Wikimedia Commons</a></p>
             </div>
-            <p class="image-credit"><a href="{{ produk.sumber_gambar }}" target="_blank" rel="noopener noreferrer">Sumber foto produk: Wikimedia Commons</a></p>
+        </div>
+        <div class="panel product-detail-not-found" id="detailProductNotFound" {% if produk %}hidden{% endif %}>
+            <span class="eyebrow">Collection unavailable</span>
+            <h1>Produk tidak ditemukan</h1>
+            <p>Produk ini tidak ada di data demo pada browser ini. Buka katalog dan pilih produk yang masih tersedia.</p>
+            <a class="button button-primary" href="{{ url_for('main.katalog') }}">Kembali ke katalog</a>
         </div>
     </div>
 </section>
 
-<!-- ===== PRODUK TERKAIT ===== -->
-<section class="section-shell section-soft">
+<section class="section-shell section-soft" id="relatedProductsSection" {% if not produk %}hidden{% endif %}>
     <div class="container">
-        <div class="section-heading">
-            <div><span class="eyebrow">Curated Pairing</span><h2 data-i18n="related_title">Koleksi terkait</h2></div>
-        </div>
-        <div class="product-grid">
-            {% for produk in produk_terkait %}
-            {% include 'partials/product_card.html' %}
-            {% endfor %}
+        <div class="section-heading"><div><span class="eyebrow">Curated Pairing</span><h2 data-i18n="related_title">Koleksi terkait</h2></div></div>
+        <div class="product-grid" id="relatedProductGrid">
+            {% for produk in produk_terkait %}{% include 'partials/product_card.html' %}{% endfor %}
         </div>
     </div>
 </section>
 {% endblock %}
+{% block scripts %}{% endblock %}

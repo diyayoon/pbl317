@@ -1,19 +1,28 @@
-<article class="product-card"
+{% set kata_kunci_produk = (
+    produk.nama ~ ' ' ~ produk.kategori ~ ' ' ~ produk.era ~ ' '
+    ~ produk.asal ~ ' ' ~ produk.kondisi ~ ' ' ~ produk.material ~ ' '
+    ~ produk.deskripsi
+) | lower %}
+<article
+    class="product-card"
     data-product
     data-id="{{ produk.id }}"
     data-name="{{ produk.nama|lower }}"
-    data-search="{{ (produk.nama ~ ' ' ~ produk.kategori ~ ' ' ~ produk.era ~ ' ' ~ produk.asal ~ ' ' ~ produk.kondisi ~ ' ' ~ produk.material ~ ' ' ~ produk.deskripsi)|lower }}"
+    data-search="{{ kata_kunci_produk }}"
     data-category="{{ produk.slug_kategori }}"
     data-era="{{ produk.era }}"
     data-condition="{{ produk.kondisi }}"
     data-price="{{ produk.harga }}"
+    data-stock="{{ produk.stok }}"
     data-rating="{{ produk.rating }}"
     data-image="{{ produk.gambar }}"
     data-origin="{{ produk.asal }}"
-    data-detail-url="{{ url_for('main.detail_produk', produk_id=produk.id) }}">
-
-    <!-- ===== VISUAL PRODUK ===== -->
-    <a class="product-visual" href="{{ url_for('main.detail_produk', produk_id=produk.id) }}">
+    data-detail-url="{{ url_for('main.detail_produk', produk_id=produk.id) }}"
+>
+    <a
+        class="product-visual"
+        href="{{ url_for('main.detail_produk', produk_id=produk.id) }}"
+    >
         <span class="product-badge">{{ produk.era }}</span>
         <span class="product-status">{{ produk.kondisi }}</span>
         <img
@@ -26,20 +35,34 @@
         >
     </a>
 
-    <!-- ===== AKSI CEPAT PRODUK ===== -->
+    {% if not current_user.is_authenticated or current_user.role == 'customer' %}
     <div class="product-actions-float">
-        <button type="button" aria-label="Tambahkan ke wishlist" data-auth-action="wishlist">♡</button>
-        <button type="button" data-add-cart="{{ produk.id }}" data-auth-action="cart" aria-label="Tambahkan ke keranjang">＋</button>
+        <button
+            type="button"
+            data-add-cart="{{ produk.id }}"
+            data-product-stock="{{ produk.stok }}"
+            data-auth-action="cart"
+            aria-label="Tambahkan ke keranjang"
+            title="Tambah ke keranjang"
+        >
+            ＋
+        </button>
     </div>
+    {% endif %}
 
-    <!-- ===== INFORMASI PRODUK ===== -->
     <div class="product-content">
         <div class="product-meta">
             <span>{{ produk.kategori }}</span>
             <span>{{ produk.asal }}</span>
         </div>
-        <h3><a href="{{ url_for('main.detail_produk', produk_id=produk.id) }}">{{ produk.nama }}</a></h3>
-        <div class="rating" aria-label="Rating {{ produk.rating }} dari 5">★★★★★ <span class="muted">{{ produk.rating }}</span></div>
+        <h3>
+            <a href="{{ url_for('main.detail_produk', produk_id=produk.id) }}">
+                {{ produk.nama }}
+            </a>
+        </h3>
+        <div class="rating" aria-label="Rating {{ produk.rating }} dari 5">
+            ★★★★★ <span class="muted">{{ produk.rating }}</span>
+        </div>
         <div class="product-bottom">
             <strong class="price">Rp{{ "{:,.0f}".format(produk.harga).replace(',', '.') }}</strong>
             <span class="stock-tag">{{ produk.stok }} item</span>

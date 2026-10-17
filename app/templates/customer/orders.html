@@ -1,102 +1,341 @@
 {% extends 'base.html' %}
+
 {% block title %}Riwayat Pesanan — Albis Antique{% endblock %}
-{% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/dashboard.css') }}">{% endblock %}
+
+{% block styles %}
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/pages/dashboard.css') }}"
+>
+{% endblock %}
+
 {% block content %}
 <section class="section-shell order-page">
     <div class="container">
         <div class="section-heading">
-            <div><span class="eyebrow">Order Ledger</span><h2>Riwayat Pesanan</h2><p>Pantau status dan perjalanan setiap koleksi yang kamu pesan.</p></div>
+            <div>
+                <span class="eyebrow">Order Ledger</span>
+                <h2>Riwayat Pesanan</h2>
+                <p>Pantau status dan perjalanan setiap koleksi yang kamu pesan.</p>
+            </div>
         </div>
+
         <div class="order-filter-tabs" role="group" aria-label="Filter status pesanan">
             <button class="is-active" type="button" data-order-filter="all">Semua</button>
-            <button type="button" data-order-filter="Menunggu pembayaran">Belum bayar</button><button type="button" data-order-filter="Diproses">Diproses</button>
+            <button type="button" data-order-filter="Menunggu pembayaran">Belum bayar</button>
+            <button type="button" data-order-filter="Menunggu persetujuan">Menunggu persetujuan</button>
+            <button type="button" data-order-filter="Diproses">Diproses</button>
             <button type="button" data-order-filter="Dikirim">Dikirim</button>
             <button type="button" data-order-filter="Selesai">Selesai</button>
-            <button type="button" data-order-filter="Dibatalkan">Dibatalkan</button>
         </div>
-        <div class="order-list" id="orderList">
-            <article class="order-card" data-order-status="Diproses">
-                <div class="order-card-top">
-                    <div><span class="order-number">ORDER #AA-2026-014</span><span class="order-date">04 Okt 2026</span></div>
-                    <span class="order-status is-processing">Diproses</span>
-                </div>
-                <div class="order-product">
-                    <div class="order-product-visual" aria-hidden="true">⌚</div>
-                    <div class="order-product-copy"><h3>Brass Pocket Watch</h3><p>Jam & Timepiece · 1 item</p><small>Pesanan contoh untuk demonstrasi antarmuka</small></div>
-                    <strong>Rp1.850.000</strong>
-                </div>
-                <div class="order-progress" aria-label="Progres pesanan: pesanan dibuat dan sedang diproses">
-                    <div class="order-step is-done"><span>✓</span><small>Pesanan dibuat</small></div>
-                    <div class="order-step is-current"><span>2</span><small>Diproses</small></div>
-                    <div class="order-step"><span>3</span><small>Dikirim</small></div>
-                    <div class="order-step"><span>4</span><small>Selesai</small></div>
-                </div>
-                <div class="order-card-bottom"><span>Menunggu pembaruan dari admin</span><a class="button button-secondary button-small" href="{{ url_for('customer.checkout') }}">Detail pembayaran</a></div>
-            </article>
-            <article class="order-card" data-order-status="Selesai">
-                <div class="order-card-top">
-                    <div><span class="order-number">ORDER #AA-2026-011</span><span class="order-date">26 Sep 2026</span></div>
-                    <span class="order-status is-complete">Selesai</span>
-                </div>
-                <div class="order-product">
-                    <div class="order-product-visual" aria-hidden="true">♜</div>
-                    <div class="order-product-copy"><h3>Victorian Cameo Brooch</h3><p>Perhiasan Antik · 1 item</p><small>Pesanan contoh untuk demonstrasi antarmuka</small></div>
-                    <strong>Rp2.750.000</strong>
-                </div>
-                <div class="order-progress" aria-label="Progres pesanan: pesanan selesai">
-                    <div class="order-step is-done"><span>✓</span><small>Pesanan dibuat</small></div>
-                    <div class="order-step is-done"><span>✓</span><small>Diproses</small></div>
-                    <div class="order-step is-done"><span>✓</span><small>Dikirim</small></div>
-                    <div class="order-step is-done"><span>✓</span><small>Selesai</small></div>
-                </div>
-                <div class="order-card-bottom"><span>Terima kasih sudah merawat cerita lama.</span><button class="button button-secondary button-small" type="button" disabled>Ulasan (tahap berikutnya)</button></div>
-            </article>
+
+        <div class="order-list" id="orderList" aria-live="polite">
+            <div class="account-empty-state">
+                <p>Riwayat pesanan akan tampil setelah kamu melakukan checkout.</p>
+                <a href="{{ url_for('main.katalog') }}">Jelajahi katalog →</a>
+            </div>
         </div>
-        <p class="order-demo-note">Catatan: status dan pesanan di atas adalah data demo. Sinkronisasi status, checkout, dan ulasan akan aktif setelah integrasi database.</p>
+
+        <p class="order-demo-note">
+            {% if database_enabled %}
+            Riwayat ini diambil dari database. Bukti pembayaran yang diunggah akan tersimpan di server dan ditinjau admin.
+            {% else %}
+            Mode demo: data pesanan serta nama file bukti bayar tersimpan di browser, belum menjadi transaksi atau unggahan server yang nyata.
+            {% endif %}
+        </p>
     </div>
 </section>
 {% endblock %}
+
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-  const orderKey = 'albis_antique_orders_demo';
-  let saved = [];
-  try { saved = JSON.parse(localStorage.getItem(orderKey)) || []; } catch { saved = []; }
-  const list = document.getElementById('orderList');
-  const money = value => `Rp${Number(value || 0).toLocaleString('id-ID')}`;
-  const statusClass = status => status === 'Selesai' ? 'is-complete' : 'is-processing';
-  saved.forEach(order => {
-    const card = document.createElement('article');
-    card.className = 'order-card';
-    card.dataset.orderStatus = order.status || 'Menunggu pembayaran';
-    const top = document.createElement('div'); top.className = 'order-card-top';
-    const meta = document.createElement('div');
-    const number = document.createElement('span'); number.className = 'order-number'; number.textContent = `ORDER #${order.id}`;
-    const date = document.createElement('span'); date.className = 'order-date'; date.textContent = new Date(order.date).toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'});
-    meta.append(number,date);
-    const status = document.createElement('span'); status.className = `order-status ${statusClass(order.status)}`; status.textContent = order.status || 'Menunggu pembayaran';
-    top.append(meta,status);
-    const product = document.createElement('div'); product.className = 'order-product';
-    const visual = document.createElement('div'); visual.className = 'order-product-visual'; visual.textContent = '♜'; visual.setAttribute('aria-hidden','true');
-    const copy = document.createElement('div'); copy.className = 'order-product-copy';
-    const title = document.createElement('h3'); title.textContent = (order.items || []).map(item => item.nama).filter(Boolean).join(', ') || 'Koleksi Albis Antique';
-    const desc = document.createElement('p'); desc.textContent = `${(order.items || []).reduce((n,item) => n + Number(item.jumlah || 1),0)} item · ${order.pembayaran || 'Metode demo'}`;
-    const note = document.createElement('small'); note.textContent = 'Pesanan simulasi lokal — belum diproses oleh backend';
-    copy.append(title,desc,note); product.append(visual,copy);
-    const total = document.createElement('strong'); total.textContent = money(order.total); product.append(total);
-    const bottom = document.createElement('div'); bottom.className = 'order-card-bottom';
-    const address = document.createElement('span'); address.textContent = `Penerima: ${order.nama || '-'} · ${order.alamat || ''}`;
-    bottom.append(address);
-    card.append(top,product,bottom);
-    list.prepend(card);
-  });
-  const buttons = document.querySelectorAll('[data-order-filter]');
-  const cards = () => document.querySelectorAll('[data-order-status]');
-  buttons.forEach(button => button.addEventListener('click', () => {
-    buttons.forEach(item => item.classList.toggle('is-active', item === button));
-    const filter = button.dataset.orderFilter;
-    cards().forEach(card => card.hidden = filter !== 'all' && card.dataset.orderStatus !== filter);
-  }));
+    const userId = (document.body.dataset.userId || '').replace(/[^A-Za-z0-9_-]/g, '_');
+    if (!userId || document.body.dataset.userRole !== 'customer') return;
+
+    const key = `albis_antique_orders_demo_${userId}`;
+    const money = value => `Rp${Number(value || 0).toLocaleString('id-ID')}`;
+
+    function read() {
+        try {
+            const value = JSON.parse(localStorage.getItem(key));
+            return Array.isArray(value) ? value : [];
+        } catch {
+            return [];
+        }
+    }
+
+    function write(orders) {
+        try {
+            localStorage.setItem(key, JSON.stringify(orders));
+            return true;
+        } catch {
+            window.alert('Penyimpanan browser penuh atau diblokir.');
+            return false;
+        }
+    }
+
+    function tag(tagName, className, value) {
+        const node = document.createElement(tagName);
+        if (className) node.className = className;
+        node.textContent = value;
+        return node;
+    }
+
+    const list = document.getElementById('orderList');
+    const buttons = [...document.querySelectorAll('[data-order-filter]')];
+    let filter = 'all';
+
+    if (document.body.dataset.databaseEnabled === 'true') {
+        let databaseOrders = [];
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+        const databaseMoney = value => `Rp${Number(value || 0).toLocaleString('id-ID')}`;
+
+        async function loadDatabaseOrders() {
+            try {
+                const response = await fetch('/customer/api/orders', { credentials: 'same-origin', headers: { Accept: 'application/json' } });
+                const payload = await response.json().catch(() => []);
+                if (!response.ok) throw new Error(payload.error || 'Riwayat pesanan tidak dapat dimuat.');
+                databaseOrders = Array.isArray(payload) ? payload : [];
+                renderDatabaseOrders();
+            } catch (error) {
+                list.replaceChildren();
+                list.append(tag('div', 'account-empty-state', error.message || 'Terjadi kesalahan saat memuat pesanan.'));
+            }
+        }
+
+        function renderDatabaseOrders() {
+            list.replaceChildren();
+            const filtered = databaseOrders.filter(order => filter === 'all' || order.status === filter);
+            if (!filtered.length) {
+                const empty = tag('div', 'account-empty-state', filter === 'all' ? 'Belum ada pesanan pada akun ini.' : 'Tidak ada pesanan dengan status tersebut.');
+                const link = tag('a', '', 'Jelajahi katalog →'); link.href = '/katalog'; empty.append(link); list.append(empty); return;
+            }
+            filtered.forEach(order => {
+                const card = tag('article', 'order-card', '');
+                card.dataset.orderStatus = order.status || 'Menunggu pembayaran';
+                const top = tag('div', 'order-card-top', '');
+                const meta = tag('div', '', '');
+                const orderDate = new Date(order.date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+                meta.append(tag('span', 'order-number', `ORDER #${order.orderNumber || order.id}`), tag('span', 'order-date', orderDate));
+                top.append(meta, tag('span', `order-status ${order.status === 'Selesai' ? 'is-complete' : 'is-processing'}`, order.status || 'Menunggu pembayaran'));
+                const product = tag('div', 'order-product', '');
+                const visual = tag('div', 'order-product-visual', '♜'); visual.setAttribute('aria-hidden', 'true');
+                const copy = tag('div', 'order-product-copy', '');
+                const names = (order.items || []).map(item => item.nama).filter(Boolean).join(', ') || 'Koleksi Albis Antique';
+                const count = (order.items || []).reduce((sum, item) => sum + Number(item.jumlah || 1), 0);
+                copy.append(tag('h3', '', names), tag('p', '', `${count} item · ${order.pembayaran || 'Transfer Bank'}`));
+                product.append(visual, copy, tag('strong', '', databaseMoney(order.total)));
+                const bottom = tag('div', 'order-card-bottom', '');
+                bottom.append(tag('span', '', `Penerima: ${order.nama || '-'} · ${order.alamat || ''}`));
+                if (order.buktiBayar?.namaFile) {
+                    const proofLink = tag('a', 'order-proof-state', `Lihat bukti pembayaran · ${order.buktiBayar.namaFile}`);
+                    proofLink.href = `/media/payments/${encodeURIComponent(order.buktiBayar.namaFile)}`;
+                    proofLink.target = '_blank'; proofLink.rel = 'noopener'; bottom.append(proofLink);
+                }
+                card.append(top, product, bottom);
+                if (order.status === 'Menunggu pembayaran' && (!order.buktiBayar?.namaFile || order.buktiBayar?.status === 'Ditolak')) {
+                    const paymentBox = tag('div', 'order-proof-upload', '');
+                    const label = tag('label', '', order.buktiBayar?.status === 'Ditolak' ? 'Unggah ulang bukti pembayaran' : 'Unggah bukti pembayaran');
+                    const input = document.createElement('input'); input.type = 'file'; input.accept = 'image/jpeg,image/png,image/webp,application/pdf'; input.setAttribute('aria-label', 'Pilih file bukti pembayaran');
+                    const note = tag('small', 'field-hint', order.buktiBayar?.status === 'Ditolak' ? 'Bukti sebelumnya ditolak admin. Unggah bukti yang benar (JPG, PNG, WEBP, atau PDF; maks. 5 MB).' : 'JPG, PNG, WEBP, atau PDF; maksimal 5 MB.');
+                    const action = tag('button', 'button button-secondary button-small', 'Kirim bukti pembayaran'); action.type = 'button'; action.disabled = true;
+                    input.addEventListener('change', () => {
+                        const file = input.files?.[0];
+                        action.disabled = !file;
+                        const allowed = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+                        if (file && (file.size > 5 * 1024 * 1024 || !allowed.includes(file.type))) { input.value = ''; action.disabled = true; note.textContent = 'File harus JPG, PNG, WEBP, atau PDF maksimal 5 MB.'; }
+                        else if (file) note.textContent = `${file.name} siap diunggah.`;
+                    });
+                    action.addEventListener('click', async () => {
+                        const file = input.files?.[0]; if (!file) return;
+                        const formData = new FormData(); formData.append('buktiBayar', file);
+                        action.disabled = true; note.textContent = 'Mengunggah bukti pembayaran…';
+                        try {
+                            const response = await fetch(`/customer/api/orders/${order.id}/bukti`, { method: 'POST', credentials: 'same-origin', headers: { 'X-CSRFToken': csrfToken, Accept: 'application/json' }, body: formData });
+                            const payload = await response.json().catch(() => ({}));
+                            if (!response.ok) throw new Error(payload.error || 'Bukti pembayaran gagal diunggah.');
+                            await loadDatabaseOrders();
+                        } catch (error) { note.textContent = error.message; action.disabled = false; }
+                    });
+                    label.append(input); paymentBox.append(label, note, action); card.append(paymentBox);
+                }
+                list.append(card);
+            });
+        }
+
+        buttons.forEach(button => button.addEventListener('click', () => {
+            filter = button.dataset.orderFilter;
+            buttons.forEach(node => node.classList.toggle('is-active', node === button));
+            renderDatabaseOrders();
+        }));
+        loadDatabaseOrders();
+        return;
+    }
+
+    function render() {
+        const orders = read();
+        list.replaceChildren();
+
+        const filtered = orders.filter(
+            order => filter === 'all' || order.status === filter,
+        );
+
+        if (!filtered.length) {
+            const message = filter === 'all'
+                ? 'Belum ada pesanan pada akun ini.'
+                : 'Tidak ada pesanan dengan status tersebut.';
+            const empty = tag('div', 'account-empty-state', message);
+            const link = tag('a', '', 'Jelajahi katalog →');
+            link.href = '/katalog';
+            empty.append(link);
+            list.append(empty);
+            return;
+        }
+
+        filtered.forEach(order => {
+            const card = tag('article', 'order-card', '');
+            card.dataset.orderStatus = order.status || 'Menunggu pembayaran';
+
+            const top = tag('div', 'order-card-top', '');
+            const meta = tag('div', '', '');
+            const orderDate = new Date(order.date).toLocaleDateString('id-ID', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+            });
+            meta.append(
+                tag('span', 'order-number', `ORDER #${order.id}`),
+                tag('span', 'order-date', orderDate),
+            );
+
+            const statusClass = order.status === 'Selesai'
+                ? 'is-complete'
+                : 'is-processing';
+            const status = tag(
+                'span',
+                `order-status ${statusClass}`,
+                order.status || 'Menunggu pembayaran',
+            );
+            top.append(meta, status);
+
+            const product = tag('div', 'order-product', '');
+            const visual = tag('div', 'order-product-visual', '♜');
+            visual.setAttribute('aria-hidden', 'true');
+
+            const copy = tag('div', 'order-product-copy', '');
+            const itemNames = (order.items || [])
+                .map(item => item.nama)
+                .filter(Boolean)
+                .join(', ') || 'Koleksi Albis Antique';
+            const itemCount = (order.items || []).reduce(
+                (count, item) => count + Number(item.jumlah || 1),
+                0,
+            );
+            copy.append(
+                tag('h3', '', itemNames),
+                tag('p', '', `${itemCount} item · ${order.pembayaran || 'Metode demo'}`),
+            );
+            product.append(
+                visual,
+                copy,
+                tag('strong', '', money(order.total)),
+            );
+
+            const bottom = tag('div', 'order-card-bottom', '');
+            bottom.append(
+                tag('span', '', `Penerima: ${order.nama || '-'} · ${order.alamat || ''}`),
+            );
+
+            if (!order.buktiBayar && order.status === 'Menunggu pembayaran') {
+                const paymentBox = tag('div', 'order-proof-upload', '');
+                const label = tag('label', '', 'Bukti pembayaran (demo)');
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'image/jpeg,image/png,image/webp,application/pdf';
+                input.setAttribute('aria-label', 'Pilih file bukti pembayaran');
+
+                const action = tag(
+                    'button',
+                    'button button-secondary button-small',
+                    'Catat file demo',
+                );
+                action.type = 'button';
+                action.disabled = true;
+
+                const note = tag(
+                    'small',
+                    'field-hint',
+                    'File tidak dikirim ke server pada mode demo.',
+                );
+
+                input.addEventListener('change', () => {
+                    const file = input.files?.[0];
+                    action.disabled = !file;
+
+                    const allowedTypes = [
+                        'image/jpeg',
+                        'image/png',
+                        'image/webp',
+                        'application/pdf',
+                    ];
+                    if (file && (file.size > 5 * 1024 * 1024 || !allowedTypes.includes(file.type))) {
+                        input.value = '';
+                        action.disabled = true;
+                        note.textContent = 'Gunakan JPG, PNG, WEBP, atau PDF maksimal 5 MB.';
+                    } else if (file) {
+                        note.textContent = `${file.name} dipilih. Klik tombol untuk mencatat simulasi.`;
+                    }
+                });
+
+                action.addEventListener('click', () => {
+                    const file = input.files?.[0];
+                    if (!file) return;
+
+                    const allOrders = read();
+                    const currentOrder = allOrders.find(item => item.id === order.id);
+                    if (!currentOrder) return;
+
+                    currentOrder.buktiBayar = {
+                        namaFile: file.name,
+                        tanggal: new Date().toISOString(),
+                        demo: true,
+                    };
+                    currentOrder.status = 'Menunggu persetujuan';
+                    if (write(allOrders)) render();
+                });
+
+                label.append(input);
+                paymentBox.append(label, note, action);
+                card.append(top, product, bottom, paymentBox);
+            } else {
+                if (order.buktiBayar?.namaFile) {
+                    bottom.append(
+                        tag(
+                            'span',
+                            'order-proof-state',
+                            `Bukti demo: ${order.buktiBayar.namaFile} · ${order.status}`,
+                        ),
+                    );
+                }
+                card.append(top, product, bottom);
+            }
+
+            list.append(card);
+        });
+    }
+
+    buttons.forEach(button => {
+        button.addEventListener('click', () => {
+            filter = button.dataset.orderFilter;
+            buttons.forEach(node => {
+                node.classList.toggle('is-active', node === button);
+            });
+            render();
+        });
+    });
+
+    render();
 });
 </script>
 {% endblock %}

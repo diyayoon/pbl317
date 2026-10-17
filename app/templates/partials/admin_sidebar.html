@@ -1,0 +1,63 @@
+<aside id="adminWorkspaceSidebar" class="dashboard-sidebar admin-sidebar">
+    <div class="admin-sidebar-heading">
+        <span aria-hidden="true">♕</span>
+        <div>
+            <strong>ALBIS ADMIN</strong>
+            <small>Workspace</small>
+        </div>
+    </div>
+
+    <nav aria-label="Menu admin">
+        <a href="{{ url_for('main.katalog') }}" target="_blank" rel="noopener noreferrer">
+            <span aria-hidden="true">↗</span> Lihat toko <small>Tab baru</small>
+        </a>
+        <a
+            class="{% if request.endpoint == 'admin.dashboard' %}active{% endif %}"
+            href="{{ url_for('admin.dashboard') }}"
+        >
+            <span aria-hidden="true">▦</span> Dashboard
+        </a>
+        <a
+            class="{% if request.endpoint == 'admin.produk' %}active{% endif %}"
+            href="{{ url_for('admin.produk') }}"
+        >
+            <span aria-hidden="true">◇</span> Produk
+        </a>
+        <a
+            class="{% if request.endpoint == 'admin.pengguna' %}active{% endif %}"
+            href="{{ url_for('admin.pengguna') }}"
+        >
+            <span aria-hidden="true">♙</span> Pengguna
+        </a>
+        <a
+            class="{% if request.endpoint == 'admin.pesanan' %}active{% endif %}"
+            href="{{ url_for('admin.pesanan') }}"
+        >
+            <span aria-hidden="true">▤</span> Pesanan
+        </a>
+        <a
+            class="{% if request.endpoint == 'admin.pembayaran' %}active{% endif %}"
+            href="{{ url_for('admin.pembayaran') }}"
+        >
+            <span aria-hidden="true">◇</span> Pembayaran
+        </a>
+        <a
+            class="{% if request.endpoint == 'admin.laporan' %}active{% endif %}"
+            href="{{ url_for('admin.laporan') }}"
+        >
+            <span aria-hidden="true">▥</span> Laporan
+        </a>
+
+        <form class="workspace-logout-form" action="{{ url_for('auth.logout') }}" method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="workspace-logout-link" type="submit">
+                <span aria-hidden="true">↪</span> Keluar dari akun
+            </button>
+        </form>
+    </nav>
+
+    <div class="admin-sidebar-note">
+        {{ 'Mode database' if database_enabled else 'Mode prototipe' }}<br>
+        <span>{{ 'Data tersimpan di PostgreSQL' if database_enabled else 'Data lokal dan contoh browser' }}</span>
+    </div>
+</aside>

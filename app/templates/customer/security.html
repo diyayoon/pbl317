@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+
+{% block title %}Keamanan Akun — Albis Antique{% endblock %}
+
+{% block styles %}
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/pages/dashboard.css') }}"
+>
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/pages/profile.css') }}"
+>
+{% endblock %}
+
+{% block content %}
+<section class="section-shell security-page">
+    <div class="container">
+        <header class="section-heading">
+            <div>
+                <span class="eyebrow">Account Security</span>
+                <h2>Keamanan Akun</h2>
+                <p>Kelola kata sandi akun customer-mu.</p>
+            </div>
+        </header>
+
+        <div class="glass-card security-card">
+            <div class="security-card-heading">
+                <span aria-hidden="true">♧</span>
+                <div>
+                    <h3>Ganti kata sandi</h3>
+                    <p>Masukkan kata sandi saat ini sebelum menyimpan kata sandi baru.</p>
+                </div>
+            </div>
+
+            <form id="formUbahPassword" method="post" novalidate>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="form-field">
+                    <label for="passwordLama">Kata sandi saat ini</label>
+                    <input
+                        class="form-control"
+                        id="passwordLama"
+                        name="password_lama"
+                        type="password"
+                        autocomplete="current-password"
+                        required
+                    >
+                    <small class="field-error" id="passwordLamaError" hidden></small>
+                </div>
+
+                <div class="form-field">
+                    <label for="passwordBaru">Kata sandi baru</label>
+                    <input
+                        class="form-control"
+                        id="passwordBaru"
+                        name="password_baru"
+                        type="password"
+                        autocomplete="new-password"
+                        minlength="16"
+                        maxlength="128"
+                        required
+                    >
+                    <small class="field-hint">Gunakan frasa sandi minimal 16 karakter.</small>
+                    <small class="field-error" id="passwordBaruError" hidden></small>
+                </div>
+
+                <div class="form-field">
+                    <label for="konfirmasiPasswordBaru">Konfirmasi kata sandi baru</label>
+                    <input
+                        class="form-control"
+                        id="konfirmasiPasswordBaru"
+                        name="konfirmasi_password"
+                        type="password"
+                        autocomplete="new-password"
+                        minlength="16"
+                        maxlength="128"
+                        required
+                    >
+                    <small class="field-error" id="konfirmasiPasswordBaruError" hidden></small>
+                </div>
+
+                <button class="button button-primary" type="submit">
+                    Perbarui kata sandi
+                </button>
+            </form>
+        </div>
+
+        <aside class="security-note">
+            <strong>Catatan mode demo</strong>
+            <p>
+                Hash password disimpan pada file lokal di direktori instance aplikasi sehingga
+                perubahan tetap ada setelah server dimulai ulang pada komputer ini. Data belum
+                disimpan ke PostgreSQL dan tidak dibagikan ke perangkat lain. Verifikasi email
+                dan autentikasi dua faktor tidak ditambahkan karena belum menjadi requirement PBL.
+            </p>
+        </aside>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("formUbahPassword");
+    if (!form) return;
+
+    const current = document.getElementById("passwordLama");
+    const fresh = document.getElementById("passwordBaru");
+    const confirm = document.getElementById("konfirmasiPasswordBaru");
+
+    const showError = (field, message) => {
+        const node = document.getElementById(`${field.id}Error`);
+        if (!node) return;
+        node.textContent = message;
+        node.hidden = !message;
+        field.setAttribute("aria-invalid", String(Boolean(message)));
+    };
+
+    const newPasswordError = () => {
+        if (fresh.value.length < 16) return "Kata sandi baru minimal 16 karakter.";
+        if (fresh.value.length > 128) return "Maksimal 128 karakter.";
+        if (!fresh.value.trim()) return "Kata sandi tidak boleh hanya berisi spasi.";
+        if (fresh.value === current.value) {
+            return "Kata sandi baru harus berbeda dari kata sandi saat ini.";
+        }
+        return "";
+    };
+
+    [current, fresh, confirm].forEach(field => {
+        field.addEventListener("input", () => showError(field, ""));
+    });
+
+    form.addEventListener("submit", event => {
+        const errors = [
+            [current, current.value ? "" : "Kata sandi saat ini wajib diisi."],
+            [fresh, newPasswordError()],
+            [
+                confirm,
+                !confirm.value
+                    ? "Konfirmasi wajib diisi."
+                    : confirm.value !== fresh.value
+                        ? "Konfirmasi kata sandi tidak cocok."
+                        : "",
+            ],
+        ];
+
+        errors.forEach(([field, message]) => showError(field, message));
+        const firstError = errors.find(([, message]) => message);
+        if (firstError) {
+            event.preventDefault();
+            firstError[0].focus();
+        }
+    });
+});
+</script>
+{% endblock %}

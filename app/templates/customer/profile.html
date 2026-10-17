@@ -12,9 +12,6 @@
 {% set daftar_tab = [
     ('profil', 'Profil'),
     ('alamat', 'Alamat'),
-    ('privasi', 'Privasi'),
-    ('keamanan', 'Keamanan'),
-    ('preferensi', 'Preferensi'),
 ] %}
 
 <!-- ===== PROFIL PELANGGAN ===== -->
@@ -25,7 +22,7 @@
             <div>
                 <span class="eyebrow">Account Settings</span>
                 <h2>Profil Pribadi</h2>
-                <p>Form ini akan dihubungkan ke tabel pengguna dan alamat pada tahap backend.</p>
+                <p>Kelola identitas akun dan alamat pengirimanmu di satu tempat.</p>
             </div>
         </div>
 
@@ -93,11 +90,19 @@
                             type="email"
                             autocomplete="email"
                             maxlength="254"
-                            aria-describedby="galatEmail"
+                            readonly
+                            aria-describedby="emailHelp galatEmail"
                         >
+                        <small class="field-hint" id="emailHelp">Email login tidak dapat diubah dalam mode demo. Pengubahan email akan mengikuti akun pada backend.</small>
                         <p class="field-error" id="galatEmail" hidden></p>
                     </div>
 
+                    <div class="form-field">
+                        <label for="teleponProfil">Nomor telepon</label>
+                        <input class="form-control" id="teleponProfil" name="telepon" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="Contoh: 628123456789" aria-describedby="teleponProfilHint galatTeleponProfil">
+                        <small class="field-hint" id="teleponProfilHint">Nomor telepon akun utama. Nomor penerima pada alamat pengiriman dapat diubah secara terpisah.</small>
+                        <p class="field-error" id="galatTeleponProfil" hidden></p>
+                    </div>
                     <div>
                         <button class="button button-primary" type="submit">Simpan Perubahan</button>
                     </div>
@@ -176,15 +181,6 @@
                 </form>
             </section>
 
-            <!-- ===== PANEL: PRIVASI, KEAMANAN, PREFERENSI (BELUM AKTIF) ===== -->
-            {% for kunci, judul in daftar_tab[2:] %}
-            <section class="profil-panel" id="panel-{{ kunci }}" role="tabpanel" aria-labelledby="tab-{{ kunci }}" hidden>
-                <h3>{{ judul }}</h3>
-                <div class="profil-placeholder">
-                    Pengaturan {{ judul|lower }} akan diaktifkan pada tahap backend.
-                </div>
-            </section>
-            {% endfor %}
         </div>
     </div>
 </section>

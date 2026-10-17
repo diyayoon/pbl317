@@ -17,12 +17,18 @@
         <!-- ===== TAUTAN AKUN DAN BANTUAN ===== -->
         {# Ini hanya tampilan. Pembatasan akses sebenarnya tetap wajib di route (login_required + role_required). #}
         {% set sebagai_customer = current_user is defined and current_user.is_authenticated and current_user.role == 'customer' %}
+        {% set sebagai_admin = current_user is defined and current_user.is_authenticated and current_user.role == 'admin' %}
         <section class="footer-column">
             <h3 data-i18n="footer_help">Bantuan</h3>
             {% if sebagai_customer %}
             <a href="{{ url_for('customer.pesanan') }}" data-i18n="footer_orders">Pesanan saya</a>
             <a href="{{ url_for('customer.keranjang') }}">Keranjang</a>
-            <a href="{{ url_for('customer.profil') }}" data-i18n="footer_security">Profil & keamanan</a>
+            <a href="{{ url_for('customer.profil') }}">Profil pribadi</a>
+            <a href="{{ url_for('customer.keamanan') }}">Keamanan akun</a>
+            {% elif sebagai_admin %}
+            <a href="{{ url_for('admin.dashboard') }}">Panel admin</a>
+            <a href="{{ url_for('main.katalog') }}">Lihat katalog</a>
+            <a href="{{ url_for('main.beranda') }}#about">Tentang proyek</a>
             {% else %}
             <a href="{{ url_for('auth.login') }}">Masuk / Daftar</a>
             <a href="{{ url_for('main.katalog') }}">Cara menjelajahi katalog</a>

@@ -1,104 +1,268 @@
 {% extends 'base.html' %}
+
 {% block title %}Kelola Produk — Albis Antique{% endblock %}
-{% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/dashboard.css') }}">{% endblock %}
+
+{% block styles %}
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/pages/dashboard.css') }}"
+>
+{% endblock %}
+
 {% block content %}
-<!-- ===== HALAMAN KELOLA PRODUK ===== -->
 <section class="dashboard-shell admin-workspace-shell">
-    <button class="workspace-mobile-toggle" type="button" aria-controls="adminWorkspaceSidebar" aria-expanded="false">☰ <span>Menu admin</span></button>
+    <button
+        class="workspace-mobile-toggle"
+        type="button"
+        aria-controls="adminWorkspaceSidebar"
+        aria-expanded="false"
+    >
+        ☰ <span>Menu admin</span>
+    </button>
+
     <div class="dashboard-layout">
-        <!-- ===== SIDEBAR ADMIN (KONSISTEN DENGAN DASHBOARD) ===== -->
-        <aside id="adminWorkspaceSidebar" class="dashboard-sidebar admin-sidebar">
-            <div class="admin-sidebar-heading"><span aria-hidden="true">♕</span><div><strong>ALBIS ADMIN</strong><small>Workspace</small></div></div>
-            <nav aria-label="Menu admin">
-                <a href="{{ url_for('main.katalog') }}"><span aria-hidden="true">↗</span> Lihat toko</a>
-                <a href="{{ url_for('admin.dashboard') }}"><span aria-hidden="true">▦</span> Dashboard</a>
-                <a class="active" href="{{ url_for('admin.produk') }}"><span aria-hidden="true">◇</span> Produk</a>
-                <a href="#" aria-disabled="true" title="Modul menyusul pada tahap backend"><span aria-hidden="true">♙</span> Pengguna <small>Segera</small></a>
-                <a href="#" aria-disabled="true" title="Modul pesanan menyusul pada tahap backend"><span aria-hidden="true">▤</span> Pesanan <small>Segera</small></a>
-                <a href="#" aria-disabled="true" title="Modul pembayaran menyusul pada tahap backend"><span aria-hidden="true">◇</span> Pembayaran <small>Segera</small></a>
-                <a href="#" aria-disabled="true" title="Laporan menyusul pada tahap backend"><span aria-hidden="true">▥</span> Laporan <small>Segera</small></a>
-                <a class="workspace-logout-link" href="{{ url_for('auth.logout') }}"><span aria-hidden="true">↪</span> Keluar dari akun</a>
-            </nav>
-            <div class="admin-sidebar-note">Prototipe akademik<br><span>Data contoh · belum terhubung DB</span></div>
-        </aside>
+        {% include 'partials/admin_sidebar.html' %}
 
-        <!-- ===== FORM TAMBAH PRODUK ===== -->
-        <div class="dashboard-content">
-            <span class="eyebrow">Royal Inventory</span>
-            <h1>Tambah Produk Antik</h1>
-            <p>Form ini sudah menyiapkan input foto. Penyimpanan data produk ke PostgreSQL akan dihubungkan pada tahap backend.</p>
+        <div class="dashboard-content" data-admin-view="products">
+            <header class="admin-page-heading">
+                <div>
+                    <span class="eyebrow">ROYAL INVENTORY</span>
+                    <h1>Kelola Produk</h1>
+                    <p>Periksa nama, harga, stok, dan informasi setiap koleksi.</p>
+                </div>
+                <button
+                    class="button button-primary"
+                    id="toggleProductForm"
+                    type="button"
+                    aria-expanded="false"
+                    aria-controls="productFormPanel"
+                >
+                    + Tambah produk
+                </button>
+            </header>
 
-            <form class="panel product-admin-form" method="post" enctype="multipart/form-data">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="admin-prototype-banner" role="note">
+                {% if database_enabled %}
+                <strong>Mode PostgreSQL.</strong> Perubahan produk dan stok tersimpan langsung ke database, lalu digunakan oleh katalog dan checkout.
+                {% else %}
+                <strong>Mode simulasi lokal.</strong> Produk disimpan oleh server pada direktori instance lokal. Data belum tersimpan di PostgreSQL.
+                {% endif %}
+            </div>
 
-                <!-- ===== INFORMASI DASAR ===== -->
-                <div class="form-grid-two">
-                    <div class="form-field">
-                        <label for="nama">Nama produk</label>
+            <section class="panel admin-product-form-panel" id="productFormPanel" hidden>
+                <div class="admin-panel-heading">
+                    <div>
+                        <span class="eyebrow">PRODUCT DETAILS</span>
+                        <h2 id="productFormTitle">Tambah produk antik</h2>
+                        <p>Isi informasi utama katalog.</p>
+                    </div>
+                    <button
+                        class="button button-secondary button-small"
+                        type="button"
+                        id="cancelProductForm"
+                    >
+                        Tutup
+                    </button>
+                </div>
+
+                <form id="adminProductForm" novalidate>
+                    <input type="hidden" id="productId">
+                    <input type="hidden" id="csrfToken" value="{{ csrf_token() }}">
+
+                    <div class="form-grid-two admin-product-form-grid">
+                        <div class="form-field admin-form-span-6">
+                            <label for="productName">Nama produk</label>
+                            <input
+                                class="form-control"
+                                id="productName"
+                                maxlength="120"
+                                required
+                            >
+                            <small class="field-error" data-product-error="nama" hidden></small>
+                        </div>
+
+                        <div class="form-field admin-form-span-6">
+                            <label for="productCategory">Kategori</label>
+                            <select class="form-control" id="productCategory" required>
+                                <option value="Jam &amp; Timepiece">Jam &amp; Timepiece</option>
+                                <option value="Kamera Vintage">Kamera Vintage</option>
+                                <option value="Porselen &amp; Keramik">Porselen &amp; Keramik</option>
+                                <option value="Perhiasan Antik">Perhiasan Antik</option>
+                                <option value="Buku &amp; Manuskrip">Buku &amp; Manuskrip</option>
+                                <option value="Musik Vintage">Musik Vintage</option>
+                                <option value="Dekorasi &amp; Interior">Dekorasi &amp; Interior</option>
+                                <option value="Travel Collectibles">Travel Collectibles</option>
+                            </select>
+                            <small class="field-error" data-product-error="kategori" hidden></small>
+                        </div>
+
+                        <div class="form-field admin-form-span-3">
+                            <label for="productEra">Era</label>
+                            <select class="form-control" id="productEra" required>
+                                <option>1800s</option>
+                                <option>1900–1949</option>
+                                <option>1950–1999</option>
+                                <option>2000–sekarang</option>
+                            </select>
+                        </div>
+
+                        <div class="form-field admin-form-span-3">
+                            <label for="productOrigin">Asal</label>
+                            <input class="form-control" id="productOrigin" maxlength="100" required>
+                            <small class="field-error" data-product-error="asal" hidden></small>
+                        </div>
+
+                        <div class="form-field admin-form-span-3">
+                            <label for="productCondition">Kondisi</label>
+                            <select class="form-control" id="productCondition" required>
+                                <option>Excellent</option>
+                                <option>Good</option>
+                                <option>Fair</option>
+                                <option>Needs restoration</option>
+                            </select>
+                        </div>
+
+                        <div class="form-field admin-form-span-3">
+                            <label for="productMaterial">Material</label>
+                            <input class="form-control" id="productMaterial" maxlength="100" required>
+                            <small class="field-error" data-product-error="material" hidden></small>
+                        </div>
+
+                        <div class="form-field admin-form-span-4">
+                            <label for="productAuthenticity">Status autentikasi</label>
+                            <select class="form-control" id="productAuthenticity" required>
+                                <option>Verified</option>
+                                <option>Documented</option>
+                                <option>Inspected</option>
+                                <option>Not verified</option>
+                            </select>
+                        </div>
+
+                        <div class="form-field admin-form-span-6">
+                            <label for="productPrice">Harga (Rp)</label>
+                            <input
+                                class="form-control"
+                                id="productPrice"
+                                type="number"
+                                min="1000"
+                                step="1000"
+                                inputmode="numeric"
+                                required
+                            >
+                            <small class="field-error" data-product-error="harga" hidden></small>
+                        </div>
+
+                        <div class="form-field admin-form-span-2 admin-stock-field">
+                            <label for="productStock">Stok</label>
+                            <input
+                                class="form-control"
+                                id="productStock"
+                                type="number"
+                                min="0"
+                                step="1"
+                                inputmode="numeric"
+                                required
+                            >
+                            <small class="field-error" data-product-error="stok" hidden></small>
+                        </div>
+
+                        <div class="form-field form-lebar admin-form-span-12">
+                            <label for="productDescription">Deskripsi</label>
+                            <textarea
+                                class="form-control"
+                                id="productDescription"
+                                maxlength="1000"
+                                rows="4"
+                                required
+                            ></textarea>
+                            <small class="field-error" data-product-error="deskripsi" hidden></small>
+                        </div>
+
+                        <div class="form-field form-lebar admin-form-span-12">
+                            <label for="productImage">Foto produk</label>
+                            <input
+                                class="form-control file-input"
+                                id="productImage"
+                                type="file"
+                                accept="image/jpeg,image/png,image/webp"
+                            >
+                            <small class="field-hint">
+                                {{ 'Foto produk diunggah ke server aplikasi dan path-nya disimpan di database.' if database_enabled else 'Foto demo disimpan pada penyimpanan lokal aplikasi.' }}
+                            </small>
+                            <div class="admin-image-preview" id="productImagePreview" hidden></div>
+                        </div>
+                    </div>
+
+                    <div class="form-aksi">
+                        <button
+                            class="button button-secondary"
+                            id="cancelProductFormBottom"
+                            type="button"
+                        >
+                            Batal
+                        </button>
+                        <button
+                            class="button button-primary"
+                            type="submit"
+                            id="saveProductButton"
+                        >
+                            {{ 'Simpan produk' if database_enabled else 'Simpan produk demo' }}
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <section
+                class="panel admin-products-table-panel"
+                id="adminProductsApp"
+                data-api-url="{{ url_for('admin.api_produk') }}"
+                data-api-item-url="{{ url_for('admin.api_ubah_produk', produk_id=0) }}"
+            >
+                <div class="admin-panel-heading">
+                    <div>
+                        <span class="eyebrow">CATALOG INVENTORY</span>
+                        <h2>Daftar produk</h2>
+                        <p><strong id="adminProductsCount">{{ produk_list|length }}</strong> produk aktif dalam simulasi.</p>
+                    </div>
+                    <div class="admin-table-search">
+                        <label class="visually-hidden" for="adminProductSearch">Cari produk</label>
                         <input
                             class="form-control"
-                            id="nama"
-                            name="nama"
-                            placeholder="Contoh: Victorian Pocket Watch"
+                            id="adminProductSearch"
+                            type="search"
+                            placeholder="Cari nama / kategori..."
                         >
                     </div>
-                    <div class="form-field">
-                        <label for="kategori">Kategori</label>
-                        <select class="form-control" id="kategori" name="kategori">
-                            <option>Jam & Timepiece</option><option>Kamera Vintage</option><option>Porselen & Keramik</option><option>Perhiasan Antik</option><option>Buku & Manuskrip</option><option>Musik Vintage</option><option>Dekorasi & Interior</option><option>Travel Collectibles</option>
-                        </select>
-                    </div>
                 </div>
 
-                <!-- ===== FOTO PRODUK ===== -->
-                <div class="form-field">
-                    <label for="foto_produk">Foto produk</label>
-                    <input
-                        class="form-control file-input"
-                        id="foto_produk"
-                        name="foto_produk"
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp"
-                        required
-                    >
-                    <small class="muted">Format: JPG/JPEG/PNG/WEBP. Untuk implementasi final tambahkan validasi MIME/magic bytes dan batas ukuran.</small>
+                <div class="table-wrap">
+                    <table class="data-table admin-products-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Produk</th>
+                                <th scope="col">Kategori / Era</th>
+                                <th scope="col">Harga</th>
+                                <th scope="col">Stok</th>
+                                <th scope="col">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminProductsBody">
+                            <tr>
+                                <td colspan="5" class="table-empty">Memuat daftar produk...</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
-
-                <!-- ===== PREVIEW FOTO ===== -->
-                <div class="upload-preview" id="uploadPreview">
-                    {% if nama_file_tersimpan %}
-                    <img
-                        src="{{ url_for('admin.foto_produk', nama_file=nama_file_tersimpan) }}"
-                        alt="Preview foto produk yang baru diunggah"
-                    >
-                    {% else %}
-                    <span>Preview foto akan tampil di sini.</span>
-                    {% endif %}
-                </div>
-
-                <!-- ===== AKSI FORM ===== -->
-                <button class="button button-primary" type="submit">Simpan Foto Prototipe</button>
-            </form>
+                <p class="table-footnote">
+                    {% if database_enabled %}Perubahan produk disimpan ke PostgreSQL dan tampil pada katalog setelah berhasil disimpan.{% else %}Perubahan produk tersimpan pada server demo lokal dan belum menggunakan PostgreSQL.{% endif %}
+                </p>
+            </section>
         </div>
     </div>
 </section>
+<script type="application/json" id="adminProductSeed">{{ produk_list|tojson }}</script>
 {% endblock %}
+
 {% block scripts %}
-<script>
-/* ===== PREVIEW FOTO PRODUK SEBELUM UPLOAD ===== */
-document.getElementById('foto_produk')?.addEventListener('change', (event) => {
-    const file = event.target.files?.[0];
-    const preview = document.getElementById('uploadPreview');
-    if (!file || !preview) return;
-    const reader = new FileReader();
-    reader.addEventListener('load', () => {
-        preview.replaceChildren();
-        const gambar = document.createElement('img');
-        gambar.src = reader.result;
-        gambar.alt = 'Preview foto produk';
-        preview.appendChild(gambar);
-    });
-    reader.readAsDataURL(file);
-});
-</script>
+<script src="{{ url_for('static', filename='js/admin-products.js') }}" defer></script>
 {% endblock %}

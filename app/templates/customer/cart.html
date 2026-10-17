@@ -1,21 +1,46 @@
 {% extends 'base.html' %}
+
 {% block title %}Keranjang — Albis Antique{% endblock %}
-{% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/dashboard.css') }}">{% endblock %}
+
+{% block styles %}
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/pages/dashboard.css') }}"
+>
+{% endblock %}
+
 {% block content %}
-<!-- ===== KERANJANG BELANJA ===== -->
-<section class="section-shell">
+<section class="section-shell cart-page">
     <div class="container">
-        <div class="section-heading"><div><span class="eyebrow">Shopping Bag</span><h2 data-i18n="cart_title">Keranjang Belanja</h2><p data-i18n="cart_desc">Tinjau barang pilihan sebelum melanjutkan ke checkout.</p></div></div>
+        <div class="section-heading">
+            <div>
+                <span class="eyebrow">Shopping Bag</span>
+                <h2 data-i18n="cart_title">Keranjang Belanja</h2>
+                <p data-i18n="cart_desc">
+                    Pilih koleksi yang ingin dibeli sebelum melanjutkan ke checkout.
+                </p>
+            </div>
+        </div>
+
         <div class="panel cart-panel">
-            <div id="cartContents" class="saved-items" aria-live="polite" data-catalog-url="{{ url_for('main.katalog') }}" data-checkout-url="{{ url_for('customer.checkout') }}">
+            <div
+                id="cartContents"
+                class="saved-items"
+                aria-live="polite"
+                data-catalog-url="{{ url_for('main.katalog') }}"
+                data-checkout-url="{{ url_for('customer.checkout') }}"
+            >
                 <div class="saved-empty">
                     <div class="saved-empty-icon" aria-hidden="true">🛍</div>
-                    <h2>Keranjang Anda masih kosong.</h2>
-                    <p>Temukan benda antik yang ingin kamu bawa pulang.</p>
-                    <a class="button button-primary" href="{{ url_for('main.katalog') }}">Lanjut Belanja</a>
+                    <h2>Keranjang sedang dimuat.</h2>
+                    <p>Mohon tunggu sebentar.</p>
                 </div>
             </div>
         </div>
+
+        <p class="cart-prototype-note">
+            {% if database_enabled %}Keranjang terhubung ke PostgreSQL dan mengikuti akun yang sedang login.{% else %}Keranjang demo mengikuti akun customer yang sedang login. Data ini masih tersimpan di browser, belum di PostgreSQL.{% endif %}
+        </p>
     </div>
 </section>
 {% endblock %}

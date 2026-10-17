@@ -1,6 +1,16 @@
 {% extends 'base.html' %}
+
 {% block title %}404 — Albis Antique{% endblock %}
+
 {% block content %}
-<!-- ===== ERROR 404 ===== -->
-<section class="section-shell"><div class="container" style="max-width:720px;text-align:center;"><span class="eyebrow">Lost in the Archive</span><h1 style="font:600 clamp(3rem,8vw,6rem) var(--font-heading);margin:10px 0;">404</h1><p class="muted">Halaman atau koleksi yang Anda cari tidak ditemukan.</p><a href="{{ url_for('main.beranda') }}" class="button button-primary">Kembali ke Beranda</a></div></section>
+<section class="section-shell">
+    <div class="container error-page-content">
+        <span class="eyebrow">Lost in the Archive</span>
+        <h1 class="error-page-code">404</h1>
+        <p class="muted">Halaman atau koleksi yang Anda cari tidak ditemukan.</p>
+        <a href="{{ url_for('main.beranda') }}" class="button button-primary">
+            Kembali ke Beranda
+        </a>
+    </div>
+</section>
 {% endblock %}

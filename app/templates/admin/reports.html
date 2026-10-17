@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block title %}Laporan — Albis Antique{% endblock %}
+
+{% block styles %}
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/pages/dashboard.css') }}"
+>
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-shell admin-workspace-shell">
+    <button
+        class="workspace-mobile-toggle"
+        type="button"
+        aria-controls="adminWorkspaceSidebar"
+        aria-expanded="false"
+    >
+        ☰ <span>Menu admin</span>
+    </button>
+
+    <div class="dashboard-layout">
+        {% include 'partials/admin_sidebar.html' %}
+
+        <div class="dashboard-content" data-admin-view="reports">
+            <header class="admin-page-heading">
+                <div>
+                    <span class="eyebrow">STORE SUMMARY</span>
+                    <h1>Laporan</h1>
+                    <p>{{ 'Ringkasan operasional berdasarkan transaksi PostgreSQL.' if database_enabled else 'Ringkasan aktivitas pesanan pada browser demo.' }}</p>
+                </div>
+                <span class="admin-demo-badge">{{ 'PostgreSQL' if database_enabled else 'Mode demo' }}</span>
+            </header>
+
+            <div class="admin-prototype-banner">
+                {% if database_enabled %}
+                <strong>Laporan database.</strong> Pendapatan saat ini menghitung pesanan berstatus Selesai; definisi laporan dapat diselaraskan dengan kebijakan bisnis tim.
+                {% else %}
+                <strong>Angka berikut bukan laporan penjualan resmi.</strong> Data diambil dari checkout demo pada browser saat ini.
+                {% endif %}
+            </div>
+
+            <div class="kpi-grid admin-report-kpis">
+                <article class="kpi-card">
+                    <span>{{ 'Total pesanan' if database_enabled else 'Total pesanan demo' }}</span>
+                    <strong id="reportOrderCount">0</strong>
+                </article>
+                <article class="kpi-card">
+                    <span>Menunggu persetujuan</span>
+                    <strong id="reportPendingCount">0</strong>
+                </article>
+                <article class="kpi-card">
+                    <span>Pesanan selesai</span>
+                    <strong id="reportCompletedCount">0</strong>
+                </article>
+                <article class="kpi-card">
+                    <span>Nilai pesanan selesai</span>
+                    <strong id="reportCompletedValue">Rp0</strong>
+                </article>
+            </div>
+
+            <section class="panel">
+                <div class="admin-panel-heading">
+                    <div>
+                        <h2>Ringkasan status</h2>
+                        <p>{{ 'Status pesanan berdasarkan database.' if database_enabled else 'Status berdasarkan data demo yang terlihat pada browser.' }}</p>
+                    </div>
+                </div>
+                <div id="reportStatusSummary" class="admin-report-status">
+                    <p>Belum ada pesanan demo.</p>
+                </div>
+            </section>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/admin-demo.js') }}" defer></script>
+{% endblock %}
