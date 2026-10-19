@@ -1,1 +1,0 @@
-"""Kumpulan blueprint Albis Antique."""
