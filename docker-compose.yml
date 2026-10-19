@@ -1,22 +1,40 @@
+# Albis Antique: Nginx -> Flask/Gunicorn -> PostgreSQL (database `albis_db`, di luar stack ini).
+# Untuk PostgreSQL lokal dalam Docker, tambahkan -f docker-compose.local.yml.
 services:
   web:
     build:
       context: .
       dockerfile: Dockerfile
     environment:
-      SECRET_KEY: ${SECRET_KEY:-change-this-preview-secret-before-deploy}
+      APP_ENV: ${APP_ENV:-production}
+      SECRET_KEY: ${SECRET_KEY:?Isi SECRET_KEY di environment Portainer atau file .env}
+      DATABASE_URL: ${DATABASE_URL:-}
+      TRUSTED_PROXY_COUNT: ${TRUSTED_PROXY_COUNT:-1}
+      # 1 = cookie hanya lewat HTTPS (wajib saat diakses lewat domain HTTPS).
+      # Isi 0 HANYA untuk uji internal lewat http://IP:PORT.
+      SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-1}
+      ORDER_PAYMENT_TTL_JAM: ${ORDER_PAYMENT_TTL_JAM:-24}
+      MAX_OPEN_ORDERS: ${MAX_OPEN_ORDERS:-5}
+      PAYMENT_BANK_NAME: ${PAYMENT_BANK_NAME:-}
+      PAYMENT_BANK_ACCOUNT: ${PAYMENT_BANK_ACCOUNT:-}
+      PAYMENT_BANK_HOLDER: ${PAYMENT_BANK_HOLDER:-}
+      PAYMENT_QRIS_NOTE: ${PAYMENT_QRIS_NOTE:-}
+    volumes:
+      - instance_data:/app/instance
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
     cap_drop:
       - ALL
     healthcheck:
+      # /health tidak menyentuh database, jadi web tetap "healthy" saat DB belum dimigrasi.
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/health', timeout=3)"]
       interval: 20s
       timeout: 5s
       retries: 5
-      start_period: 10s
-    networks: [app_net]
+      start_period: 25s
+    networks:
+      - app_net
 
   nginx:
     build:
@@ -35,7 +53,27 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
-    networks: [app_net]
+    networks:
+      - app_net
+
+  # Alat sekali jalan (tidak ikut start otomatis): migrasi skema dengan role OWNER database.
+  #   docker compose --profile tools run --rm migrate
+  migrate:
+    profiles: ["tools"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["python", "-m", "flask", "--app", "run", "db", "upgrade"]
+    environment:
+      APP_ENV: ${APP_ENV:-production}
+      SECRET_KEY: ${SECRET_KEY:?Isi SECRET_KEY}
+      DATABASE_URL: ${DATABASE_URL:-}
+      MIGRATION_DATABASE_URL: ${MIGRATION_DATABASE_URL:?Isi MIGRATION_DATABASE_URL (role owner skema)}
+    networks:
+      - app_net
+
+volumes:
+  instance_data:
 
 networks:
   app_net:
