@@ -23,14 +23,16 @@
     {% block styles %}{% endblock %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/efek.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/polish.css') }}">
 </head>
 {% set customer_workspace_endpoints = [
     'customer.dashboard', 'customer.pesanan', 'customer.keranjang',
     'customer.profil', 'customer.checkout', 'customer.keamanan'
 ] %}
 {% set admin_workspace_endpoints = [
-    'admin.dashboard', 'admin.produk', 'admin.pengguna',
-    'admin.pesanan', 'admin.pembayaran', 'admin.laporan'
+    'admin.dashboard', 'admin.produk', 'admin.kategori', 'admin.pengguna',
+    'admin.pesanan', 'admin.pembayaran', 'admin.ulasan', 'admin.laporan',
+    'admin.audit_log', 'admin.akun'
 ] %}
 {% set is_customer_workspace = request.endpoint in customer_workspace_endpoints %}
 {% set is_admin_workspace = request.endpoint in admin_workspace_endpoints %}
@@ -41,10 +43,10 @@
 <body
     class="{% block body_class %}{% endblock %} {{ workspace_body_classes }}"
     data-authenticated="{{ 'true' if current_user.is_authenticated else 'false' }}"
-    data-database-enabled="{{ 'true' if database_enabled else 'false' }}"
+    data-database-enabled="true"
     data-user-avatar="{{ current_user.avatar_data if current_user.is_authenticated and current_user.avatar_data else '' }}"
     data-user-role="{{ current_user.role if current_user.is_authenticated else '' }}"
-    data-user-id="{{ current_user.get_id() if current_user.is_authenticated else '' }}"
+    data-user-id="{{ current_user.id if current_user.is_authenticated else '' }}"
     data-user-name="{{ current_user.nama if current_user.is_authenticated else '' }}"
     data-user-email="{{ current_user.email if current_user.is_authenticated else '' }}"
     data-user-phone="{{ current_user.telepon if current_user.is_authenticated else '' }}"
@@ -95,31 +97,5 @@
     <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
     {% block scripts %}{% endblock %}
 
-    <script>
-    document.addEventListener("DOMContentLoaded", () => {
-        document.querySelectorAll(".workspace-mobile-toggle").forEach(button => {
-            const sidebarId = button.getAttribute("aria-controls");
-            const sidebar = sidebarId ? document.getElementById(sidebarId) : null;
-            if (!sidebar) return;
-
-            const closeSidebar = () => {
-                sidebar.classList.remove("is-open");
-                button.setAttribute("aria-expanded", "false");
-            };
-
-            button.addEventListener("click", () => {
-                const isOpen = sidebar.classList.toggle("is-open");
-                button.setAttribute("aria-expanded", String(isOpen));
-            });
-
-            sidebar.querySelectorAll("a").forEach(link => {
-                link.addEventListener("click", closeSidebar);
-            });
-            document.addEventListener("keydown", event => {
-                if (event.key === "Escape") closeSidebar();
-            });
-        });
-    });
-    </script>
 </body>
 </html>

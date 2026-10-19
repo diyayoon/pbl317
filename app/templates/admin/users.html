@@ -28,20 +28,15 @@
                 <div>
                     <span class="eyebrow">ACCOUNT DIRECTORY</span>
                     <h1>Pengguna</h1>
-                    <p>{{ 'Daftar akun customer dan admin dari PostgreSQL.' if database_enabled else 'Daftar akun yang dikenali pada mode demo lokal.' }}</p>
+                    <p>Daftar akun customer dan admin dari PostgreSQL.</p>
                 </div>
-                <span class="admin-demo-badge">{{ 'PostgreSQL' if database_enabled else 'Mode demo' }}</span>
             </header>
-
-            <div class="admin-prototype-banner">
-                {% if database_enabled %}<strong>Data akun PostgreSQL.</strong> Akun yang tercantum berasal dari tabel users.{% else %}<strong>Mode demo.</strong> Daftar ini membaca akun demo yang disimpan pada server lokal, bukan tabel database.{% endif %}
-            </div>
 
             <section class="panel">
                 <div class="admin-panel-heading">
                     <div>
                         <h2>Daftar akun</h2>
-                        <p>{{ pengguna_list|length }} {{ 'akun' if database_enabled else 'akun demo' }} dikenali oleh aplikasi.</p>
+                        <p>{{ pengguna_list|length }} akun dikenali oleh aplikasi.</p>
                     </div>
                 </div>
 
@@ -52,7 +47,9 @@
                                 <th scope="col">Nama</th>
                                 <th scope="col">Email</th>
                                 <th scope="col">Role</th>
-                                <th scope="col">Status data</th>
+                                <th scope="col">Telepon</th>
+                                <th scope="col">Bergabung</th>
+                                <th scope="col">Status</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -61,11 +58,13 @@
                                 <td><strong>{{ akun.nama }}</strong></td>
                                 <td>{{ akun.email }}</td>
                                 <td><span class="admin-status">{{ akun.role|capitalize }}</span></td>
+                                <td>{{ akun.telepon or "—" }}</td>
+                                <td>{{ akun.bergabung }}</td>
                                 <td>{{ akun.status }}</td>
                             </tr>
                             {% else %}
                             <tr>
-                                <td colspan="4" class="table-empty">{{ 'Belum ada akun dalam database.' if database_enabled else 'Belum ada akun demo.' }}</td>
+                                <td colspan="6" class="table-empty">Belum ada akun dalam database.</td>
                             </tr>
                             {% endfor %}
                         </tbody>

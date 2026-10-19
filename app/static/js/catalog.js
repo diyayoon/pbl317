@@ -1,12 +1,15 @@
 'use strict';
 
-/* Katalog frontend demo: pencarian, filter, sorting, dan pagination berbagi satu hasil. */
+/* Katalog frontend: pencarian, filter, sorting, dan pagination berbagi satu hasil. */
 class FilterKatalog {
     constructor() {
         this.pencarian = document.getElementById('catalogSearch');
         this.kategori = document.getElementById('catalogCategory');
         this.era = document.getElementById('catalogEra');
         this.kondisi = document.getElementById('catalogCondition');
+        this.hargaMin = document.getElementById('catalogPriceMin');
+        this.hargaMax = document.getElementById('catalogPriceMax');
+        this.resetFilter = document.getElementById('catalogFilterReset');
         this.urutan = document.getElementById('catalogSort');
         this.grid = document.getElementById('catalogGrid');
         this.jumlah = document.getElementById('productCount');
@@ -27,10 +30,16 @@ class FilterKatalog {
         const kategori = this.kategori?.value || '';
         const era = this.era?.value || '';
         const kondisi = this.kondisi?.value || '';
+        const hargaMin = this.hargaMin?.value === '' || this.hargaMin?.value == null ? null : Number(this.hargaMin.value);
+        const hargaMax = this.hargaMax?.value === '' || this.hargaMax?.value == null ? null : Number(this.hargaMax.value);
+        const harga = Number(kartu.dataset.price || 0);
         return kata.every(item => teksProduk.includes(item))
             && (!kategori || kartu.dataset.category === kategori)
             && (!era || this.normalisasi(kartu.dataset.era).replace(/[–—]/g, '-') === this.normalisasi(era).replace(/[–—]/g, '-'))
-            && (!kondisi || kartu.dataset.condition === kondisi);
+            && (!kondisi || kartu.dataset.condition === kondisi)
+            && (hargaMin === null || (Number.isFinite(hargaMin) && harga >= hargaMin))
+            && (hargaMax === null || (Number.isFinite(hargaMax) && harga <= hargaMax))
+            && !(hargaMin !== null && hargaMax !== null && hargaMin > hargaMax);
     }
 
     urutkan(kartu) {
@@ -87,6 +96,13 @@ class FilterKatalog {
         kartu.forEach(item => { item.hidden = !terlihat.has(item); });
         if (this.jumlah) this.jumlah.textContent = String(terurut.length);
         if (this.kosong) this.kosong.style.display = terurut.length ? 'none' : 'block';
+        const rangeError = document.getElementById('catalogPriceError');
+        const minValue = this.hargaMin?.value === '' || this.hargaMin?.value == null ? null : Number(this.hargaMin.value);
+        const maxValue = this.hargaMax?.value === '' || this.hargaMax?.value == null ? null : Number(this.hargaMax.value);
+        const invalidRange = minValue !== null && maxValue !== null && minValue > maxValue;
+        if (rangeError) rangeError.hidden = !invalidRange;
+        this.hargaMin?.setAttribute('aria-invalid', String(Boolean(invalidRange)));
+        this.hargaMax?.setAttribute('aria-invalid', String(Boolean(invalidRange)));
         this.renderPagination(terurut.length);
     }
 
@@ -96,12 +112,23 @@ class FilterKatalog {
     }
 
     pasang() {
-        [this.pencarian, this.kategori, this.era, this.kondisi].forEach(elemen => {
+        [this.pencarian, this.kategori, this.era, this.kondisi, this.hargaMin, this.hargaMax].forEach(elemen => {
             elemen?.addEventListener(elemen === this.pencarian ? 'input' : 'change', () => this.terapkan(true));
         });
         this.urutan?.addEventListener('change', () => this.terapkan(true));
+        this.resetFilter?.addEventListener('click', () => {
+            if (this.pencarian) this.pencarian.value = '';
+            if (this.kategori) this.kategori.value = '';
+            if (this.era) this.era.value = '';
+            if (this.kondisi) this.kondisi.value = '';
+            if (this.hargaMin) this.hargaMin.value = '';
+            if (this.hargaMax) this.hargaMax.value = '';
+            if (this.urutan) this.urutan.value = 'popular';
+            this.terapkan(true);
+        });
         this.terapkan(true);
     }
 }
 
 window.FilterKatalog = FilterKatalog;
+

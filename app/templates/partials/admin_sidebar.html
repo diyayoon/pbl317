@@ -24,6 +24,12 @@
             <span aria-hidden="true">◇</span> Produk
         </a>
         <a
+            class="{% if request.endpoint == 'admin.kategori' %}active{% endif %}"
+            href="{{ url_for('admin.kategori') }}"
+        >
+            <span aria-hidden="true">▣</span> Kategori
+        </a>
+        <a
             class="{% if request.endpoint == 'admin.pengguna' %}active{% endif %}"
             href="{{ url_for('admin.pengguna') }}"
         >
@@ -42,10 +48,28 @@
             <span aria-hidden="true">◇</span> Pembayaran
         </a>
         <a
+            class="{% if request.endpoint == 'admin.ulasan' %}active{% endif %}"
+            href="{{ url_for('admin.ulasan') }}"
+        >
+            <span aria-hidden="true">★</span> Ulasan
+        </a>
+        <a
             class="{% if request.endpoint == 'admin.laporan' %}active{% endif %}"
             href="{{ url_for('admin.laporan') }}"
         >
             <span aria-hidden="true">▥</span> Laporan
+        </a>
+        <a
+            class="{% if request.endpoint == 'admin.audit_log' %}active{% endif %}"
+            href="{{ url_for('admin.audit_log') }}"
+        >
+            <span aria-hidden="true">⌕</span> Audit log
+        </a>
+        <a
+            class="{% if request.endpoint == 'admin.akun' %}active{% endif %}"
+            href="{{ url_for('admin.akun') }}"
+        >
+            <span aria-hidden="true">⚙</span> Akun &amp; keamanan
         </a>
 
         <form class="workspace-logout-form" action="{{ url_for('auth.logout') }}" method="post">
@@ -57,7 +81,7 @@
     </nav>
 
     <div class="admin-sidebar-note">
-        {{ 'Mode database' if database_enabled else 'Mode prototipe' }}<br>
-        <span>{{ 'Data tersimpan di PostgreSQL' if database_enabled else 'Data lokal dan contoh browser' }}</span>
+        Masuk sebagai<br>
+        <span>{{ current_user.nama }}</span>
     </div>
 </aside>

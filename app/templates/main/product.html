@@ -1,15 +1,11 @@
 {% extends 'base.html' %}
-{% set item = produk if produk else {
-    'id': produk_id, 'nama': 'Memuat koleksi…', 'gambar': '', 'alt_gambar': 'Foto produk antik',
-    'rating': 0, 'ulasan': 0, 'harga': 0, 'deskripsi': '', 'era': '', 'asal': '',
-    'kondisi': '', 'material': '', 'autentikasi': '', 'stok': 0, 'kategori': '', 'sumber_gambar': ''
-} %}
+{% set item = produk %}
 {% block title %}{{ item.nama }} — Albis Antique{% endblock %}
 {% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/catalog.css') }}">{% endblock %}
 {% block content %}
 <section class="section-shell">
     <div class="container product-detail" id="productDetailRoot" data-product-id="{{ item.id }}">
-        <div class="product-detail-content" data-product-detail-content {% if not produk %}hidden{% endif %}>
+        <div class="product-detail-content" data-product-detail-content>
             <div class="product-gallery">
                 <div class="product-main-image royal-frame">
                     <button class="product-image-zoom" type="button" aria-label="Perbesar foto produk" data-image-zoom>
@@ -21,7 +17,7 @@
             <div class="product-copy">
                 <span class="eyebrow" data-i18n="detail_eyebrow">Detail Koleksi</span>
                 <h1 id="detailProductName">{{ item.nama }}</h1>
-                <div class="rating" id="detailProductRatingLine">★★★★★ <span class="muted" id="detailProductRating">{{ item.rating }} · {{ item.ulasan }} ulasan</span></div>
+                <div class="rating" id="detailProductRatingLine" aria-label="Rating {{ item.rating }} dari 5">{% set penuh = item.rating|round|int %}<span aria-hidden="true">{{ '★' * penuh }}{{ '☆' * (5 - penuh) }}</span> <span class="muted" id="detailProductRating">{% if item.ulasan %}{{ item.rating }} · {{ item.ulasan }} ulasan{% else %}Belum ada ulasan{% endif %}</span></div>
                 <p class="detail-price" id="detailProductPrice">Rp{{ "{:,.0f}".format(item.harga).replace(',', '.') }}</p>
                 <p id="detailProductDescription">{{ item.deskripsi }}</p>
 
@@ -32,7 +28,7 @@
                         <strong>1</strong>
                         <button type="button" aria-label="Tambah jumlah">＋</button>
                     </div>
-                    <button class="button button-primary" type="button"
+                    <button class="button button-primary" type="button" {% if item.stok < 1 %}disabled{% endif %}
                         id="detailAddToCart" data-add-cart="{{ item.id }}" data-product-id="{{ item.id }}"
                         data-product-name="{{ item.nama }}" data-product-price="{{ item.harga }}"
                         data-product-image="{{ item.gambar }}" data-product-category="{{ item.kategori }}"
@@ -40,7 +36,7 @@
                         data-product-url="{{ url_for('main.detail_produk', produk_id=item.id) }}" data-i18n="detail_add">Tambah ke Keranjang</button>
                 </div>
                 <div class="detail-secondary-actions">
-                    <button class="button button-gold" type="button" id="detailBuyNow" data-buy-now
+                    <button class="button button-gold" type="button" id="detailBuyNow" {% if item.stok < 1 %}disabled{% endif %} data-buy-now
                         data-product-id="{{ item.id }}" data-product-name="{{ item.nama }}" data-product-price="{{ item.harga }}"
                         data-product-image="{{ item.gambar }}" data-product-category="{{ item.kategori }}"
                         data-product-origin="{{ item.asal }}" data-product-stock="{{ item.stok }}"
@@ -57,21 +53,37 @@
                     <div class="spec-card"><span data-i18n="spec_condition">Kondisi</span><strong id="detailProductCondition">{{ item.kondisi }}</strong></div>
                     <div class="spec-card"><span data-i18n="spec_material">Material</span><strong id="detailProductMaterial">{{ item.material }}</strong></div>
                     <div class="spec-card"><span data-i18n="spec_authenticity">Autentikasi</span><strong id="detailProductAuthenticity">{{ item.autentikasi }}</strong></div>
-                    <div class="spec-card"><span data-i18n="spec_stock">Stok</span><strong id="detailProductStock">{{ item.stok }} item</strong></div>
+                    <div class="spec-card"><span data-i18n="spec_stock">Stok</span><strong id="detailProductStock">{% if item.stok < 1 %}Stok habis{% else %}{{ item.stok }} item{% endif %}</strong></div>
                 </div>
-                <p class="image-credit" id="detailProductCredit"><a id="detailProductCreditLink" href="{{ item.sumber_gambar or '#' }}" target="_blank" rel="noopener noreferrer">Sumber foto produk: Wikimedia Commons</a></p>
+                {% if item.sumber_gambar %}<p class="image-credit" id="detailProductCredit"><a id="detailProductCreditLink" href="{{ item.sumber_gambar }}" target="_blank" rel="noopener noreferrer">Sumber foto produk</a></p>{% endif %}
             </div>
-        </div>
-        <div class="panel product-detail-not-found" id="detailProductNotFound" {% if produk %}hidden{% endif %}>
-            <span class="eyebrow">Collection unavailable</span>
-            <h1>Produk tidak ditemukan</h1>
-            <p>Produk ini tidak ada di data demo pada browser ini. Buka katalog dan pilih produk yang masih tersedia.</p>
-            <a class="button button-primary" href="{{ url_for('main.katalog') }}">Kembali ke katalog</a>
         </div>
     </div>
 </section>
 
-<section class="section-shell section-soft" id="relatedProductsSection" {% if not produk %}hidden{% endif %}>
+<section class="section-shell" id="reviewsSection">
+    <div class="container">
+        <div class="section-heading"><div><span class="eyebrow">Testimoni</span><h2>Ulasan pembeli</h2></div></div>
+        {% if daftar_ulasan %}
+        <div class="review-list">
+            {% for ul in daftar_ulasan %}
+            <article class="review-card">
+                <div class="review-head">
+                    <strong>{{ ul.nama }}</strong>
+                    <span class="review-stars" aria-label="{{ ul.rating }} dari 5">{{ '★' * ul.rating }}{{ '☆' * (5 - ul.rating) }}</span>
+                    <time datetime="{{ ul.tanggal }}">{{ ul.tanggal[:10] }}</time>
+                </div>
+                {% if ul.komentar %}<p>{{ ul.komentar }}</p>{% endif %}
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="muted">Belum ada ulasan. Ulasan hanya dapat ditulis oleh pembeli yang pesanannya sudah selesai.</p>
+        {% endif %}
+    </div>
+</section>
+
+<section class="section-shell section-soft" id="relatedProductsSection">
     <div class="container">
         <div class="section-heading"><div><span class="eyebrow">Curated Pairing</span><h2 data-i18n="related_title">Koleksi terkait</h2></div></div>
         <div class="product-grid" id="relatedProductGrid">

@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block title %}Kategori — Albis Antique{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-shell admin-workspace-shell">
+    <button class="workspace-mobile-toggle" type="button" aria-controls="adminWorkspaceSidebar" aria-expanded="false">
+        ☰ <span>Menu admin</span>
+    </button>
+
+    <div class="dashboard-layout">
+        {% include 'partials/admin_sidebar.html' %}
+
+        <div class="dashboard-content" data-admin-view="categories">
+            <header class="admin-page-heading">
+                <div>
+                    <span class="eyebrow">CATALOG STRUCTURE</span>
+                    <h1>Kategori</h1>
+                    <p>Atur kategori yang dipakai pada katalog dan filter pelanggan.</p>
+                </div>
+            </header>
+
+            <section class="panel">
+                <div class="admin-panel-heading"><div><h2>Tambah / ubah kategori</h2><p>Kategori yang masih dipakai produk tidak dihapus permanen, hanya dinonaktifkan.</p></div></div>
+                <form id="categoryForm" class="admin-inline-form" novalidate>
+                    <div class="form-field">
+                        <label for="categoryName">Nama kategori</label>
+                        <input class="form-control" id="categoryName" maxlength="80" required>
+                    </div>
+                    <div class="form-field">
+                        <label for="categoryIcon">Ikon (emoji)</label>
+                        <input class="form-control" id="categoryIcon" maxlength="8" value="✧">
+                    </div>
+                    <button class="button button-primary" id="categorySubmit" type="submit">Tambah kategori</button>
+                </form>
+            </section>
+
+            <section class="panel">
+                <div class="admin-panel-heading"><div><h2>Daftar kategori</h2></div></div>
+                <div class="table-wrap">
+                    <table class="data-table">
+                        <thead><tr><th scope="col">Ikon</th><th scope="col">Nama</th><th scope="col">Produk</th><th scope="col">Status</th><th scope="col">Aksi</th></tr></thead>
+                        <tbody id="adminCategoriesBody"><tr><td colspan="5" class="table-empty">Memuat kategori...</td></tr></tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/admin.js') }}" defer></script>
+{% endblock %}

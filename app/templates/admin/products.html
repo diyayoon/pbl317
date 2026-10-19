@@ -42,11 +42,9 @@
             </header>
 
             <div class="admin-prototype-banner" role="note">
-                {% if database_enabled %}
+                
                 <strong>Mode PostgreSQL.</strong> Perubahan produk dan stok tersimpan langsung ke database, lalu digunakan oleh katalog dan checkout.
-                {% else %}
-                <strong>Mode simulasi lokal.</strong> Produk disimpan oleh server pada direktori instance lokal. Data belum tersimpan di PostgreSQL.
-                {% endif %}
+                
             </div>
 
             <section class="panel admin-product-form-panel" id="productFormPanel" hidden>
@@ -84,14 +82,7 @@
                         <div class="form-field admin-form-span-6">
                             <label for="productCategory">Kategori</label>
                             <select class="form-control" id="productCategory" required>
-                                <option value="Jam &amp; Timepiece">Jam &amp; Timepiece</option>
-                                <option value="Kamera Vintage">Kamera Vintage</option>
-                                <option value="Porselen &amp; Keramik">Porselen &amp; Keramik</option>
-                                <option value="Perhiasan Antik">Perhiasan Antik</option>
-                                <option value="Buku &amp; Manuskrip">Buku &amp; Manuskrip</option>
-                                <option value="Musik Vintage">Musik Vintage</option>
-                                <option value="Dekorasi &amp; Interior">Dekorasi &amp; Interior</option>
-                                <option value="Travel Collectibles">Travel Collectibles</option>
+                                {% for k in kategori_list %}<option value="{{ k.nama }}">{{ k.nama }}</option>{% endfor %}
                             </select>
                             <small class="field-error" data-product-error="kategori" hidden></small>
                         </div>
@@ -187,7 +178,7 @@
                                 accept="image/jpeg,image/png,image/webp"
                             >
                             <small class="field-hint">
-                                {{ 'Foto produk diunggah ke server aplikasi dan path-nya disimpan di database.' if database_enabled else 'Foto demo disimpan pada penyimpanan lokal aplikasi.' }}
+                                Foto produk diunggah ke server aplikasi dan path-nya disimpan di database.
                             </small>
                             <div class="admin-image-preview" id="productImagePreview" hidden></div>
                         </div>
@@ -206,7 +197,7 @@
                             type="submit"
                             id="saveProductButton"
                         >
-                            {{ 'Simpan produk' if database_enabled else 'Simpan produk demo' }}
+                            Simpan produk
                         </button>
                     </div>
                 </form>
@@ -222,7 +213,7 @@
                     <div>
                         <span class="eyebrow">CATALOG INVENTORY</span>
                         <h2>Daftar produk</h2>
-                        <p><strong id="adminProductsCount">{{ produk_list|length }}</strong> produk aktif dalam simulasi.</p>
+                        <p><strong id="adminProductsCount">{{ produk_list|length }}</strong> produk terdaftar (aktif maupun nonaktif).</p>
                     </div>
                     <div class="admin-table-search">
                         <label class="visually-hidden" for="adminProductSearch">Cari produk</label>
@@ -254,13 +245,13 @@
                     </table>
                 </div>
                 <p class="table-footnote">
-                    {% if database_enabled %}Perubahan produk disimpan ke PostgreSQL dan tampil pada katalog setelah berhasil disimpan.{% else %}Perubahan produk tersimpan pada server demo lokal dan belum menggunakan PostgreSQL.{% endif %}
+                    Perubahan produk disimpan ke PostgreSQL dan tampil pada katalog setelah berhasil disimpan.
                 </p>
             </section>
         </div>
     </div>
 </section>
-<script type="application/json" id="adminProductSeed">{{ produk_list|tojson }}</script>
+
 {% endblock %}
 
 {% block scripts %}

@@ -254,7 +254,7 @@
     font-size: 1.1rem;
 }
 
-/* Tombol tambahan (wishlist, dll.) */
+/* Aksi sekunder detail produk */
 .detail-secondary-actions {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -328,7 +328,21 @@
 .product-image-zoom { align-self: stretch; height: 100%; position: relative; display: grid; place-items: center; width: 100%; min-height: inherit; padding: 0; border: 0; background: transparent; cursor: zoom-in; overflow: hidden; }
 .product-image-zoom img { display: block; width: 100%; max-height: 620px; object-fit: contain; transition: transform .45s cubic-bezier(.2,.7,.2,1), filter .35s ease; }
 .product-image-zoom:hover img { transform: scale(1.035); filter: saturate(1.03); }
-.zoom-hint { position: absolute; right: 16px; bottom: 16px; padding: 8px 12px; border: 1px solid rgba(199,169,105,.35); border-radius: 999px; color: var(--warna-biru-dalam); background: rgba(255,255,255,.88); box-shadow: 0 6px 18px rgba(25,49,61,.09); font-size: .75rem; opacity: 0; transform: translateY(5px); transition: opacity .22s ease, transform .22s ease; }
+.zoom-hint {
+    position: absolute;
+    right: 16px;
+    bottom: 16px;
+    padding: 8px 12px;
+    border: 1px solid rgba(199, 169, 105, .35);
+    border-radius: 999px;
+    color: var(--warna-biru-dalam);
+    background: rgba(255, 255, 255, .88);
+    box-shadow: 0 6px 18px rgba(25, 49, 61, .09);
+    font-size: .75rem;
+    opacity: 0;
+    transform: translateY(5px);
+    transition: opacity .22s ease, transform .22s ease;
+}
 .product-image-zoom:hover .zoom-hint, .product-image-zoom:focus-visible .zoom-hint { opacity: 1; transform: translateY(0); }
 .product-image-zoom:focus-visible { outline: 3px solid rgba(97,168,214,.65); outline-offset: -5px; }
 .product-thumbs { display: none !important; }
@@ -374,3 +388,59 @@
 .pagination-button.active { background: var(--warna-biru-dalam); color: #fff; border-color: var(--warna-biru-dalam); }
 .pagination-button:disabled { opacity: .38; cursor: not-allowed; }
 .product-card[hidden] { display: none !important; }
+
+/* Rentang harga: minimum — maksimum dalam satu baris yang seimbang. */
+.price-filter-title {
+    font-size: .77rem;
+    font-weight: 800;
+    line-height: 1.35;
+}
+
+.price-filter-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 10px minmax(0, 1fr);
+    align-items: center;
+    column-gap: 6px;
+    width: 100%;
+    min-width: 0;
+}
+
+.price-filter-field {
+    min-width: 0;
+    width: 100%;
+}
+
+.price-filter-grid .form-control {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    min-height: 42px;
+    padding: 0 9px;
+    border-radius: 10px;
+    box-sizing: border-box;
+    font-size: .8rem;
+    text-overflow: ellipsis;
+}
+
+.price-filter-grid .form-control::placeholder {
+    color: var(--warna-muted);
+    opacity: .9;
+}
+
+.price-filter-grid input[type="number"] {
+    font-variant-numeric: tabular-nums;
+}
+
+.price-filter-separator {
+    display: block;
+    color: var(--warna-muted);
+    font-size: .9rem;
+    font-weight: 700;
+    line-height: 1;
+    text-align: center;
+}
+
+.filter-stack .catalog-filter-reset {
+    width: 100%;
+    margin-top: 2px;
+}

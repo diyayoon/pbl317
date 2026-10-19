@@ -123,8 +123,8 @@
             <div id="forgotPasswordInfo" class="auth-reset-note" hidden role="status">
                 <strong>Reset kata sandi belum tersedia.</strong>
                 <p>
-                    Mode demo belum mengirim email pemulihan. Untuk pengujian, gunakan akun
-                    demo lokal atau ubah kata sandi melalui menu Keamanan setelah login customer.
+                    Pemulihan kata sandi mandiri belum tersedia. Hubungi admin Albis Antique
+                    untuk bantuan, atau ubah kata sandi lewat menu Keamanan setelah masuk.
                 </p>
             </div>
 
@@ -139,17 +139,4 @@
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/tombol_mata.js') }}" defer></script>
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-    const button = document.getElementById("forgotPasswordButton");
-    const info = document.getElementById("forgotPasswordInfo");
-    if (!button || !info) return;
-
-    button.addEventListener("click", () => {
-        const isOpening = info.hidden;
-        info.hidden = !isOpening;
-        button.setAttribute("aria-expanded", String(isOpening));
-    });
-});
-</script>
 {% endblock %}

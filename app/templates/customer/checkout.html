@@ -16,16 +16,16 @@
             <div>
                 <span class="eyebrow">Secure Checkout</span>
                 <h2>Checkout</h2>
-                <p>{% if database_enabled %}Periksa koleksi, pilih alamat tersimpan, lalu buat pesanan.{% else %}Periksa koleksi, pilih alamat tersimpan, lalu buat pesanan demo.{% endif %}</p>
+                <p>Periksa koleksi, pilih alamat tersimpan, lalu buat pesanan.</p>
             </div>
         </div>
 
         <div id="checkoutSuccess" class="checkout-success" role="status" hidden>
             <span class="checkout-success-icon" aria-hidden="true">✓</span>
             <div>
-                <h3>{% if database_enabled %}Pesanan berhasil dibuat.{% else %}Pesanan demo berhasil dibuat.{% endif %}</h3>
+                <h3>Pesanan berhasil dibuat.</h3>
                 <p>
-                    {% if database_enabled %}Pesanan tersimpan di database. Pembayaran tetap menunggu bukti dan persetujuan admin.{% else %}Pesanan tersimpan di browser ini. Belum ada pembayaran sungguhan atau penyimpanan database.{% endif %}
+                    Pesanan tersimpan. Lanjutkan dengan transfer, lalu unggah bukti bayar di halaman Pesanan agar admin dapat memverifikasi.
                 </p>
                 <p id="checkoutSuccessOrder" class="checkout-success-order"></p>
             </div>
@@ -36,7 +36,7 @@
 
         <div id="checkoutEmpty" class="glass-card checkout-empty" hidden>
             <div class="saved-empty-icon" aria-hidden="true">🛍</div>
-            <h3>{% if database_enabled %}Belum ada produk yang dipilih.{% else %}Keranjangmu masih kosong.{% endif %}</h3>
+            <h3>Belum ada produk yang dipilih.</h3>
             <p>Tambahkan koleksi dari katalog sebelum melanjutkan checkout.</p>
             <a class="button button-primary" href="{{ url_for('main.katalog') }}">
                 Jelajahi Katalog
@@ -73,26 +73,26 @@
                             class="button button-secondary button-small"
                             href="{{ url_for('customer.profil', _anchor='alamat') }}"
                         >Tambah / kelola alamat di Profil</a>
-                        <span class="checkout-address-note">Alamat yang dipilih akan disalin ke detail pesanan demo.</span>
+                        <span class="checkout-address-note">Alamat yang dipilih disalin ke detail pesanan sehingga tetap utuh walau profil berubah.</span>
                     </div>
                 </section>
 
                 <div class="form-field">
-                    <label for="checkoutPayment">{% if database_enabled %}Metode pembayaran{% else %}Metode pembayaran (simulasi){% endif %}</label>
+                    <label for="checkoutPayment">Metode pembayaran</label>
                     <select class="form-control" id="checkoutPayment" name="pembayaran" required>
                         <option value="Transfer Bank">Transfer Bank</option>
                         <option value="QRIS">QRIS</option>
                     </select>
                     <small class="checkout-payment-note">
-                        {% if database_enabled %}Metode disimpan pada pesanan. Integrasi payment gateway belum aktif; pembayaran diverifikasi manual melalui bukti bayar.{% else %}Pilihan ini hanya dicatat untuk demo; belum terhubung ke payment gateway.{% endif %}
+                        Metode disimpan pada pesanan. Integrasi payment gateway belum aktif; pembayaran diverifikasi manual melalui bukti bayar.
                     </small>
                 </div>
 
                 <button class="button button-primary" id="checkoutSubmit" type="submit">
-                    {% if database_enabled %}Buat Pesanan{% else %}Buat Pesanan Demo{% endif %}
+                    Buat Pesanan
                 </button>
-                <p class="checkout-demo-disclaimer">
-                    {% if database_enabled %}Total dan stok dihitung ulang oleh server. Pesanan akan tercatat di database setelah dikonfirmasi.{% else %}Mode prototipe: pesanan disimpan di localStorage browser, bukan database. Jangan masukkan data sensitif asli.{% endif %}
+                <p class="checkout-disclaimer">
+                    Total dan stok dihitung ulang oleh server. Pesanan yang belum dibayar dibatalkan otomatis setelah batas waktu dan stok dikembalikan.
                 </p>
             </div>
 
@@ -111,7 +111,7 @@
                 </div>
                 <div class="checkout-total-row">
                     <span>Pengiriman</span>
-                    <strong>Gratis (demo)</strong>
+                    <strong>Dihitung admin</strong>
                 </div>
                 <div class="checkout-grand-total">
                     <span>Total</span>
@@ -127,494 +127,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
-(() => {
-    const safeUserId = (document.body.dataset.userId || '').replace(/[^A-Za-z0-9_-]/g, '_');
-    const safeEmail = (document.body.dataset.userEmail || '').trim().toLowerCase().replace(/[^a-z0-9_-]/g, '_');
-    const storageSuffix = safeEmail ? `${safeUserId}__${safeEmail}` : safeUserId;
-    const role = document.body.dataset.userRole || '';
-    const cartKey = `albis_antique_cart_demo_${storageSuffix}`;
-    const orderKey = `albis_antique_orders_demo_${safeUserId}`;
-    const addressKey = `albis_antique_alamat_demo_${safeUserId}`;
-    const selectionKey = `albis_antique_checkout_selection_${storageSuffix}`;
-    const directKey = `albis_antique_checkout_direct_${storageSuffix}`;
-    const money = value => `Rp${Number(value || 0).toLocaleString('id-ID')}`;
-
-    function read(key, fallback = []) {
-        try {
-            return JSON.parse(localStorage.getItem(key)) ?? fallback;
-        } catch {
-            return fallback;
-        }
-    }
-
-    function write(key, value) {
-        try {
-            localStorage.setItem(key, JSON.stringify(value));
-            return true;
-        } catch {
-            return false;
-        }
-    }
-
-    async function initDbCheckout() {
-        const form = document.getElementById('checkoutForm');
-        const empty = document.getElementById('checkoutEmpty');
-        const success = document.getElementById('checkoutSuccess');
-        const itemsNode = document.getElementById('checkoutItems');
-        const totalNode = document.getElementById('checkoutTotal');
-        const subtotalNode = document.getElementById('checkoutSubtotal');
-        const addressList = document.getElementById('checkoutAddresses');
-        const addressFeedback = document.getElementById('checkoutAddressFeedback');
-        const submit = document.getElementById('checkoutSubmit');
-        const url = new URL(window.location.href);
-        const directId = Number(url.searchParams.get('direct_product_id') || 0) || null;
-        const directQuantity = Math.max(1, Number(url.searchParams.get('quantity') || 1));
-        const money = value => `Rp${Number(value || 0).toLocaleString('id-ID')}`;
-        const make = (tag, cls = '', value = undefined) => {
-            const node = document.createElement(tag);
-            if (cls) node.className = cls;
-            if (value !== undefined) node.textContent = value;
-            return node;
-        };
-        const request = async (path, method = 'GET', payload = undefined) => {
-            const headers = { Accept: 'application/json' };
-            const csrf = document.querySelector('meta[name="csrf-token"]')?.content;
-            if (csrf) headers['X-CSRFToken'] = csrf;
-            const options = { method, credentials: 'same-origin', headers };
-            if (payload !== undefined) { headers['Content-Type'] = 'application/json'; options.body = JSON.stringify(payload); }
-            const response = await fetch(path, options);
-            const body = await response.json().catch(() => ({}));
-            if (!response.ok) throw new Error(body.error || `Permintaan gagal (${response.status}).`);
-            return body;
-        };
-        const showError = message => {
-            addressFeedback.textContent = message;
-            addressFeedback.hidden = false;
-        };
-        let selectedAddressId = null;
-        let checkoutItems = [];
-
-        try {
-            const query = directId ? `?direct_product_id=${encodeURIComponent(directId)}&quantity=${encodeURIComponent(directQuantity)}` : '';
-            const data = await request(`/customer/api/checkout${query}`);
-            checkoutItems = Array.isArray(data.items) ? data.items : [];
-            const addresses = Array.isArray(data.addresses?.daftar) ? data.addresses.daftar : [];
-            selectedAddressId = data.addresses?.utamaId || addresses[0]?.id || null;
-            addressList.replaceChildren();
-            if (!addresses.length) {
-                showError('Belum ada alamat lengkap di profil. Tambahkan alamat sebelum checkout.');
-            } else {
-                addresses.forEach((address, index) => {
-                    const complete = Boolean(address.penerima && address.telepon && address.kodePos && address.provinsi && address.kota && address.kecamatan && address.lengkap && address.lengkap.trim().length >= 10);
-                    const option = make('div', 'checkout-address-option' + (complete ? '' : ' is-incomplete'));
-                    const label = make('label', 'checkout-address-option-label');
-                    const radio = document.createElement('input');
-                    radio.type = 'radio'; radio.name = 'alamatId'; radio.value = address.id;
-                    radio.checked = String(address.id) === String(selectedAddressId) && complete;
-                    radio.disabled = !complete; radio.id = `checkoutAddress_${index}`;
-                    const copy = make('span', 'checkout-address-copy');
-                    const title = make('span', 'checkout-address-label-line');
-                    title.append(make('strong', '', address.label || 'Alamat tersimpan'));
-                    if (String(address.id) === String(data.addresses?.utamaId)) title.append(make('span', 'checkout-address-badge', 'Alamat utama'));
-                    copy.append(title, make('span', 'checkout-address-person', `${address.penerima || 'Penerima belum diisi'} · ${address.telepon || 'Telepon belum diisi'}`), make('span', 'checkout-address-text', [address.lengkap, address.kecamatan, address.kota, address.provinsi, address.kodePos].filter(Boolean).join(', ')));
-                    if (!complete) copy.append(make('span', 'checkout-address-incomplete-note', 'Alamat belum lengkap. Lengkapi melalui Profil.'));
-                    label.append(radio, copy); option.append(label); addressList.append(option);
-                    radio.addEventListener('change', () => {
-                        if (!radio.checked) return;
-                        selectedAddressId = String(address.id);
-                        addressList.querySelectorAll('.checkout-address-option').forEach(row => row.classList.toggle('is-selected', row.contains(radio)));
-                        addressFeedback.hidden = true;
-                        submit.disabled = false;
-                    });
-                });
-                const selected = addresses.find(address => String(address.id) === String(selectedAddressId));
-                if (!selected || !selected.penerima || !selected.telepon || !selected.kodePos || !selected.provinsi || !selected.kota || !selected.kecamatan || !selected.lengkap || selected.lengkap.trim().length < 10) {
-                    selectedAddressId = null;
-                    showError('Pilih alamat yang lengkap atau lengkapi alamat melalui Profil.');
-                }
-            }
-
-            itemsNode.replaceChildren();
-            let subtotal = 0;
-            checkoutItems.forEach(item => {
-                const qty = Number(item.jumlah || 1);
-                const price = Number(item.harga || 0);
-                subtotal += price * qty;
-                const row = make('div', 'checkout-item');
-                if (item.gambar) { const image = make('img'); image.src = item.gambar; image.alt = item.nama || 'Foto produk'; image.loading = 'lazy'; row.append(image); }
-                else row.append(make('span', 'checkout-item-placeholder', '✧'));
-                const copy = make('div', 'checkout-item-copy');
-                copy.append(make('strong', '', item.nama || 'Produk Albis Antique'), make('small', '', `${qty} item × ${money(price)}`));
-                row.append(copy, make('strong', 'checkout-item-price', money(price * qty)));
-                itemsNode.append(row);
-            });
-            subtotalNode.textContent = money(subtotal); totalNode.textContent = money(subtotal);
-            if (!checkoutItems.length) { form.hidden = true; empty.hidden = false; return; }
-            empty.hidden = true; form.hidden = false;
-            submit.disabled = !selectedAddressId;
-        } catch (error) {
-            form.hidden = true; empty.hidden = false;
-            const message = make('p', '', error.message || 'Data checkout gagal dimuat dari database.');
-            empty.append(message);
-            return;
-        }
-
-        form.addEventListener('submit', async event => {
-            event.preventDefault();
-            if (!selectedAddressId) { showError('Pilih alamat yang lengkap sebelum membuat pesanan.'); return; }
-            submit.disabled = true;
-            const original = submit.textContent;
-            submit.textContent = 'Menyimpan pesanan…';
-            try {
-                const payload = {
-                    address_id: Number(selectedAddressId),
-                    payment_method: document.getElementById('checkoutPayment').value,
-                };
-                if (directId) { payload.direct_product_id = directId; payload.quantity = directQuantity; }
-                const result = await request('/customer/api/orders', 'POST', payload);
-                form.hidden = true; empty.hidden = true; success.hidden = false;
-                document.getElementById('checkoutSuccessOrder').textContent = `Nomor pesanan: #${result.order.orderNumber} · Total ${money(result.order.total)} · Metode ${result.order.pembayaran}`;
-                success.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            } catch (error) {
-                showError(error.message || 'Pesanan gagal disimpan. Periksa stok dan alamat lalu coba lagi.');
-            } finally {
-                submit.disabled = !selectedAddressId;
-                submit.textContent = original;
-            }
-        });
-    }
-
-    if (document.body.dataset.databaseEnabled === 'true') {
-        void initDbCheckout();
-        return;
-    }
-
-    const form = document.getElementById('checkoutForm');
-    const empty = document.getElementById('checkoutEmpty');
-    const success = document.getElementById('checkoutSuccess');
-    const itemsNode = document.getElementById('checkoutItems');
-    const totalNode = document.getElementById('checkoutTotal');
-    const subtotalNode = document.getElementById('checkoutSubtotal');
-    const selectedIds = read(selectionKey, []);
-    const directItems = read(directKey, null);
-    const isDirectCheckout = Array.isArray(directItems) && directItems.length > 0;
-    const cart = read(cartKey, []);
-    let items = isDirectCheckout
-        ? directItems
-        : (Array.isArray(selectedIds)
-            ? cart.filter(item => selectedIds.includes(Number(item.id)))
-            : []);
-
-    if (role !== 'customer' || !safeUserId) items = [];
-
-    function text(tagName, className, value) {
-        const node = document.createElement(tagName);
-        if (className) node.className = className;
-        node.textContent = value;
-        return node;
-    }
-
-    function showEmpty() {
-        form.hidden = true;
-        empty.hidden = false;
-    }
-
-    const addressListNode = document.getElementById('checkoutAddresses');
-    const addressFeedback = document.getElementById('checkoutAddressFeedback');
-    const checkoutSubmit = document.getElementById('checkoutSubmit');
-    let addressState = read(addressKey, null);
-
-    // Jika customer belum pernah membuka tab Alamat di Profil, buat entri awal
-    // dari data register. Entri ini tetap ditandai belum lengkap bila register
-    // hanya menyimpan satu baris alamat tanpa kota/provinsi/kode pos terpisah.
-    if (!addressState) {
-        const registeredAddress = String(document.body.dataset.userAddress || '').trim();
-        if (registeredAddress && role === 'customer' && safeUserId) {
-            const initialId = `alamat-register-${safeUserId}`;
-            addressState = {
-                daftar: [{
-                    id: initialId,
-                    label: 'Utama',
-                    penerima: document.body.dataset.userName || '',
-                    telepon: document.body.dataset.userPhone || '',
-                    kodePos: '',
-                    provinsi: '',
-                    kota: '',
-                    kecamatan: '',
-                    lengkap: registeredAddress,
-                }],
-                utamaId: initialId,
-            };
-            write(addressKey, addressState);
-        }
-    }
-
-    if (!addressState || typeof addressState !== 'object') {
-        addressState = { daftar: [], utamaId: null };
-    }
-
-    const savedAddresses = Array.isArray(addressState.daftar)
-        ? addressState.daftar.filter(address => address && typeof address.id === 'string')
-        : [];
-
-    function normalizePhone(value) {
-        return String(value || '')
-            .replace(/[^\d+]/g, '')
-            .replace(/^\+/, '')
-            .replace(/\+/g, '')
-            .replace(/^0/, '62');
-    }
-
-    function addressProblems(address) {
-        if (!address) return ['Pilih alamat pengiriman.'];
-        const problems = [];
-        if (String(address.penerima || '').trim().length < 3) problems.push('nama penerima');
-        if (!/^62\d{8,13}$/.test(normalizePhone(address.telepon))) problems.push('nomor telepon');
-        if (!/^\d{5}$/.test(String(address.kodePos || '').trim())) problems.push('kode pos');
-        if (String(address.provinsi || '').trim().length < 3) problems.push('provinsi');
-        if (String(address.kota || '').trim().length < 3) problems.push('kota/kabupaten');
-        if (String(address.kecamatan || '').trim().length < 3) problems.push('kecamatan/kelurahan');
-        const completeStreet = String(address.lengkap || '').trim();
-        if (completeStreet.length < 10 || completeStreet.length > 255) problems.push('alamat lengkap');
-        return problems;
-    }
-
-    function isAddressComplete(address) {
-        return addressProblems(address).length === 0;
-    }
-
-    function formatAddress(address) {
-        return [
-            address.lengkap,
-            address.kecamatan,
-            address.kota,
-            address.provinsi,
-            address.kodePos,
-        ].map(value => String(value || '').trim()).filter(Boolean).join(', ');
-    }
-
-    function makeNode(tag, className, value) {
-        const node = document.createElement(tag);
-        if (className) node.className = className;
-        if (value !== undefined) node.textContent = value;
-        return node;
-    }
-
-    const alamatUtama = savedAddresses.find(address => address.id === addressState.utamaId);
-    let selectedAddressId = alamatUtama && isAddressComplete(alamatUtama)
-        ? alamatUtama.id
-        : (savedAddresses.find(isAddressComplete)?.id || '');
-
-    function getSelectedAddress() {
-        return savedAddresses.find(address => address.id === selectedAddressId && isAddressComplete(address)) || null;
-    }
-
-    function renderAddressOptions() {
-        addressListNode.replaceChildren();
-
-        if (!savedAddresses.length) {
-            addressFeedback.textContent = 'Belum ada alamat tersimpan. Tambahkan alamat melalui Profil sebelum membuat pesanan.';
-            addressFeedback.hidden = false;
-        } else {
-            addressFeedback.textContent = '';
-            addressFeedback.hidden = true;
-        }
-
-        savedAddresses.forEach((address, index) => {
-            const complete = isAddressComplete(address);
-            const option = makeNode('div', 'checkout-address-option');
-            if (!complete) option.classList.add('is-incomplete');
-            if (address.id === selectedAddressId && complete) option.classList.add('is-selected');
-
-            const label = document.createElement('label');
-            label.className = 'checkout-address-option-label';
-            const radio = document.createElement('input');
-            radio.type = 'radio';
-            radio.name = 'alamatId';
-            radio.value = address.id;
-            radio.checked = address.id === selectedAddressId && complete;
-            radio.disabled = !complete;
-            radio.id = `checkoutAddress_${index}`;
-            radio.setAttribute('aria-label', `${address.label || 'Alamat'} — ${address.penerima || 'penerima'}`);
-
-            const content = makeNode('span', 'checkout-address-copy');
-            const titleLine = makeNode('span', 'checkout-address-label-line');
-            titleLine.append(makeNode('strong', '', address.label || 'Alamat tersimpan'));
-            if (address.id === addressState.utamaId) {
-                titleLine.append(makeNode('span', 'checkout-address-badge', 'Alamat utama'));
-            }
-            content.append(titleLine);
-            content.append(makeNode('span', 'checkout-address-person', `${address.penerima || 'Nama penerima belum diisi'} · ${address.telepon || 'Nomor telepon belum diisi'}`));
-            content.append(makeNode('span', 'checkout-address-text', formatAddress(address) || 'Alamat lengkap belum diisi'));
-
-            if (!complete) {
-                content.append(makeNode(
-                    'span',
-                    'checkout-address-incomplete-note',
-                    `Perlu dilengkapi: ${addressProblems(address).join(', ')}. Lengkapi melalui tab Alamat di Profil.`,
-                ));
-            }
-
-            label.append(radio, content);
-            option.append(label);
-            addressListNode.append(option);
-
-            radio.addEventListener('change', () => {
-                if (!radio.checked || !complete) return;
-                selectedAddressId = address.id;
-                addressFeedback.hidden = true;
-                addressFeedback.textContent = '';
-                renderAddressSelectionState();
-            });
-        });
-
-        if (savedAddresses.length && !savedAddresses.some(isAddressComplete)) {
-            addressFeedback.textContent = 'Alamat tersimpan belum lengkap. Buka Profil → Alamat untuk melengkapi kota, provinsi, kode pos, dan alamat lengkap sebelum checkout.';
-            addressFeedback.hidden = false;
-        } else if (savedAddresses.some(address => !isAddressComplete(address))) {
-            addressFeedback.textContent = 'Alamat yang belum lengkap tidak dapat dipilih. Kamu tetap bisa memilih alamat lain yang sudah lengkap.';
-            addressFeedback.hidden = false;
-        }
-
-        checkoutSubmit.disabled = !getSelectedAddress();
-        checkoutSubmit.setAttribute('aria-disabled', String(checkoutSubmit.disabled));
-    }
-
-    function renderAddressSelectionState() {
-        addressListNode.querySelectorAll('.checkout-address-option').forEach(option => {
-            const radio = option.querySelector('input[type="radio"]');
-            option.classList.toggle('is-selected', Boolean(radio?.checked));
-        });
-        checkoutSubmit.disabled = !getSelectedAddress();
-        checkoutSubmit.setAttribute('aria-disabled', String(checkoutSubmit.disabled));
-    }
-
-    renderAddressOptions();
-
-    const subtotal = items.reduce(
-        (sum, item) => sum + Number(item.harga || 0) * Number(item.jumlah || 1),
-        0,
-    );
-
-    function tampilkanItems() {
-        itemsNode.replaceChildren();
-        items.forEach(item => {
-            const row = document.createElement('div');
-            row.className = 'checkout-item';
-
-            if (item.gambar) {
-                const image = document.createElement('img');
-                image.src = item.gambar;
-                image.alt = item.nama || 'Foto produk';
-                image.loading = 'lazy';
-                row.append(image);
-            } else {
-                row.append(text('span', 'checkout-item-placeholder', '✧'));
-            }
-
-            const copy = document.createElement('div');
-            copy.className = 'checkout-item-copy';
-            copy.append(
-                text('strong', '', item.nama || 'Produk Albis Antique'),
-                text('small', '', `${Number(item.jumlah || 1)} item × ${money(item.harga)}`),
-            );
-            row.append(
-                copy,
-                text(
-                    'strong',
-                    'checkout-item-price',
-                    money(Number(item.harga || 0) * Number(item.jumlah || 1)),
-                ),
-            );
-            itemsNode.append(row);
-        });
-
-        subtotalNode.textContent = money(subtotal);
-        totalNode.textContent = money(subtotal);
-    }
-
-    if (!items.length) showEmpty();
-    else tampilkanItems();
-
-    form.addEventListener('submit', event => {
-        event.preventDefault();
-        if (!items.length) return showEmpty();
-
-        const selectedAddress = getSelectedAddress();
-        if (!selectedAddress) {
-            addressFeedback.textContent = 'Pilih alamat yang lengkap atau lengkapi alamat melalui Profil.';
-            addressFeedback.hidden = false;
-            document.getElementById('checkoutAddressTitle').scrollIntoView({ behavior: 'smooth', block: 'center' });
-            return;
-        }
-
-        const data = new FormData(form);
-        const name = String(selectedAddress.penerima || '').trim();
-        const phone = normalizePhone(selectedAddress.telepon);
-        const address = formatAddress(selectedAddress);
-        const problems = addressProblems(selectedAddress);
-        if (problems.length) {
-            addressFeedback.textContent = `Alamat belum lengkap: ${problems.join(', ')}. Perbarui alamat di Profil.`;
-            addressFeedback.hidden = false;
-            return;
-        }
-
-        const orders = read(orderKey, []);
-        const orderId = `AA-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`;
-        const alamatSnapshot = {
-            id: selectedAddress.id,
-            label: selectedAddress.label || 'Alamat',
-            penerima: name,
-            telepon: phone,
-            lengkap: String(selectedAddress.lengkap || '').trim(),
-            kecamatan: String(selectedAddress.kecamatan || '').trim(),
-            kota: String(selectedAddress.kota || '').trim(),
-            provinsi: String(selectedAddress.provinsi || '').trim(),
-            kodePos: String(selectedAddress.kodePos || '').trim(),
-        };
-        const order = {
-            id: orderId,
-            date: new Date().toISOString(),
-            alamatId: selectedAddress.id,
-            alamatPengiriman: alamatSnapshot,
-            nama: name,
-            telepon: phone,
-            alamat: address,
-            pembayaran: data.get('pembayaran'),
-            total: subtotal,
-            status: 'Menunggu pembayaran',
-            items: items.map(item => ({ ...item })),
-            buktiBayar: null,
-        };
-        orders.unshift(order);
-        if (!write(orderKey, orders)) return;
-
-        let cartAfter = cart;
-        if (!isDirectCheckout) {
-            const selectedSet = new Set(items.map(item => Number(item.id)));
-            cartAfter = cart.filter(item => !selectedSet.has(Number(item.id)));
-            if (!write(cartKey, cartAfter)) return;
-        }
-
-        localStorage.removeItem(selectionKey);
-        localStorage.removeItem(directKey);
-
-        const badge = document.getElementById('cartBadge');
-        if (badge) {
-            badge.textContent = String(
-                cartAfter.reduce((sum, item) => sum + Number(item.jumlah || 1), 0),
-            );
-            badge.hidden = cartAfter.length === 0;
-        }
-
-        form.hidden = true;
-        empty.hidden = true;
-        success.hidden = false;
-        document.getElementById('checkoutSuccessOrder').textContent =
-            `Nomor pesanan: #${orderId} · Total ${money(subtotal)} · Metode ${order.pembayaran}`;
-        success.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    });
-})();
-</script>
+<script src="{{ url_for('static', filename='js/checkout.js') }}" defer></script>
 {% endblock %}

@@ -28,24 +28,15 @@
                 <div>
                     <span class="eyebrow">ORDER MANAGEMENT</span>
                     <h1>Pesanan</h1>
-                    <p>{{ 'Kelola status pesanan nyata yang tersimpan di PostgreSQL.' if database_enabled else 'Tinjau pesanan demo yang dibuat dari browser ini.' }}</p>
+                    <p>Kelola status pesanan nyata yang tersimpan di PostgreSQL.</p>
                 </div>
-                <span class="admin-demo-badge">{{ 'PostgreSQL' if database_enabled else 'Mode demo' }}</span>
             </header>
-
-            <div class="admin-prototype-banner">
-                {% if database_enabled %}
-                <strong>Data pesanan tersimpan di PostgreSQL.</strong> Perubahan status dikirim ke backend dan dicatat di database.
-                {% else %}
-                <strong>Transaksi belum persisten.</strong> Daftar demo mengumpulkan pesanan prototipe dari localStorage browser ini, bukan PostgreSQL.
-                {% endif %}
-            </div>
 
             <section class="panel">
                 <div class="admin-panel-heading">
                     <div>
                         <h2>Daftar pesanan</h2>
-                        <p>{{ 'Perbarui status pesanan; status selesai membutuhkan pembayaran disetujui.' if database_enabled else 'Gunakan daftar ini untuk memeriksa status demo.' }}</p>
+                        <p>Perbarui status pesanan; status selesai membutuhkan pembayaran disetujui.</p>
                     </div>
                     <div class="admin-table-search">
                         <label class="visually-hidden" for="adminOrderSearch">Cari pesanan</label>
@@ -68,12 +59,12 @@
                                 <th scope="col">Total</th>
                                 <th scope="col">Status</th>
                                 <th scope="col">Bukti</th>
-                                {% if database_enabled %}<th scope="col">Ubah status</th>{% endif %}
+                                <th scope="col">Ubah status</th>
                             </tr>
                         </thead>
                         <tbody id="adminOrdersBody">
                             <tr>
-                                <td colspan="{{ 7 if database_enabled else 6 }}" class="table-empty">{{ 'Memuat pesanan dari database...' if database_enabled else 'Memuat pesanan demo...' }}</td>
+                                <td colspan="7" class="table-empty">Memuat pesanan...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -85,5 +76,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/admin-demo.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/admin.js') }}" defer></script>
 {% endblock %}

@@ -2,28 +2,21 @@
 
 /* ======================================================================
    FILE   : profil.js
-   ISI    : Halaman Profil Pribadi (prototipe frontend)
-   CATATAN: Data disimpan di localStorage browser, sama seperti keranjang.
-            Validasi di sini hanya untuk kenyamanan pengguna. Saat backend
-            aktif, aturan yang sama WAJIB diperiksa ulang di server
-            (app/utils/validasi.py), karena browser tidak boleh dipercaya.
+   ISI    : Halaman profil, alamat, dan foto akun.
+   CATATAN: Profil dan alamat dimuat/disimpan lewat API Flask (PostgreSQL);
+            validasi server tetap menjadi sumber kebenaran.
    DAFTAR BAGIAN (cari dengan Ctrl+F: "=====" + nama):
       1. KONSTANTA
-      2. KELAS PENYIMPAN LOKAL
-      3. KELAS VALIDATOR FORM
-      4. KELAS EDITOR FOTO
-      5. KELAS HALAMAN PROFIL
-      6. INISIALISASI
+      2. KELAS VALIDATOR FORM
+      3. KELAS EDITOR FOTO
+      4. KELAS HALAMAN PROFIL
+      5. INISIALISASI
    ==================================================================== */
 
 /* ===== KONSTANTA ===== */
-const KUNCI_PROFIL = 'albis_antique_profil_demo';
-const KUNCI_ALAMAT = 'albis_antique_alamat_demo';
-const UKURAN_FOTO_MAKS = 5 * 1024 * 1024; /* sama dengan MAX_CONTENT_LENGTH di config.py */
+const ID_PENGGUNA = (document.body.dataset.userId || 'guest').replace(/[^A-Za-z0-9_-]/g, '_');
+const UKURAN_FOTO_MAKS = 5 * 1024 * 1024; /* foto diperkecil di browser sebelum dikirim (server membatasi 1 MB) */
 const TIPE_FOTO_BOLEH = ['image/png', 'image/jpeg', 'image/webp'];
-const PROFIL_BAWAAN = { nama: 'Demo Customer', email: 'customer@example.test', foto: null };
-const ALAMAT_BAWAAN = { daftar: [], utamaId: null };
-
 /* Peta kolom form alamat: kunci -> [id kolom, id pesan galat] */
 const KOLOM_ALAMAT = {
     label: ['alamatLabel', 'galatLabel'],
@@ -35,37 +28,6 @@ const KOLOM_ALAMAT = {
     kecamatan: ['alamatKecamatan', 'galatKecamatan'],
     lengkap: ['alamatLengkap', 'galatLengkap'],
 };
-
-/* ===== KELAS PENYIMPAN LOKAL ===== */
-class PenyimpanLokal {
-    constructor(kunci, bawaan) {
-        this.kunci = kunci;
-        this.bawaan = bawaan;
-    }
-
-    /* ===== FUNGSI: MEMBACA DATA (JIKA RUSAK / KOSONG, PAKAI NILAI BAWAAN) ===== */
-    baca() {
-        const salinanBawaan = JSON.parse(JSON.stringify(this.bawaan));
-        try {
-            const mentah = localStorage.getItem(this.kunci);
-            if (!mentah) return salinanBawaan;
-            const data = JSON.parse(mentah);
-            return data && typeof data === 'object' ? { ...salinanBawaan, ...data } : salinanBawaan;
-        } catch {
-            return salinanBawaan;
-        }
-    }
-
-    /* ===== FUNGSI: MENULIS DATA; MENGEMBALIKAN false JIKA GAGAL (PENUH / DIBLOKIR) ===== */
-    simpan(data) {
-        try {
-            localStorage.setItem(this.kunci, JSON.stringify(data));
-            return true;
-        } catch {
-            return false;
-        }
-    }
-}
 
 /* ===== KELAS VALIDATOR FORM ===== */
 /* Aturan dibuat sama dengan validasi register (app/utils/validasi.py). */
@@ -86,7 +48,7 @@ class ValidatorForm {
     static nama(teks, sebutan = 'Nama') {
         const nilai = ValidatorForm.rapikan(teks);
         if (!nilai) return `${sebutan} tidak boleh kosong.`;
-        if (nilai.length < 2) return `${sebutan} minimal 2 karakter.`;
+        if (nilai.length < 3) return `${sebutan} minimal 3 karakter.`;
         if (nilai.length > 100 || !/^\p{L}[\p{L} .'-]*$/u.test(nilai)) {
             return `${sebutan} hanya boleh berisi huruf, spasi, titik, apostrof, dan tanda hubung.`;
         }
@@ -120,7 +82,7 @@ class ValidatorForm {
     static wilayah(teks, sebutan) {
         const nilai = ValidatorForm.rapikan(teks);
         if (!nilai) return `${sebutan} tidak boleh kosong.`;
-        if (nilai.length < 2) return `${sebutan} minimal 2 karakter.`;
+        if (nilai.length < 3) return `${sebutan} minimal 3 karakter.`;
         if (nilai.length > 100 || !/^[\p{L}\p{N} .,'/-]+$/u.test(nilai)) {
             return `${sebutan} berisi karakter yang tidak diizinkan.`;
         }
@@ -451,13 +413,11 @@ class EditorFoto {
 /* ===== KELAS HALAMAN PROFIL ===== */
 class HalamanProfil {
     constructor() {
-        this.penyimpanProfil = new PenyimpanLokal(KUNCI_PROFIL, PROFIL_BAWAAN);
-        this.penyimpanAlamat = new PenyimpanLokal(KUNCI_ALAMAT, ALAMAT_BAWAAN);
         this.editorFoto = new EditorFoto();
 
-        this.tersimpan = this.muatProfil();
+        this.tersimpan = { nama: '', email: '', telepon: '', foto: null };
         this.draf = { ...this.tersimpan };
-        this.alamat = this.muatAlamat();
+        this.alamat = { daftar: [], utamaId: null };
 
         this.daftarTab = [...document.querySelectorAll('[data-tab]')];
         this.kunciTab = this.daftarTab.map((tombol) => tombol.dataset.tab);
@@ -468,6 +428,7 @@ class HalamanProfil {
 
         this.kolomNama = document.getElementById('namaLengkap');
         this.kolomEmail = document.getElementById('emailProfil');
+        this.kolomTelepon = document.getElementById('teleponProfil');
         this.inputFoto = document.getElementById('inputFoto');
         this.tombolHapusFoto = document.getElementById('hapusFoto');
         this.avatar = document.getElementById('avatarBulat');
@@ -477,30 +438,58 @@ class HalamanProfil {
         this.daftarAlamat = document.getElementById('daftarAlamat');
     }
 
-    /* ===== FUNGSI: MEMBACA PROFIL TERSIMPAN DAN MEMBERSIHKAN TIPE DATANYA ===== */
-    muatProfil() {
-        const data = this.penyimpanProfil.baca();
-        const foto = typeof data.foto === 'string' && data.foto.startsWith('data:image/') ? data.foto : null;
-        return {
-            nama: typeof data.nama === 'string' ? data.nama : PROFIL_BAWAAN.nama,
-            email: typeof data.email === 'string' ? data.email : PROFIL_BAWAAN.email,
-            foto,
-        };
+    async requestServer(url, method = 'GET', payload = undefined) {
+        const headers = { Accept: 'application/json' };
+        const csrf = document.querySelector('meta[name="csrf-token"]')?.content;
+        if (csrf) headers['X-CSRFToken'] = csrf;
+        const options = { method, credentials: 'same-origin', headers };
+        if (payload !== undefined) {
+            headers['Content-Type'] = 'application/json';
+            options.body = JSON.stringify(payload);
+        }
+        const response = await fetch(url, options);
+        const result = await response.json().catch(() => ({}));
+        if (response.status === 401) { window.location.href = result.login || '/auth/login'; throw new Error(result.error || 'Sesi berakhir.'); }
+        if (!response.ok) throw new Error(result.error || `Penyimpanan gagal (${response.status}).`);
+        return result;
     }
 
-    /* ===== FUNGSI: MEMBACA ALAMAT TERSIMPAN DAN MEMBUANG DATA RUSAK ===== */
-    muatAlamat() {
-        const data = this.penyimpanAlamat.baca();
-        const kunciTeks = ['label', 'penerima', 'telepon', 'kodePos', 'provinsi', 'kota', 'kecamatan', 'lengkap'];
-        const daftar = (Array.isArray(data.daftar) ? data.daftar : []).filter(
-            (a) => a && typeof a.id === 'string' && kunciTeks.every((kunci) => typeof a[kunci] === 'string'),
-        );
-        const utamaAda = daftar.some((a) => a.id === data.utamaId);
-        return { daftar, utamaId: utamaAda ? data.utamaId : (daftar[0]?.id ?? null) };
+    async muatDariServer() {
+        const [profil, alamat] = await Promise.all([
+            this.requestServer('/customer/api/profile'),
+            this.requestServer('/customer/api/addresses'),
+        ]);
+        this.tersimpan = {
+            nama: profil.nama || '', email: profil.email || '',
+            telepon: profil.telepon || '', foto: profil.foto || null,
+        };
+        this.draf = { ...this.tersimpan };
+        this.alamat = { daftar: Array.isArray(alamat.daftar) ? alamat.daftar : [], utamaId: alamat.utamaId || null };
+        if (!this.alamat.daftar.length && profil.alamat_registrasi) {
+            const idDrafAlamat = `alamat-register-${ID_PENGGUNA}`;
+            this.alamat = {
+                daftar: [{
+                    id: idDrafAlamat, label: 'Alamat pendaftaran (lengkapi)',
+                    penerima: profil.nama || '', telepon: profil.telepon || '',
+                    kodePos: '', provinsi: '', kota: '', kecamatan: '',
+                    lengkap: profil.alamat_registrasi, isPrimary: true,
+                }],
+                utamaId: idDrafAlamat,
+            };
+        }
+        document.body.dataset.userName = this.tersimpan.nama;
+        document.body.dataset.userEmail = this.tersimpan.email;
+        document.body.dataset.userPhone = this.tersimpan.telepon;
+        document.body.dataset.userAvatar = this.tersimpan.foto || '';
     }
 
     /* ===== FUNGSI: MENJALANKAN HALAMAN ===== */
-    mulai() {
+    async mulai() {
+        try { await this.muatDariServer(); }
+        catch (error) {
+            this.tampilkanToast(error.message || 'Data profil gagal dimuat.', true);
+            return;
+        }
         this.isiFormProfil();
         this.tampilkanFoto();
         this.pasangTab();
@@ -595,6 +584,7 @@ class HalamanProfil {
         return (
             this.draf.nama !== this.tersimpan.nama ||
             this.draf.email !== this.tersimpan.email ||
+            this.draf.telepon !== this.tersimpan.telepon ||
             this.draf.foto !== this.tersimpan.foto
         );
     }
@@ -603,8 +593,10 @@ class HalamanProfil {
     isiFormProfil() {
         document.getElementById('namaLengkap').value = this.draf.nama;
         document.getElementById('emailProfil').value = this.draf.email;
+        document.getElementById('teleponProfil').value = this.draf.telepon || '';
         this.aturGalat('namaLengkap', 'galatNama', '');
         this.aturGalat('emailProfil', 'galatEmail', '');
+        this.aturGalat('teleponProfil', 'galatTeleponProfil', '');
     }
 
     /* ===== FUNGSI: MENAMPILKAN FOTO (ATAU IKON BAWAAN) DI LINGKARAN ===== */
@@ -641,6 +633,18 @@ class HalamanProfil {
             this.aturGalat('emailProfil', 'galatEmail', '');
             this.perbaruiBar();
         });
+        this.kolomTelepon.addEventListener('input', () => {
+            this.draf.telepon = this.kolomTelepon.value;
+            this.aturGalat('teleponProfil', 'galatTeleponProfil', '');
+            this.perbaruiBar();
+        });
+        this.kolomTelepon.addEventListener('blur', () => {
+            if (this.kolomTelepon.value.trim()) {
+                this.kolomTelepon.value = ValidatorForm.normalisasiTelepon(this.kolomTelepon.value);
+                this.draf.telepon = this.kolomTelepon.value;
+                this.perbaruiBar();
+            }
+        });
 
         this.inputFoto.addEventListener('change', async () => {
             const file = this.inputFoto.files[0];
@@ -664,9 +668,9 @@ class HalamanProfil {
             this.perbaruiBar();
         });
 
-        document.getElementById('formProfil').addEventListener('submit', (peristiwa) => {
+        document.getElementById('formProfil').addEventListener('submit', async (peristiwa) => {
             peristiwa.preventDefault();
-            this.simpanProfil();
+            await this.simpanProfil();
         });
     }
 
@@ -680,8 +684,8 @@ class HalamanProfil {
             this.lanjutkanTujuan();
         });
 
-        document.getElementById('simpanDariBar').addEventListener('click', () => {
-            if (this.simpanProfil()) this.lanjutkanTujuan();
+        document.getElementById('simpanDariBar').addEventListener('click', async () => {
+            if (await this.simpanProfil()) this.lanjutkanTujuan();
         });
     }
 
@@ -693,24 +697,30 @@ class HalamanProfil {
     }
 
     /* ===== FUNGSI: MEMERIKSA DAN MENYIMPAN PROFIL; MENGEMBALIKAN true JIKA BERHASIL ===== */
-    simpanProfil() {
+    async simpanProfil() {
         const galatNama = ValidatorForm.nama(this.draf.nama, 'Nama lengkap');
         const galatEmail = ValidatorForm.email(this.draf.email);
+        const galatTelepon = ValidatorForm.telepon(this.draf.telepon || '');
         this.aturGalat('namaLengkap', 'galatNama', galatNama);
         this.aturGalat('emailProfil', 'galatEmail', galatEmail);
+        this.aturGalat('teleponProfil', 'galatTeleponProfil', galatTelepon);
 
-        if (galatNama || galatEmail) {
-            (galatNama ? this.kolomNama : this.kolomEmail).focus();
+        if (galatNama || galatEmail || galatTelepon) {
+            (galatNama ? this.kolomNama : galatTelepon ? this.kolomTelepon : this.kolomEmail).focus();
             return false;
         }
 
         const bersih = {
             nama: ValidatorForm.rapikan(this.draf.nama),
             email: this.draf.email.trim(),
+            telepon: ValidatorForm.normalisasiTelepon(this.draf.telepon),
             foto: this.draf.foto,
         };
-        if (!this.penyimpanProfil.simpan(bersih)) {
-            this.tampilkanToast('Gagal menyimpan: penyimpanan browser penuh atau diblokir.', true);
+        try {
+            const result = await this.requestServer('/customer/api/profile', 'PUT', bersih);
+            Object.assign(bersih, result.profile || {});
+        } catch (error) {
+            this.tampilkanToast(error.message || 'Profil gagal disimpan.', true);
             return false;
         }
 
@@ -718,7 +728,12 @@ class HalamanProfil {
         this.draf = { ...bersih };
         this.isiFormProfil();
         this.perbaruiBar();
-        this.tampilkanToast('Profil berhasil diperbarui.');
+        document.body.dataset.userName = bersih.nama;
+        document.body.dataset.userEmail = bersih.email;
+        document.body.dataset.userPhone = bersih.telepon;
+        document.body.dataset.userAvatar = bersih.foto || '';
+        window.dispatchEvent(new CustomEvent('albis:profile-updated', { detail: { ...bersih } }));
+        this.tampilkanToast('Profil berhasil disimpan.');
         return true;
     }
 
@@ -729,9 +744,9 @@ class HalamanProfil {
         document.getElementById('alamatBaru').addEventListener('click', () => this.bukaFormAlamat());
         document.getElementById('batalAlamat').addEventListener('click', () => this.tutupFormAlamat());
 
-        this.formAlamat.addEventListener('submit', (peristiwa) => {
+        this.formAlamat.addEventListener('submit', async (peristiwa) => {
             peristiwa.preventDefault();
-            this.simpanAlamat();
+            await this.simpanAlamat();
         });
 
         /* Hapus pesan galat saat kolom diketik ulang */
@@ -812,12 +827,14 @@ class HalamanProfil {
     }
 
     /* ===== FUNGSI: MENYIMPAN KEADAAN ALAMAT BARU; GAGAL = KEADAAN LAMA TIDAK DIUBAH ===== */
-    terapkanAlamat(keadaanBaru) {
-        if (!this.penyimpanAlamat.simpan(keadaanBaru)) {
-            this.tampilkanToast('Gagal menyimpan: penyimpanan browser penuh atau diblokir.', true);
+    async terapkanAlamat(keadaanBaru) {
+        try {
+            const saved = await this.requestServer('/customer/api/addresses', 'PUT', keadaanBaru);
+            this.alamat = { daftar: saved.daftar || [], utamaId: saved.utamaId || null };
+        } catch (error) {
+            this.tampilkanToast(error.message || 'Alamat gagal disimpan.', true);
             return false;
         }
-        this.alamat = keadaanBaru;
         this.gambarDaftarAlamat();
         return true;
     }
@@ -830,7 +847,7 @@ class HalamanProfil {
         const nilai = {
             label: alamat && alamat.label !== 'Alamat' ? alamat.label : '',
             penerima: alamat?.penerima ?? '',
-            telepon: alamat?.telepon ?? '',
+            telepon: alamat?.telepon ?? this.tersimpan.telepon ?? '',
             kodePos: alamat?.kodePos ?? '',
             provinsi: alamat?.provinsi ?? '',
             kota: alamat?.kota ?? '',
@@ -856,7 +873,7 @@ class HalamanProfil {
     }
 
     /* ===== FUNGSI: MEMERIKSA FORM ALAMAT LALU MENYIMPANNYA ===== */
-    simpanAlamat() {
+    async simpanAlamat() {
         const mentah = {};
         Object.entries(KOLOM_ALAMAT).forEach(([kunci, [idKolom]]) => {
             mentah[kunci] = document.getElementById(idKolom).value;
@@ -884,22 +901,22 @@ class HalamanProfil {
             if (!utamaId) utamaId = idBaru;
         }
 
-        if (!this.terapkanAlamat({ daftar, utamaId })) return;
+        if (!await this.terapkanAlamat({ daftar, utamaId })) return;
         this.tutupFormAlamat();
         this.tampilkanToast('Alamat berhasil disimpan.');
     }
 
     /* ===== FUNGSI: MENJADIKAN SATU ALAMAT SEBAGAI ALAMAT UTAMA ===== */
-    jadikanUtama(id) {
-        this.terapkanAlamat({ daftar: [...this.alamat.daftar], utamaId: id });
+    async jadikanUtama(id) {
+        await this.terapkanAlamat({ daftar: [...this.alamat.daftar], utamaId: id });
     }
 
     /* ===== FUNGSI: MENGHAPUS ALAMAT SETELAH KONFIRMASI ===== */
-    hapusAlamat(id) {
+    async hapusAlamat(id) {
         if (!window.confirm('Hapus alamat ini dari daftar alamat tersimpan?')) return;
         const daftar = this.alamat.daftar.filter((a) => a.id !== id);
         const utamaId = this.alamat.utamaId === id ? (daftar[0]?.id ?? null) : this.alamat.utamaId;
-        if (!this.terapkanAlamat({ daftar, utamaId })) return;
+        if (!await this.terapkanAlamat({ daftar, utamaId })) return;
         if (this.idSedangDiedit === id) this.tutupFormAlamat();
         this.tampilkanToast('Alamat dihapus.');
     }

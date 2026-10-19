@@ -87,12 +87,11 @@
         </div>
 
         <aside class="security-note">
-            <strong>Catatan mode demo</strong>
+            <strong>Keamanan akunmu</strong>
             <p>
-                Hash password disimpan pada file lokal di direktori instance aplikasi sehingga
-                perubahan tetap ada setelah server dimulai ulang pada komputer ini. Data belum
-                disimpan ke PostgreSQL dan tidak dibagikan ke perangkat lain. Verifikasi email
-                dan autentikasi dua faktor tidak ditambahkan karena belum menjadi requirement PBL.
+                Kata sandi disimpan sebagai hash (tidak dapat dibaca siapa pun, termasuk admin).
+                Setelah kata sandi diganti, sesi di perangkat lain otomatis keluar. Percobaan masuk
+                yang gagal berulang akan dibatasi sementara untuk mencegah tebakan kata sandi.
             </p>
         </aside>
     </div>
@@ -100,58 +99,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-    const form = document.getElementById("formUbahPassword");
-    if (!form) return;
-
-    const current = document.getElementById("passwordLama");
-    const fresh = document.getElementById("passwordBaru");
-    const confirm = document.getElementById("konfirmasiPasswordBaru");
-
-    const showError = (field, message) => {
-        const node = document.getElementById(`${field.id}Error`);
-        if (!node) return;
-        node.textContent = message;
-        node.hidden = !message;
-        field.setAttribute("aria-invalid", String(Boolean(message)));
-    };
-
-    const newPasswordError = () => {
-        if (fresh.value.length < 16) return "Kata sandi baru minimal 16 karakter.";
-        if (fresh.value.length > 128) return "Maksimal 128 karakter.";
-        if (!fresh.value.trim()) return "Kata sandi tidak boleh hanya berisi spasi.";
-        if (fresh.value === current.value) {
-            return "Kata sandi baru harus berbeda dari kata sandi saat ini.";
-        }
-        return "";
-    };
-
-    [current, fresh, confirm].forEach(field => {
-        field.addEventListener("input", () => showError(field, ""));
-    });
-
-    form.addEventListener("submit", event => {
-        const errors = [
-            [current, current.value ? "" : "Kata sandi saat ini wajib diisi."],
-            [fresh, newPasswordError()],
-            [
-                confirm,
-                !confirm.value
-                    ? "Konfirmasi wajib diisi."
-                    : confirm.value !== fresh.value
-                        ? "Konfirmasi kata sandi tidak cocok."
-                        : "",
-            ],
-        ];
-
-        errors.forEach(([field, message]) => showError(field, message));
-        const firstError = errors.find(([, message]) => message);
-        if (firstError) {
-            event.preventDefault();
-            firstError[0].focus();
-        }
-    });
-});
-</script>
+<script src="{{ url_for('static', filename='js/security.js') }}" defer></script>
 {% endblock %}

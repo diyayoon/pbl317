@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}Ulasan — Albis Antique{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-shell admin-workspace-shell">
+    <button class="workspace-mobile-toggle" type="button" aria-controls="adminWorkspaceSidebar" aria-expanded="false">
+        ☰ <span>Menu admin</span>
+    </button>
+
+    <div class="dashboard-layout">
+        {% include 'partials/admin_sidebar.html' %}
+
+        <div class="dashboard-content" data-admin-view="reviews">
+            <header class="admin-page-heading">
+                <div>
+                    <span class="eyebrow">REVIEW MODERATION</span>
+                    <h1>Ulasan</h1>
+                    <p>Moderasi ulasan pembeli. Isi dan rating tidak diubah; ulasan hanya disembunyikan dengan alasan tercatat.</p>
+                </div>
+            </header>
+
+            <section class="panel">
+                <div class="admin-panel-heading"><div><h2>Semua ulasan</h2><p>Ulasan yang disembunyikan tidak tampil di halaman produk dan tidak dihitung pada rating.</p></div></div>
+                <div class="table-wrap">
+                    <table class="data-table">
+                        <thead><tr><th scope="col">Produk</th><th scope="col">Pembeli</th><th scope="col">Rating</th><th scope="col">Komentar</th><th scope="col">Status</th><th scope="col">Aksi</th></tr></thead>
+                        <tbody id="adminReviewsBody"><tr><td colspan="6" class="table-empty">Memuat ulasan...</td></tr></tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/admin.js') }}" defer></script>
+{% endblock %}

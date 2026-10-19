@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ kode }} — Albis Antique{% endblock %}
+
+{% block content %}
+<section class="section-shell">
+    <div class="container error-page-content">
+        <span class="eyebrow">Albis Antique</span>
+        <h1 class="error-page-code">{{ kode }}</h1>
+        <p class="muted">{{ pesan }}</p>
+        <a href="{{ url_for('main.beranda') }}" class="button button-primary">Kembali ke Beranda</a>
+    </div>
+</section>
+{% endblock %}

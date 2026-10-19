@@ -28,22 +28,13 @@
                 <div>
                     <span class="eyebrow">STORE SUMMARY</span>
                     <h1>Laporan</h1>
-                    <p>{{ 'Ringkasan operasional berdasarkan transaksi PostgreSQL.' if database_enabled else 'Ringkasan aktivitas pesanan pada browser demo.' }}</p>
+                    <p>Ringkasan operasional berdasarkan transaksi PostgreSQL.</p>
                 </div>
-                <span class="admin-demo-badge">{{ 'PostgreSQL' if database_enabled else 'Mode demo' }}</span>
             </header>
-
-            <div class="admin-prototype-banner">
-                {% if database_enabled %}
-                <strong>Laporan database.</strong> Pendapatan saat ini menghitung pesanan berstatus Selesai; definisi laporan dapat diselaraskan dengan kebijakan bisnis tim.
-                {% else %}
-                <strong>Angka berikut bukan laporan penjualan resmi.</strong> Data diambil dari checkout demo pada browser saat ini.
-                {% endif %}
-            </div>
 
             <div class="kpi-grid admin-report-kpis">
                 <article class="kpi-card">
-                    <span>{{ 'Total pesanan' if database_enabled else 'Total pesanan demo' }}</span>
+                    <span>Total pesanan</span>
                     <strong id="reportOrderCount">0</strong>
                 </article>
                 <article class="kpi-card">
@@ -64,12 +55,22 @@
                 <div class="admin-panel-heading">
                     <div>
                         <h2>Ringkasan status</h2>
-                        <p>{{ 'Status pesanan berdasarkan database.' if database_enabled else 'Status berdasarkan data demo yang terlihat pada browser.' }}</p>
+                        <p>Status pesanan berdasarkan database.</p>
                     </div>
                 </div>
                 <div id="reportStatusSummary" class="admin-report-status">
-                    <p>Belum ada pesanan demo.</p>
+                    <p>Belum ada pesanan.</p>
                 </div>
+            </section>
+
+            <section class="panel">
+                <div class="admin-panel-heading">
+                    <div>
+                        <h2>Produk terlaris</h2>
+                        <p>Dihitung dari pesanan yang pembayarannya sudah disetujui.</p>
+                    </div>
+                </div>
+                <div id="reportTopProducts" class="admin-report-status"></div>
             </section>
         </div>
     </div>
@@ -77,5 +78,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/admin-demo.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/admin.js') }}" defer></script>
 {% endblock %}

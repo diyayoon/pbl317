@@ -1,56 +1,42 @@
 services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      SECRET_KEY: ${SECRET_KEY:-change-this-preview-secret-before-deploy}
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/health', timeout=3)"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks: [app_net]
+
   nginx:
-    image: pbl317-nginx:latest
-    pull_policy: never
-    container_name: my-nginx
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
     ports:
-      - "8080:80"
+      - "${APP_HTTP_PORT:-8081}:80"
     depends_on:
       web:
         condition: service_healthy
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/"]
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/health"]
       interval: 30s
       timeout: 5s
       retries: 3
+    networks: [app_net]
 
-  web:
-    image: pbl317-web:latest
-    pull_policy: never
-    container_name: albis-web
-    environment:
-      SECRET_KEY: ${SECRET_KEY:?SECRET_KEY wajib diisi}
-      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD wajib diisi}@db:5432/${POSTGRES_DB:-albis_antique}
-    depends_on:
-      db:
-        condition: service_healthy
-    volumes:
-      - instance_data:/app/instance
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/', timeout=3)"]
-      interval: 15s
-      timeout: 5s
-      retries: 5
-      start_period: 20s
-
-  db:
-    image: postgres:17-alpine
-    container_name: albis-db
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD wajib diisi}
-      POSTGRES_DB: ${POSTGRES_DB:-albis_antique}
-    volumes:
-      - db_data:/var/lib/postgresql/data
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-albis_antique}"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-
-volumes:
-  db_data:
-  instance_data:
+networks:
+  app_net:
+    driver: bridge

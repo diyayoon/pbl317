@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block title %}Audit log — Albis Antique{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-shell admin-workspace-shell">
+    <button class="workspace-mobile-toggle" type="button" aria-controls="adminWorkspaceSidebar" aria-expanded="false">
+        ☰ <span>Menu admin</span>
+    </button>
+
+    <div class="dashboard-layout">
+        {% include 'partials/admin_sidebar.html' %}
+
+        <div class="dashboard-content" data-admin-view="audit">
+            <header class="admin-page-heading">
+                <div>
+                    <span class="eyebrow">SECURITY TRAIL</span>
+                    <h1>Audit log</h1>
+                    <p>Jejak aktivitas penting: login, perubahan produk, status pesanan, pembayaran, dan moderasi.</p>
+                </div>
+            </header>
+
+            <section class="panel">
+                <div class="admin-panel-heading"><div><h2>300 aktivitas terakhir</h2><p>Dicatat otomatis oleh backend; tidak dapat diubah dari panel.</p></div></div>
+                <div class="table-wrap">
+                    <table class="data-table">
+                        <thead><tr><th scope="col">Waktu</th><th scope="col">Pelaku</th><th scope="col">Aksi</th><th scope="col">Target</th><th scope="col">Detail</th><th scope="col">IP</th></tr></thead>
+                        <tbody>
+                            {% for b in baris %}
+                            <tr>
+                                <td>{{ b.waktu[:19].replace('T', ' ') }}</td>
+                                <td>{{ b.aktor }}</td>
+                                <td><span class="admin-status {{ 'is-pending' if 'gagal' in b.aksi or 'diblokir' in b.aksi else 'is-paid' }}">{{ b.aksi }}</span></td>
+                                <td>{{ b.target }}</td>
+                                <td>{{ b.detail }}</td>
+                                <td>{{ b.ip }}</td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="6" class="table-empty">Belum ada aktivitas tercatat.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </div>
+</section>
+{% endblock %}

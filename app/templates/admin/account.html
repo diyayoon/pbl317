@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}Akun & keamanan — Albis Antique{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-shell admin-workspace-shell">
+    <button class="workspace-mobile-toggle" type="button" aria-controls="adminWorkspaceSidebar" aria-expanded="false">
+        ☰ <span>Menu admin</span>
+    </button>
+
+    <div class="dashboard-layout">
+        {% include 'partials/admin_sidebar.html' %}
+
+        <div class="dashboard-content" data-admin-view="account">
+            <header class="admin-page-heading">
+                <div>
+                    <span class="eyebrow">ADMIN ACCOUNT</span>
+                    <h1>Akun & keamanan</h1>
+                    <p>Ganti kata sandi akun admin Anda.</p>
+                </div>
+            </header>
+
+            <section class="panel">
+                <div class="admin-panel-heading"><div><h2>Ganti kata sandi</h2><p>Masuk sebagai {{ current_user.email }}. Setelah diganti, sesi di perangkat lain otomatis keluar.</p></div></div>
+                <form method="post" class="admin-inline-form admin-password-form" autocomplete="off">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="form-field"><label for="pwLama">Kata sandi saat ini</label><input class="form-control" id="pwLama" name="password_lama" type="password" autocomplete="current-password" maxlength="200" required></div>
+                    <div class="form-field"><label for="pwBaru">Kata sandi baru (16–128 karakter)</label><input class="form-control" id="pwBaru" name="password_baru" type="password" autocomplete="new-password" minlength="16" maxlength="128" required></div>
+                    <div class="form-field"><label for="pwKonfirmasi">Ulangi kata sandi baru</label><input class="form-control" id="pwKonfirmasi" name="konfirmasi_password" type="password" autocomplete="new-password" minlength="16" maxlength="128" required></div>
+                    <button class="button button-primary" type="submit">Simpan kata sandi</button>
+                </form>
+            </section>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -1,117 +1,147 @@
 /* ======================================================================
    FILE   : pages/auth.css
-   ISI    : Halaman login dan daftar
-   DAFTAR BAGIAN (cari dengan Ctrl+F: "=====" + nama):
-      1. HALAMAN AUTENTIKASI
+   ISI    : Login dan registrasi — Wistoria cathedral glass-card edition
    ==================================================================== */
 
-/* ===== HALAMAN AUTENTIKASI ===== */
-
-/* Layout login/daftar */
-.auth-shell {
-    min-height: calc(100vh - 78px);
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+/* Auth pages only: full-screen image background. The image keeps its ratio;
+   cover may crop edges responsively, but never stretches/distorts it. */
+html:has(body.auth-page),
+body.auth-page {
+    min-height: 100%;
 }
-
-/* Login: panel visual kiri */
-.auth-visual {
+body.auth-page {
+    min-height: 100vh;
+    background: #183f59;
+}
+body.auth-page #konten-utama {
+    min-height: 100vh;
+}
+body.auth-page .auth-shell {
     position: relative;
-    padding: 70px 70px 150px;
+    isolation: isolate;
+    min-height: 100vh;
+    min-height: 100svh;
+    display: grid;
+    place-items: center;
+    padding: clamp(24px, 5vh, 56px) 18px;
+    overflow: clip;
+    background: #204e6a;
+}
+body.auth-page .auth-shell::before,
+body.auth-page .auth-shell::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+}
+body.auth-page .auth-shell::before {
+    z-index: -2;
+    background-image: url("../../images/wistoria-cathedral.jpg");
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center 38%;
+    transform: translateZ(0);
+}
+body.auth-page .auth-shell::after {
+    z-index: -1;
+    background: linear-gradient(135deg,
+        rgba(15, 48, 73, .48),
+        rgba(37, 100, 137, .30) 48%,
+        rgba(15, 48, 73, .56));
+}
+body.auth-page .auth-form-area {
+    box-sizing: border-box;
+    width: min(100%, 680px);
+    display: block;
+    padding: clamp(24px, 4vw, 40px);
+    border: 1px solid rgba(238, 250, 255, .72);
+    border-radius: 26px;
+    background: rgba(235, 249, 255, .84);
+    box-shadow: 0 24px 80px rgba(9, 35, 54, .30),
+                inset 0 1px 0 rgba(255, 255, 255, .76);
+    -webkit-backdrop-filter: blur(18px) saturate(125%);
+    backdrop-filter: blur(18px) saturate(125%);
+}
+body.auth-page .auth-card {
+    width: 100%;
+    max-width: 470px;
+    margin-inline: auto;
+}
+body.auth-page .auth-card-daftar {
+    max-width: 560px;
+}
+.auth-brand {
+    width: fit-content;
     display: flex;
     align-items: center;
     justify-content: center;
-    text-align: center;
-    color: white;
-    overflow: hidden;
-    background: linear-gradient(145deg, #193b52, #397fa8 58%, #86cce7);
+    gap: 11px;
+    margin: 0 auto 24px;
+    color: #24485c;
+    text-decoration: none;
 }
-
-/* Login: panel visual kiri › hiasan sebelum */
-.auth-visual::before {
-    content: "";
-    position: absolute;
-    width: 520px;
-    height: 520px;
-    border-radius: 50%;
-    top: -200px;
-    right: -180px;
-    background: radial-gradient(circle, rgba(255,255,255,.26), transparent 68%);
-}
-
-/* Login: panel visual kiri › hiasan sesudah */
-.auth-visual::after {
-    content: "❄";
-    position: absolute;
-    right: 12%;
-    top: 22%;
-    font-size: 8rem;
-    color: rgba(255,255,255,.12);
-}
-
-/* Login: teks sambutan */
-.auth-message {
-    position: relative;
-    z-index: 2;
-    max-width: 560px;
-}
-
-/* Login: teks sambutan › Label kecil di atas judul */
-.auth-message .eyebrow {
-    color: #d7f4ff;
-}
-
-/* Login: teks sambutan › judul h1 */
-.auth-message h1 {
-    margin: 10px 0 14px;
-    font: 500 clamp(2.8rem,5vw,4.5rem)/1.04 var(--font-heading);
-}
-
-/* Login: teks sambutan › paragraf */
-.auth-message p {
-    max-width: 460px;
-    margin-inline: auto;
-    color: rgba(255,255,255,.78);
-}
-
-/* Login: area form */
-.auth-form-area {
-    padding: 70px 9vw;
+.auth-brand-crest {
+    width: 42px;
+    height: 42px;
     display: grid;
     place-items: center;
-    background: rgba(255,255,255,.76);
+    flex: 0 0 auto;
+    border: 1px solid rgba(199, 169, 105, .85);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .82);
+    box-shadow: 0 4px 16px rgba(35, 83, 110, .10);
 }
-
-/* Login: kartu form */
-.auth-card {
-    width: min(470px, 100%);
+.auth-brand-crest img { display: block; object-fit: contain; }
+.auth-brand-copy { display: grid; line-height: 1.2; }
+.auth-brand-copy strong {
+    font: 600 1.12rem var(--font-heading);
+    letter-spacing: .01em;
 }
-
-/* Login: kartu form › judul h2 */
+.auth-brand-copy small {
+    margin-top: 4px;
+    color: #66808e;
+    font-size: .59rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+}
+.auth-message {
+    max-width: 470px;
+    margin: 0 auto 24px;
+    text-align: center;
+    color: #24485c;
+}
+.auth-message .eyebrow {
+    display: inline-block;
+    color: #397fa8;
+    font-size: .68rem;
+    font-weight: 800;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+}
+.auth-message h1 {
+    margin: 8px 0 9px;
+    font: 600 clamp(1.65rem, 4vw, 2.25rem)/1.15 var(--font-heading);
+    text-wrap: balance;
+}
+.auth-message p {
+    max-width: 390px;
+    margin: 0 auto;
+    color: #597786;
+    font-size: .88rem;
+    line-height: 1.65;
+}
 .auth-card h2 {
-    margin: 0 0 8px;
-    font: 600 2.2rem var(--font-heading);
+    margin: 0 0 6px;
+    color: #193b50;
+    font: 600 1.55rem/1.25 var(--font-heading);
 }
-
-/* Login: kartu form › paragraf */
 .auth-card > p {
-    margin: 0 0 28px;
+    margin: 0 0 20px;
     color: var(--warna-muted);
 }
-
-/* Login & daftar: judul dan subjudul kartu rata tengah */
 .auth-card h2,
-.auth-card > p {
-    text-align: center;
-}
-
-/* Login: kartu form › form */
-.auth-card form {
-    display: grid;
-    gap: 16px;
-}
-
-/* Login: baris "ingat saya" */
+.auth-card > p { text-align: center; }
+.auth-card form { display: grid; gap: 15px; }
 .auth-row {
     display: flex;
     align-items: center;
@@ -119,50 +149,38 @@
     gap: 12px;
     font-size: .78rem;
 }
-
-/* Login: catatan bawah form */
 .auth-note {
-    margin-top: 22px;
+    margin-top: 18px;
     text-align: center;
     color: var(--warna-muted);
     font-size: .8rem;
 }
-
-/* Login: catatan bawah form › tautan */
-.auth-note a {
-    color: var(--warna-biru-dalam);
-    font-weight: 800;
-}
-
-/* ===== HALAMAN DAFTAR: TATA LETAK DAN VALIDASI ===== */
-
-/* Footer menempel langsung ke bawah panel (tanpa jarak 40px yang bikin terlihat terpotong) */
-.halaman-penuh .site-footer {
-    margin-top: 0;
-}
-
-/* Area form daftar: lebih lega ke samping, lebih rapat ke atas-bawah karena field lebih banyak */
-.auth-form-daftar {
-    padding: 48px 5vw;
-}
-
-/* Kartu form daftar: lebih lebar agar dua kolom muat */
-.auth-card-daftar {
-    width: min(600px, 100%);
-}
-
-/* Baris dua kolom (username + password, nama + tanggal lahir) */
+.auth-note a { color: var(--warna-biru-dalam); font-weight: 800; }
+.halaman-penuh .site-footer { margin-top: 0; }
+.auth-form-daftar { padding: clamp(20px, 3.5vw, 34px); }
+.auth-card-daftar { width: 100%; }
 .form-baris-dua {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+.form-baris-dua > .form-field,
+.auth-card form > .form-field { min-width: 0; }
+
+/* ===== HALAMAN DAFTAR: VALIDASI DAN FIELD ===== */
+
+/* Footer halaman autentikasi menempel langsung ke bawah konten. */
+.halaman-penuh .site-footer { margin-top: 0; }
+
+/* Grid dua kolom untuk field registrasi; menjadi satu kolom di layar kecil. */
+.form-baris-dua {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
 }
 
-/* Kolom form: cegah isi melebar keluar dari grid */
 .form-baris-dua > .form-field,
-.auth-card form > .form-field {
-    min-width: 0;
-}
+.auth-card form > .form-field { min-width: 0; }
 
 /* Pesan error di bawah kolom */
 .field-error {
@@ -342,9 +360,90 @@
     cursor: wait;
 }
 
-/* HP: dua kolom jadi satu kolom */
+/* Pesan akun demo tanpa inline style di template. */
+.demo-account-note,
+.auth-prototype-note {
+    margin: 1rem 0;
+    padding: .9rem 1rem;
+    border: 1px solid #c9e7f4;
+    border-radius: 14px;
+    background: rgba(214, 246, 255, .42);
+    color: #244b68;
+    font-size: .9rem;
+    line-height: 1.6;
+}
+.demo-account-note p { margin: .4rem 0 .6rem; }
+.demo-account-note .demo-account-line { margin: .2rem 0; }
+.demo-account-note hr {
+    margin: .6rem 0;
+    border: 0;
+    border-top: 1px solid #c9e7f4;
+}
+.demo-account-note .demo-account-hint {
+    margin: .6rem 0 0;
+    font-size: .8rem;
+}
+.auth-reset-note {
+    margin-top: 14px;
+    padding: 13px 15px;
+    border: 1px solid #d4eaf4;
+    border-radius: 12px;
+    background: #f5fbfe;
+    color: #244b68;
+    line-height: 1.6;
+}
+.auth-reset-note p { margin: 5px 0 0; font-size: .82rem; }
+
+/* ===== RESPONSIVE AUTH LAYOUT ===== */
 @media (max-width: 640px) {
-    .form-baris-dua {
-        grid-template-columns: 1fr;
+    body.auth-page .auth-shell {
+        padding: 16px 12px;
+        place-items: center;
     }
+
+    body.auth-page .auth-shell::before {
+        background-position: 48% center;
+    }
+
+    body.auth-page .auth-form-area {
+        width: 100%;
+        padding: 23px 18px;
+        border-radius: 21px;
+        background: rgba(239, 250, 255, .91);
+        -webkit-backdrop-filter: blur(14px);
+        backdrop-filter: blur(14px);
+    }
+
+    body.auth-page .auth-card:not(.auth-card-daftar) {
+        min-height: 0;
+    }
+
+    .auth-brand { margin-bottom: 18px; }
+    .auth-message { margin-bottom: 20px; }
+    .auth-message h1 { font-size: clamp(1.55rem, 7vw, 2rem); }
+    .auth-message p { font-size: .82rem; }
+    .auth-card h2 { font-size: 1.4rem; }
+    .form-baris-dua { grid-template-columns: 1fr; }
+
+    .demo-account-note,
+    .auth-prototype-note { font-size: .82rem; }
+}
+
+@media (max-height: 760px) and (min-width: 641px) {
+    body.auth-page .auth-shell {
+        align-items: start;
+        padding-block: 22px;
+    }
+
+    body.auth-page .auth-card:not(.auth-card-daftar) {
+        min-height: 0;
+    }
+
+    body.auth-page .auth-form-area { padding: 24px 32px; }
+    .auth-brand { margin-bottom: 14px; }
+    .auth-message { margin-bottom: 16px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body.auth-page .auth-shell::before { transform: none; }
 }

@@ -225,11 +225,6 @@
         margin-left: auto;
     }
 
-    /* .nav-wishlist */
-    .nav-wishlist {
-        display: none;
-    }
-
     /* Tombol ganti bahasa ID/EN */
     .language-toggle {
         width: 42px;
@@ -402,7 +397,7 @@
         grid-template-columns: 1fr;
     }
 
-    /* Tombol tambahan (wishlist, dll.) / Grid spesifikasi produk */
+    /* Tombol beli / Grid spesifikasi produk */
     .detail-secondary-actions,
     .spec-grid {
         grid-template-columns: 1fr;
@@ -476,9 +471,39 @@
 .customer-workspace-page #konten-utama, .admin-workspace-page #konten-utama { min-height: 100vh; }
 .customer-workspace-page .customer-workspace-content .section-shell > .container { width: 100%; max-width: none; }
 @media (max-width: 900px) {
-    .workspace-mobile-toggle { display: inline-flex; align-items: center; gap: 9px; position: fixed; top: 12px; left: 12px; z-index: 60; padding: 10px 13px; border: 1px solid #c9e5f1; border-radius: 12px; color: #234253; background: #f8fdff; font: 700 .82rem var(--font-body,sans-serif); cursor: pointer; }
-    .customer-workspace-layout > .workspace-sidebar, .customer-home .customer-sidebar, .admin-workspace-page .admin-sidebar { width: min(290px,86vw); transform: translateX(-105%); transition: transform .22s ease; z-index: 55; padding-top: 68px; border-right: 1px solid #cfe5ef; }
-    .customer-workspace-layout > .workspace-sidebar.is-open, .customer-home .customer-sidebar.is-open, .admin-workspace-page .admin-sidebar.is-open { transform: translateX(0); }
+    .workspace-mobile-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        position: fixed;
+        top: 12px;
+        left: 12px;
+        z-index: 60;
+        padding: 10px 13px;
+        border: 1px solid #c9e5f1;
+        border-radius: 12px;
+        color: #234253;
+        background: #f8fdff;
+        font: 700 .82rem var(--font-body, sans-serif);
+        cursor: pointer;
+    }
+
+    .customer-workspace-layout > .workspace-sidebar,
+    .customer-home .customer-sidebar,
+    .admin-workspace-page .admin-sidebar {
+        width: min(290px, 86vw);
+        transform: translateX(-105%);
+        transition: transform .22s ease;
+        z-index: 55;
+        padding-top: 68px;
+        border-right: 1px solid #cfe5ef;
+    }
+
+    .customer-workspace-layout > .workspace-sidebar.is-open,
+    .customer-home .customer-sidebar.is-open,
+    .admin-workspace-page .admin-sidebar.is-open {
+        transform: translateX(0);
+    }
     .customer-workspace-content, .customer-home .customer-content, .admin-workspace-shell .dashboard-content { margin-left: 0; padding: 70px 18px 34px; }
     .customer-home .customer-layout, .admin-workspace-shell .dashboard-layout { padding: 0; }
     .customer-home .customer-content { padding-top: 70px; }
@@ -637,4 +662,20 @@
 }
 @media (prefers-reduced-motion: reduce) {
     .flash-message { animation: none; }
+}
+
+
+@media (max-width: 620px) {
+    .nav-actions > a.nav-profile-link.icon-button {
+        width: 42px;
+        min-width: 42px;
+        max-width: 42px;
+        padding: 4px;
+        justify-content: center;
+        flex: 0 0 42px;
+    }
+
+    .nav-profile-name {
+        display: none;
+    }
 }

@@ -124,7 +124,7 @@
                     aria-hidden="true"
                     loading="lazy"
                     referrerpolicy="no-referrer"
-                    onerror="this.remove()"
+                    data-img-fallback="remove"
                 >
 
                 <!-- ===== BARIS ATAS: FOTO KECIL + NOMOR URUT ===== -->
@@ -137,7 +137,7 @@
                             alt=""
                             loading="lazy"
                             referrerpolicy="no-referrer"
-                            onerror="this.remove()"
+                            data-img-fallback="remove"
                         >
                     </span>
                     <span class="category-number" aria-hidden="true">{{ '%02d' % loop.index }}</span>

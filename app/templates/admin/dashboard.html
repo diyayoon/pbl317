@@ -27,7 +27,6 @@
             class="dashboard-content"
             id="adminDashboard"
             data-admin-view="dashboard"
-            data-products-api-url="{{ url_for('admin.api_produk') }}"
         >
             <header class="admin-page-heading">
                 <div>
@@ -35,33 +34,24 @@
                     <h1>Dashboard Admin</h1>
                     <p>Kelola katalog dan pantau aktivitas toko dari satu workspace.</p>
                 </div>
-                <span class="admin-demo-badge">{{ 'Database PostgreSQL' if database_enabled else 'Mode demo' }}</span>
             </header>
-
-            <div class="admin-prototype-banner">
-                {% if database_enabled %}
-                <strong>Data operasional PostgreSQL.</strong> Ringkasan produk, pengguna, pesanan, pendapatan, dan stok dibaca dari database aplikasi.
-                {% else %}
-                <strong>Mode demo lokal.</strong> Jumlah produk dibaca dari penyimpanan server lokal. Pesanan dan pendapatan masih memakai catatan demo browser.
-                {% endif %}
-            </div>
 
             <div class="kpi-grid" aria-label="Ringkasan operasional toko">
                 <article class="kpi-card">
-                    <span>Total produk katalog</span>
+                    <span>Produk aktif di katalog</span>
                     <strong id="adminProductCount">{{ ringkasan.produk }}</strong>
                 </article>
                 <article class="kpi-card">
-                    <span>{{ 'Akun customer' if database_enabled else 'Akun demo' }}</span>
+                    <span>Akun customer</span>
                     <strong id="adminUserCount">{{ ringkasan.pengguna }}</strong>
                 </article>
                 <article class="kpi-card">
-                    <span>{{ 'Total pesanan' if database_enabled else 'Total pesanan demo' }}</span>
-                    <strong id="adminOrderCount">—</strong>
+                    <span>Total pesanan</span>
+                    <strong id="adminOrderCount">{{ ringkasan.pesanan }}</strong>
                 </article>
                 <article class="kpi-card">
-                    <span>{{ 'Pendapatan dari pesanan selesai' if database_enabled else 'Pendapatan demo' }}</span>
-                    <strong id="adminRevenue">—</strong>
+                    <span>Pendapatan dari pesanan selesai</span>
+                    <strong id="adminRevenue">Rp{{ '{:,}'.format(ringkasan.pendapatan).replace(',', '.') }}</strong>
                 </article>
             </div>
 
@@ -70,7 +60,7 @@
                     <div>
                         <span class="eyebrow">ACTIVITY</span>
                         <h2>Pesanan terbaru</h2>
-                        <p>{{ 'Pesanan terbaru dari database aplikasi.' if database_enabled else 'Pesanan demo yang tercatat pada browser ini.' }}</p>
+                        <p>Pesanan terbaru dari database aplikasi.</p>
                     </div>
                     <a
                         class="button button-secondary button-small"
@@ -94,7 +84,7 @@
                         <tbody id="adminRecentOrders">
                             <tr>
                                 <td colspan="5" class="table-empty">
-                                    Belum ada data pesanan pada browser ini.
+                                    Memuat pesanan...
                                 </td>
                             </tr>
                         </tbody>
@@ -114,24 +104,31 @@
                 <div class="admin-insight-list" id="adminInventoryAttention">
                     <div class="admin-insight-row">
                         <div>
-                            <strong>Produk kehabisan stok</strong>
-                            <small id="adminOutOfStockDetail">Memuat data...</small>
-                        </div>
-                        <span id="adminOutOfStockCount">0</span>
-                    </div>
-                    <div class="admin-insight-row">
-                        <div>
-                            <strong>Produk dengan stok menipis</strong>
-                            <small id="adminLowStockDetail">Memuat data...</small>
-                        </div>
-                        <span id="adminLowStockCount">0</span>
-                    </div>
-                    <div class="admin-insight-row">
-                        <div>
                             <strong>Pembayaran menunggu persetujuan</strong>
-                            <small id="adminPendingPaymentDetail">Berdasarkan data pesanan demo.</small>
+                            <small>Bukti bayar sudah diunggah dan perlu diperiksa.</small>
                         </div>
-                        <span id="adminPendingPaymentCount">0</span>
+                        <a href="{{ url_for('admin.pembayaran') }}"><span id="adminPendingPaymentCount">{{ ringkasan.menunggu_persetujuan }}</span></a>
+                    </div>
+                    <div class="admin-insight-row">
+                        <div>
+                            <strong>Pesanan siap diproses/dikirim</strong>
+                            <small>Pembayaran disetujui; tinggal dikemas dan dikirim.</small>
+                        </div>
+                        <a href="{{ url_for('admin.pesanan') }}"><span>{{ ringkasan.diproses + ringkasan.dikirim }}</span></a>
+                    </div>
+                    <div class="admin-insight-row">
+                        <div>
+                            <strong>Produk stok menipis atau habis</strong>
+                            <small>Stok 2 atau kurang pada produk aktif.</small>
+                        </div>
+                        <a href="{{ url_for('admin.produk') }}"><span id="adminLowStockCount">{{ ringkasan.stok_rendah }}</span></a>
+                    </div>
+                    <div class="admin-insight-row">
+                        <div>
+                            <strong>Ulasan disembunyikan</strong>
+                            <small>Ulasan yang dimoderasi dan tidak tampil di toko.</small>
+                        </div>
+                        <a href="{{ url_for('admin.ulasan') }}"><span>{{ ringkasan.ulasan_tersembunyi }}</span></a>
                     </div>
                 </div>
             </section>
@@ -141,9 +138,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script
-    type="application/json"
-    id="adminDashboardProductSeed"
->{{ product_seed|tojson }}</script>
-<script src="{{ url_for('static', filename='js/admin-demo.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/admin.js') }}" defer></script>
 {% endblock %}

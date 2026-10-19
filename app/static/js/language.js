@@ -56,12 +56,12 @@ class PengelolaBahasa {
                 recommended_title: 'Pilihan untuk kolektor yang menyukai detail',
 
                 /* ----- Highlight toko ----- */
-                highlight_1_title: 'Informasi Koleksi Lengkap',
-                highlight_1_desc: 'Era, asal, material, kondisi, dan autentikasi dapat ditampilkan pada setiap produk.',
-                highlight_2_title: 'Koleksi Terbatas',
+                highlight_1_title: 'Detail dan Asal-usul Terang' ,
+                highlight_1_desc: 'Informasi era, asal, material, kondisi, dan status autentikasi ditampilkan dengan jelas.',
+                highlight_2_title: 'Koleksi Unik dan Terbatas',
                 highlight_2_desc: 'Sebagian besar barang antik bersifat unik sehingga stok dapat dibatasi secara realistis.',
-                highlight_3_title: 'Pengalaman Responsif',
-                highlight_3_desc: 'Tata letak menyesuaikan desktop, tablet, dan ponsel tanpa mengubah alur utama pengguna.',
+                highlight_3_title: 'Kondisi Barang Transparan',
+                highlight_3_desc: 'Foto dan catatan kondisi membantu kolektor menilai setiap benda sebelum memutuskan membeli.',
 
                 /* ----- Halaman katalog ----- */
                 catalog_eyebrow: 'Galeri Antik',
@@ -89,7 +89,6 @@ class PengelolaBahasa {
                 detail_eyebrow: 'Detail Koleksi',
                 detail_add: 'Tambah ke Keranjang',
                 detail_buy: 'Beli Sekarang',
-                detail_wishlist: 'Simpan ke Wishlist',
                 related_title: 'Koleksi terkait',
                 spec_era: 'Era',
                 spec_origin: 'Asal',
@@ -101,7 +100,7 @@ class PengelolaBahasa {
                 /* ----- Login dan daftar ----- */
                 login_eyebrow: 'Akses Kolektor',
                 login_visual_title: 'Masuk ke ruang koleksi pribadi Anda.',
-                login_visual_desc: 'Kelola wishlist, keranjang, riwayat pesanan, alamat, dan profil dalam satu tempat.',
+                login_visual_desc: 'Kelola keranjang, riwayat pesanan, alamat, dan profil dalam satu tempat.',
                 login_title: 'Selamat datang kembali',
                 login_desc: 'Masuk menggunakan akun yang telah terdaftar.',
                 email: 'Email',
@@ -112,7 +111,7 @@ class PengelolaBahasa {
                 no_account: 'Belum punya akun?',
                 register_link: 'Daftar',
                 register_title: 'Buat akun baru',
-                register_desc: 'Daftar untuk menyimpan koleksi favorit dan melakukan checkout.',
+                register_desc: 'Daftar untuk mengelola profil dan melanjutkan checkout.',
                 name: 'Nama lengkap',
                 confirm_password: 'Konfirmasi kata sandi',
                 register_button: 'Daftar',
@@ -137,7 +136,7 @@ class PengelolaBahasa {
 
                 /* ----- Dashboard ----- */
                 dashboard_title: 'Dashboard Pelanggan',
-                dashboard_desc: 'Ringkasan akun, wishlist, keranjang, dan riwayat pesanan.',
+                dashboard_desc: 'Ringkasan akun, keranjang, dan riwayat pesanan.',
                 admin_title: 'Dashboard Admin',
                 admin_desc: 'Kelola produk, pengguna, pesanan, pembayaran, dan ringkasan transaksi.',
 
@@ -151,7 +150,7 @@ class PengelolaBahasa {
                 footer_orders: 'Pesanan',
                 footer_payment: 'Pembayaran',
                 footer_security: 'Keamanan',
-                footer_note: 'Prototipe e-commerce untuk proyek pembelajaran.',
+                footer_note: 'Toko barang antik terkurasi dengan keaslian yang dapat dipertanggungjawabkan.',
             },
 
             /* ===== BAHASA INGGRIS ===== */
@@ -202,12 +201,12 @@ class PengelolaBahasa {
                 recommended_title: 'Selected for collectors who appreciate detail',
 
                 /* ----- Highlight toko ----- */
-                highlight_1_title: 'Complete Collection Details',
-                highlight_1_desc: 'Era, origin, material, condition, and authenticity can be presented for every product.',
-                highlight_2_title: 'Limited Collections',
+                highlight_1_title: 'Clear Provenance Details',
+                highlight_1_desc: 'Era, origin, material, condition, and authentication status are presented clearly.',
+                highlight_2_title: 'Unique, Limited Pieces',
                 highlight_2_desc: 'Many antiques are one-of-a-kind, making realistic limited stock a natural part of the catalog.',
-                highlight_3_title: 'Responsive Experience',
-                highlight_3_desc: 'The layout adapts across desktop, tablet, and mobile without breaking the main user flow.',
+                highlight_3_title: 'Transparent Condition Notes',
+                highlight_3_desc: 'Photos and condition notes help collectors evaluate each piece before deciding to purchase.',
 
                 /* ----- Halaman katalog ----- */
                 catalog_eyebrow: 'Antique Gallery',
@@ -235,7 +234,6 @@ class PengelolaBahasa {
                 detail_eyebrow: 'Collection Details',
                 detail_add: 'Add to Cart',
                 detail_buy: 'Buy Now',
-                detail_wishlist: 'Save to Wishlist',
                 related_title: 'Related collections',
                 spec_era: 'Era',
                 spec_origin: 'Origin',
@@ -247,7 +245,7 @@ class PengelolaBahasa {
                 /* ----- Login dan daftar ----- */
                 login_eyebrow: 'Collector Access',
                 login_visual_title: 'Enter your personal collection space.',
-                login_visual_desc: 'Manage your wishlist, cart, order history, addresses, and profile in one place.',
+                login_visual_desc: 'Manage your cart, order history, addresses, and profile in one place.',
                 login_title: 'Welcome back',
                 login_desc: 'Sign in using your registered account.',
                 email: 'Email',
@@ -258,7 +256,7 @@ class PengelolaBahasa {
                 no_account: 'No account yet?',
                 register_link: 'Register',
                 register_title: 'Create an account',
-                register_desc: 'Register to save favorite pieces and continue to checkout.',
+                register_desc: 'Register to manage your profile and continue to checkout.',
                 name: 'Full name',
                 confirm_password: 'Confirm password',
                 register_button: 'Register',
@@ -283,7 +281,7 @@ class PengelolaBahasa {
 
                 /* ----- Dashboard ----- */
                 dashboard_title: 'Customer Dashboard',
-                dashboard_desc: 'A summary of your account, wishlist, cart, and order history.',
+                dashboard_desc: 'A summary of your account, cart, and order history.',
                 admin_title: 'Admin Dashboard',
                 admin_desc: 'Manage products, users, orders, payments, and transaction summaries.',
 
@@ -296,8 +294,7 @@ class PengelolaBahasa {
                 footer_categories: 'Categories',
                 footer_orders: 'Orders',
                 footer_payment: 'Payment',
-                footer_security: 'Security',
-                footer_note: 'E-commerce prototype for an academic project.',
+                footer_note: 'A curated antiques store with authenticity you can rely on.',
             },
         };
     }
