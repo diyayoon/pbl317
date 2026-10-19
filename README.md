@@ -1,27 +1,55 @@
-# Albis Antique — Frontend Only (Deployment Ready)
+# Albis Antique
 
-Aset visual FE, Docker Compose + Nginx + Gunicorn, serta `python run.py` dapat digunakan untuk preview lokal.
-`.env` tidak boleh di-commit; gunakan `.env.example` sebagai template.
+Toko online barang antik. **Flask (OOP: blueprint → service → model) + PostgreSQL `albis_db`**, dijalankan
+dengan Docker (Nginx → Gunicorn/Flask). Semua data (produk, keranjang, pesanan, pembayaran, ulasan) tersimpan
+di PostgreSQL; tidak ada data tiruan di browser.
 
-## Jalankan lokal
+## Peran
+| Peran | Cara dibuat | Akses |
+|---|---|---|
+| Customer | Registrasi publik `/auth/register` (otomatis, tidak bisa memilih peran) | Katalog, keranjang, checkout, pesanan, ulasan, profil |
+| Admin | Hanya lewat CLI `flask create-admin` (orang internal kelompok) | Produk, kategori, pesanan, pembayaran, ulasan, laporan, audit log |
 
-```powershell
-py -m venv .venv
-.venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
-Copy-Item .env.example .env
-# Ganti SECRET_KEY di .env dengan nilai acak sebelum penggunaan non-lokal
+## Alur
+Customer: katalog → detail → keranjang → checkout (alamat tersimpan) → pesanan dibuat (stok dikunci & dikurangi) →
+transfer → unggah bukti → admin setujui/tolak (alasan wajib) → diproses → dikirim → selesai → ulasan.
+Pesanan yang tidak dibayar dalam `ORDER_PAYMENT_TTL_JAM` (default 24 jam) otomatis dibatalkan dan stok kembali.
+
+## Database siap-import
+`database/` berisi skema + data awal SQL hasil migrasi (alternatif dari `db upgrade`); lihat `database/README.md`.
+
+## Preview lokal tanpa PostgreSQL (SQLite, khusus development)
+Cukup untuk melihat tampilan dan mencoba alur di laptop. Data **bukan** data produksi.
+```bash
+python -m venv .venv && . .venv/bin/activate        # Windows: .venv\Scripts\activate
+pip install -r requirements-dev.txt
+# .env:  APP_ENV=development  SECRET_KEY=<acak>  DATABASE_URL=sqlite:///dev.db   (file: instance/dev.db)
+python -m flask --app run init-dev-db                 # buat tabel + kategori + koleksi pembuka
+python -m flask --app run create-admin
+python run.py                                         # http://127.0.0.1:5000
+```
+SQLite ditolak otomatis bila `APP_ENV=production`. Untuk uji yang setara produksi (rebutan stok, dsb.) pakai PostgreSQL lewat Docker.
+
+## Menjalankan
+Lihat [`docs/PANDUAN-DEPLOY.md`](docs/PANDUAN-DEPLOY.md) (Portainer/Docker Compose + migrasi + admin pertama)
+dan [`docs/KEAMANAN-OWASP-MITRE.md`](docs/KEAMANAN-OWASP-MITRE.md) (kontrol keamanan dan cara mengujinya).
+
+Lokal tanpa Docker:
+```bash
+python -m venv .venv && . .venv/bin/activate        # Windows: .venv\Scripts\activate
+pip install -r requirements-dev.txt
+cp .env.example .env                                  # isi SECRET_KEY dan DATABASE_URL (albis_db)
+python -m flask --app run db upgrade                  # pakai MIGRATION_DATABASE_URL bila ada
+python -m flask --app run seed-catalog                # kategori + koleksi pembuka (opsional --tanpa-produk)
+python -m flask --app run create-admin
 python run.py
 ```
 
-Buka `http://127.0.0.1:5000`.
+## Perintah CLI
+`db-check`, `seed-catalog [--tanpa-produk]`, `create-admin`, `expire-orders`, `purge-security-events`, `db upgrade|check`.
 
-## Jalankan dengan Docker Compose
-
-```powershell
-Copy-Item .env.example .env
-# Edit SECRET_KEY pada .env
-docker compose up -d --build
+## Tes
+```bash
+python -m pytest -q        # 25 tes (SQLite in-memory)
+pip-audit -r requirements.txt && bandit -q -r app -ll
 ```
-
-Akses `http://localhost:8081` (atau port `APP_HTTP_PORT` di `.env`).

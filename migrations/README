@@ -1,0 +1,2 @@
+Flask-Migrate / Alembic migrations for Albis Antique.
+Use `flask --app run db upgrade` only after verifying DATABASE_URL points to the intended test database and a backup exists if it contains useful data.
