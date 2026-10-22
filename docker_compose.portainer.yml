@@ -7,6 +7,7 @@
 services:
   web:
     image: albis-web:latest
+    pull_policy: never
     environment:
       APP_ENV: ${APP_ENV:-production}
       SECRET_KEY: ${SECRET_KEY:?Isi SECRET_KEY di environment Portainer atau file .env}
@@ -40,6 +41,7 @@ services:
 
   nginx:
     image: albis-nginx:latest
+    pull_policy: never
     ports:
       - "${APP_HTTP_PORT:-8081}:80"
     depends_on:
@@ -61,6 +63,7 @@ services:
   migrate:
     profiles: ["tools"]
     image: albis-web:latest
+    pull_policy: never
     command: ["python", "-m", "flask", "--app", "run", "db", "upgrade"]
     environment:
       APP_ENV: ${APP_ENV:-production}
