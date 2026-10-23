@@ -1,4 +1,3 @@
-"""Transaksi checkout yang menghitung harga dan stok di sisi server."""
 from datetime import datetime, timezone
 from decimal import Decimal
 from uuid import uuid4
