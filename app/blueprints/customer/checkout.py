@@ -1,4 +1,3 @@
-"""Customer: checkout dan pembuatan pesanan. """
 from flask import jsonify, render_template, request
 from flask_login import current_user, login_required
 from app.extensions import db
