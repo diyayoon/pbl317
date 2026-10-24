@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block title %}Verifikasi Email — Albis Antique{% endblock %}
+{% block body_class %}halaman-penuh auth-page{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/auth.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/verifikasi.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="auth-shell">
+    <div class="auth-form-area">
+        <div class="auth-card verif-card">
+            <h2>Cek email Anda <span aria-hidden="true">✉️</span></h2>
+            <p class="verif-sub">Kami mengirim kode ke {{ email_samar }}</p>
+            <form method="post" novalidate id="formKode">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="form-field">
+                    <label for="kode">Kode verifikasi</label>
+                    <input class="form-control verif-kode" id="kode" name="kode" type="text" inputmode="numeric"
+                           autocomplete="one-time-code" maxlength="{{ digit }}" pattern="[0-9]*" data-digit="{{ digit }}"
+                           placeholder="{{ '•' * digit }}" required autofocus>
+                </div>
+                <button class="button button-primary button-full" id="tombolLanjut" type="submit" disabled>Lanjutkan</button>
+            </form>
+            <form method="post" action="{{ url_for('auth.kirim_ulang_verifikasi') }}" class="verif-ulang" id="formUlang" data-sisa="{{ sisa }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="kembali" value="kode">
+                <span id="teksUlang"></span>
+                <button class="text-link" id="tombolUlang" type="submit" hidden>Kirim ulang kode</button>
+            </form>
+            <a class="text-link verif-kembali" href="{{ url_for('auth.login') }}">Kembali ke login</a>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/verifikasi_kode.js') }}" defer></script>
+{% endblock %}

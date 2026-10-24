@@ -50,6 +50,6 @@ python run.py
 
 ## Tes
 ```bash
-python -m pytest -q        # 25 tes (SQLite in-memory)
+python -m pytest -q        # 94 tes (SQLite in-memory); lihat docs/REVISI-FINAL.md untuk uji di PostgreSQL
 pip-audit -r requirements.txt && bandit -q -r app -ll
 ```

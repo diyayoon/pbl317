@@ -28,16 +28,17 @@
                 <div>
                     <span class="eyebrow">ACCOUNT DIRECTORY</span>
                     <h1>Pengguna</h1>
-                    <p>Daftar akun customer dan admin dari PostgreSQL.</p>
+                    <p>Kelola akun customer: status, detail audit, dan penghapusan.</p>
                 </div>
             </header>
 
             <section class="panel">
                 <div class="admin-panel-heading">
                     <div>
-                        <h2>Daftar akun</h2>
-                        <p>{{ pengguna_list|length }} akun dikenali oleh aplikasi.</p>
+                        <h2>Daftar customer</h2>
+                        <p id="userCount">{{ pengguna_list|length }} customer terdaftar.</p>
                     </div>
+                    <input id="userSearch" type="search" placeholder="Cari nama atau email" maxlength="100" aria-label="Cari customer">
                 </div>
 
                 <div class="table-wrap">
@@ -46,30 +47,19 @@
                             <tr>
                                 <th scope="col">Nama</th>
                                 <th scope="col">Email</th>
-                                <th scope="col">Role</th>
                                 <th scope="col">Telepon</th>
+                                <th scope="col">Pesanan</th>
                                 <th scope="col">Bergabung</th>
                                 <th scope="col">Status</th>
+                                <th scope="col">Aksi</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            {% for akun in pengguna_list %}
-                            <tr>
-                                <td><strong>{{ akun.nama }}</strong></td>
-                                <td>{{ akun.email }}</td>
-                                <td><span class="admin-status">{{ akun.role|capitalize }}</span></td>
-                                <td>{{ akun.telepon or "—" }}</td>
-                                <td>{{ akun.bergabung }}</td>
-                                <td>{{ akun.status }}</td>
-                            </tr>
-                            {% else %}
-                            <tr>
-                                <td colspan="6" class="table-empty">Belum ada akun dalam database.</td>
-                            </tr>
-                            {% endfor %}
+                        <tbody id="userRows">
+                            <tr><td colspan="7" class="table-empty">Memuat data…</td></tr>
                         </tbody>
                     </table>
                 </div>
+                <div id="userDetail" class="admin-report-status" hidden></div>
             </section>
         </div>
     </div>

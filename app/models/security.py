@@ -38,3 +38,30 @@ class RateLimitEvent(db.Model):
     kind = db.Column(db.String(30), nullable=False)
     key = db.Column(db.String(254), nullable=False)
     created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utcnow)
+
+
+class EmailVerificationToken(db.Model):
+    """Token verifikasi email. Yang disimpan hanya hash SHA-256; token mentah hanya ada di email."""
+    __tablename__ = "email_verification_tokens"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    token_hash = db.Column(db.String(64), nullable=False, unique=True)
+    created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utcnow)
+    expires_at = db.Column(db.DateTime(timezone=True), nullable=False)
+    used_at = db.Column(db.DateTime(timezone=True), nullable=True)
+    code_hash = db.Column(db.String(64), nullable=True)
+    attempts = db.Column(db.Integer, nullable=False, default=0)
+
+
+class UserSession(db.Model):
+    """Sesi login sisi server: dasar timeout inaktivitas dan pencabutan nyata saat logout. Hanya hash ID sesi yang disimpan."""
+    __tablename__ = "user_sessions"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    sid_hash = db.Column(db.String(64), nullable=False, unique=True)
+    created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utcnow)
+    last_activity_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utcnow)
+    revoked_at = db.Column(db.DateTime(timezone=True), nullable=True)
+    revoke_reason = db.Column(db.String(30), nullable=True)

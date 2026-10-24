@@ -70,9 +70,29 @@ class Config:
     REGISTER_MAX_PER_IP = _int("REGISTER_MAX_PER_IP", 10)
     REGISTER_WINDOW_MENIT = _int("REGISTER_WINDOW_MENIT", 60)
 
+    # Timeout inaktivitas (menit) ditegakkan di server. Admin sengaja lebih ketat.
+    SESI_INAKTIF_MENIT_CUSTOMER = _int("SESI_INAKTIF_MENIT_CUSTOMER", 10)
+    SESI_INAKTIF_MENIT_ADMIN = _int("SESI_INAKTIF_MENIT_ADMIN", 5)
+    SESI_MAKS_MENIT = _int("SESI_MAKS_MENIT", 480)   # batas mutlak sejak login
+    SESI_SENTUH_DETIK = _int("SESI_SENTUH_DETIK", 10)  # jeda minimum antar penulisan last_activity
+
     # Aturan bisnis
     ORDER_PAYMENT_TTL_JAM = _int("ORDER_PAYMENT_TTL_JAM", 24)
     MAX_OPEN_ORDERS = _int("MAX_OPEN_ORDERS", 5)
+
+    # Verifikasi email & SMTP (kredensial hanya dari environment)
+    EMAIL_VERIFY_TTL_JAM = _int("EMAIL_VERIFY_TTL_JAM", 24)
+    EMAIL_VERIFY_COOLDOWN_DETIK = _int("EMAIL_VERIFY_COOLDOWN_DETIK", 60)
+    EMAIL_VERIFY_MAX_PER_JAM = _int("EMAIL_VERIFY_MAX_PER_JAM", 5)
+    EMAIL_VERIFY_KODE_DIGIT = _int("EMAIL_VERIFY_KODE_DIGIT", 6)      # 4-8; makin pendek makin mudah ditebak
+    EMAIL_VERIFY_KODE_MAX_SALAH = _int("EMAIL_VERIFY_KODE_MAX_SALAH", 5)
+    APP_BASE_URL = os.getenv("APP_BASE_URL", "").rstrip("/")
+    MAIL_SERVER = os.getenv("MAIL_SERVER", "")
+    MAIL_PORT = _int("MAIL_PORT", 587)
+    MAIL_SECURITY = os.getenv("MAIL_SECURITY", "starttls").strip().lower()  # starttls | ssl
+    MAIL_USERNAME = os.getenv("MAIL_USERNAME", "")
+    MAIL_PASSWORD = os.getenv("MAIL_PASSWORD", "")
+    MAIL_FROM = os.getenv("MAIL_FROM", "")
 
     # Proxy (nginx -> gunicorn). Isi 1 bila di belakang satu reverse proxy.
     TRUSTED_PROXY_COUNT = _int("TRUSTED_PROXY_COUNT", 0)

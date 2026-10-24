@@ -8,3 +8,11 @@
         </div>
     {% endif %}
 {% endwith %}
+{% if current_user.is_authenticated and current_user.role == 'customer' and not current_user.is_verified and request.endpoint != 'auth.verifikasi_status' %}
+    <div class="flash-wrapper" role="status">
+        <div class="flash-message flash-warning">
+            Email Anda belum terverifikasi, jadi belum bisa memesan atau mengunggah bukti bayar.
+            <a href="{{ url_for('auth.verifikasi_status') }}">Verifikasi sekarang</a>
+        </div>
+    </div>
+{% endif %}

@@ -94,4 +94,5 @@ def register_commands(app):
     def purge_security_events(hari):
         """Hapus catatan percobaan login lama (tabel rate_limit_events)."""
         from .utils.ratelimit import pangkas_lama
-        click.echo(f"{pangkas_lama(hari)} baris dihapus.")
+        from .services.sesi_service import LayananSesi
+        click.echo(f"{pangkas_lama(hari)} baris dihapus; {LayananSesi.pangkas(hari)} sesi lama dihapus.")

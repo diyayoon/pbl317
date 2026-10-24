@@ -31,6 +31,9 @@
                         class="form-control"
                         id="catalogSearch"
                         type="search"
+                        maxlength="100"
+                        autocomplete="off"
+                        value="{{ q_awal or '' }}"
                         placeholder="Pocket watch, porcelain..."
                     >
                 </div>
@@ -134,6 +137,7 @@
             <div class="catalog-empty" id="catalogEmpty">
                 <h2>Tidak ada koleksi yang sesuai.</h2>
                 <p>Ubah kata kunci atau filter untuk menampilkan hasil lain.</p>
+                <button class="button button-secondary button-small" id="catalogEmptyReset" type="button">Hapus pencarian dan filter</button>
             </div>
 
             <!-- Pagination dibuat dinamis berdasarkan hasil filter dan jumlah produk. -->

@@ -32,6 +32,9 @@ def _validasi_konfigurasi(app: Flask) -> None:
         secret = str(app.config.get("SECRET_KEY") or "").strip()
         if len(secret) < 32 or any(m in secret.lower() for m in _PLACEHOLDER_SECRET):
             raise RuntimeError("Production membutuhkan SECRET_KEY acak minimal 32 karakter; nilai contoh/placeholder tidak boleh digunakan.")
+        # Tautan email dibuat dari nilai ini, bukan header Host (anti Host header injection).
+        if not str(app.config.get("APP_BASE_URL") or "").startswith(("http://", "https://")):
+            raise RuntimeError("Production membutuhkan APP_BASE_URL (mis. https://domain-anda) untuk tautan verifikasi email.")
 
 
 def buat_app(konfigurasi=None):
@@ -54,6 +57,8 @@ def buat_app(konfigurasi=None):
 
     from .security import init_security
     init_security(app)
+    from .sesi import init_sesi
+    init_sesi(app)
 
     from .blueprints.main import main_bp
     from .blueprints.auth import auth_bp

@@ -1,5 +1,5 @@
 """Route publik Albis Antique: beranda, katalog, detail produk (data dari PostgreSQL)."""
-from flask import abort, render_template, request
+from flask import abort, make_response, render_template, request
 
 from app.services.catalog_service import CatalogService
 from app.services.review_service import LayananUlasan
@@ -35,14 +35,24 @@ def beranda():
 
 @main_bp.get("/katalog")
 def katalog():
-    """Seluruh produk aktif dirender; pencarian/filter/sortir dilakukan di browser (catalog.js).
+    """Produk dari PostgreSQL. `?q=` dicari di server (berperingkat); filter lain, sortir, dan paginasi di catalog.js.
 
     `?kategori=<slug>` hanya menentukan pilihan awal dropdown, bukan menyaring di server.
     """
+    q = " ".join(request.args.get("q", "").split())[:CatalogService.MAKS_PANJANG_Q]
     return render_template(
         "main/explore.html", kategori_unggulan=CatalogService.category_summary(),
-        produk=CatalogService.list_products(), kategori_awal=request.args.get("kategori", "")[:100],
+        produk=CatalogService.list_products(query=q), kategori_awal=request.args.get("kategori", "")[:100], q_awal=q,
     )
+
+
+@main_bp.get("/katalog/hasil")
+def katalog_hasil():
+    """Potongan HTML kartu produk (template yang sama dengan katalog) untuk pencarian langsung; selalu dari database."""
+    q = " ".join(request.args.get("q", "").split())[:CatalogService.MAKS_PANJANG_Q]
+    resp = make_response(render_template("main/_hasil_katalog.html", produk=CatalogService.list_products(query=q)))
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
 
 
 @main_bp.get("/produk/<int:produk_id>")

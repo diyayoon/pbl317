@@ -37,11 +37,15 @@ def client(app):
     return app.test_client()
 
 
-def daftar_dan_login(client, email="pembeli@test.local", nama="Pembeli Uji"):
+def daftar_dan_login(client, email="pembeli@test.local", nama="Pembeli Uji", verifikasi=True):
     client.post("/auth/register", data={
         "email": email, "password": PASSWORD, "konfirmasi_password": PASSWORD, "nama": nama,
         "alamat": "Jl. Contoh No. 1 Batam", "telepon": "081234567890",
     })
+    if verifikasi:  # alur lama (sebelum ada verifikasi email) mengasumsikan akun langsung bisa belanja
+        with client.application.app_context():
+            User.query.filter_by(email=email).update({"is_verified": True})
+            db.session.commit()
     return client.post("/auth/login", data={"email": email, "password": PASSWORD})
 
 

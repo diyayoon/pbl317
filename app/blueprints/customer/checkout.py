@@ -4,7 +4,7 @@ from app.extensions import db
 from app.services.checkout_service import LayananCheckout
 from app.services.order_service import LayananPesanan
 from app.utils import audit
-from app.utils.decorators import role_required
+from app.utils.decorators import role_required, terverifikasi_required
 from . import customer_bp
 
 
@@ -33,6 +33,7 @@ def api_checkout_data():
 @customer_bp.post("/api/orders")
 @login_required
 @role_required("customer")
+@terverifikasi_required
 def api_create_order():
     payload = request.get_json(silent=True) or {}
     try:

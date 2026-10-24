@@ -1,6 +1,6 @@
 'use strict';
 
-/* Panel admin: pesanan, pembayaran, laporan, ulasan, dan kategori. Semua data dari API PostgreSQL. */
+/* Panel admin: pesanan, pembayaran, laporan, ulasan, kategori, dan pengguna. Semua data dari API PostgreSQL. */
 document.addEventListener('DOMContentLoaded', () => {
     const view = document.querySelector('[data-admin-view]')?.dataset.adminView || '';
     if (!view || view === 'products') return;
@@ -239,7 +239,69 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) { toast(error.message, 'alert'); }
     });
 
+    /* ---------------- PENGGUNA ---------------- */
+    async function pengguna() {
+        const body = element('userRows'); const box = element('userDetail');
+        const q = element('userSearch')?.value.trim() || '';
+        const list = await api(`/admin/api/pengguna?q=${encodeURIComponent(q)}`);
+        put('userCount', `${list.length} customer ditemukan.`);
+        if (!list.length) { barisKosong(body, 7, 'Tidak ada customer.'); return; }
+        body.replaceChildren();
+        const aksi = async (path, method, data, ok) => {
+            try { await kirim(path, method, data); toast(ok); box.hidden = true; await pengguna(); }
+            catch (error) { toast(error.message, 'alert'); }
+        };
+        list.forEach(u => {
+            const row = make('tr');
+            const nama = make('td'); nama.append(make('strong', '', u.nama));
+            const st = make('td'); st.append(statusTag(u.status === 'Aktif' ? 'Selesai' : u.status)); st.append(make('div', 'table-footnote', u.terverifikasi ? 'Email terverifikasi' : 'Email belum terverifikasi'));
+            row.append(nama, make('td', '', u.email), make('td', '', u.telepon || '—'), make('td', '', String(u.jumlahPesanan)),
+                make('td', '', waktu(u.bergabung)), st);
+            const act = make('td', 'table-actions');
+            act.append(tombol('Detail', 'btn btn-secondary btn-small', async () => {
+                try { renderDetail(box, await api(`/admin/api/pengguna/${u.id}`)); } catch (error) { toast(error.message, 'alert'); }
+            }));
+            if (u.status === 'Aktif') {
+                act.append(tombol('Nonaktifkan', 'btn btn-secondary btn-small', () => {
+                    const alasan = window.prompt(`Alasan menonaktifkan ${u.email}:`); if (alasan === null) return;
+                    aksi(`/admin/api/pengguna/${u.id}/status`, 'POST', { aksi: 'nonaktifkan', alasan }, 'Akun dinonaktifkan.');
+                }));
+                act.append(tombol('Blokir', 'btn btn-secondary btn-small', () => {
+                    const alasan = window.prompt(`Alasan memblokir ${u.email}:`); if (alasan === null) return;
+                    aksi(`/admin/api/pengguna/${u.id}/status`, 'POST', { aksi: 'blokir', alasan }, 'Akun diblokir.');
+                }));
+            } else if (u.status === 'Nonaktif') {
+                act.append(tombol('Aktifkan', 'btn btn-primary btn-small', () =>
+                    aksi(`/admin/api/pengguna/${u.id}/status`, 'POST', { aksi: 'aktifkan' }, 'Akun diaktifkan kembali.')));
+            }
+            if (u.status !== 'Dihapus') {
+                act.append(tombol('Hapus', 'btn btn-secondary btn-small', () => {
+                    const konfirmasi = window.prompt(`Hapus akun (data pribadi dianonimkan, riwayat pesanan tetap). Ketik email ${u.email} untuk konfirmasi:`);
+                    if (konfirmasi === null) return;
+                    aksi(`/admin/api/pengguna/${u.id}`, 'DELETE', { konfirmasi_email: konfirmasi, alasan: 'dihapus oleh admin' }, 'Akun dihapus.');
+                }));
+            }
+            row.append(act); body.append(row);
+        });
+    }
+    function renderDetail(box, d) {
+        box.replaceChildren(); box.hidden = false;
+        box.append(make('h3', '', `Detail: ${d.nama}`));
+        [['Email', d.email], ['Verifikasi email', d.terverifikasi ? 'Sudah' : 'Belum'], ['Status', d.status + (d.alasan ? ` (${d.alasan})` : '')], ['Pesanan', d.jumlahPesanan],
+            ['Ulasan', d.jumlahUlasan], ['Alamat tersimpan', d.jumlahAlamat]].forEach(([k, v]) => {
+            const r = make('div', 'admin-report-status-row'); r.append(make('span', '', k), make('strong', '', String(v))); box.append(r);
+        });
+        box.append(make('h4', '', 'Aktivitas terakhir'));
+        if (!d.aktivitas.length) box.append(make('p', '', 'Belum ada aktivitas tercatat.'));
+        d.aktivitas.forEach(a => {
+            const r = make('div', 'admin-report-status-row');
+            r.append(make('span', '', `${waktu(a.waktu)} · ${a.aksi} · ${a.aktor}`), make('strong', '', a.detail || ''));
+            box.append(r);
+        });
+    }
+    element('userSearch')?.addEventListener('input', () => { window.clearTimeout(window._userT); window._userT = window.setTimeout(() => pengguna().catch(() => {}), 250); });
+
     element('adminOrderSearch')?.addEventListener('input', renderOrders);
-    const jalan = { dashboard, orders: muatOrders, payments: pembayaran, reports: laporan, reviews: ulasan, categories: kategori }[view];
+    const jalan = { dashboard, orders: muatOrders, payments: pembayaran, reports: laporan, reviews: ulasan, categories: kategori, users: pengguna }[view];
     if (jalan) jalan().catch(error => toast(`Data tidak dapat dimuat: ${error.message}`, 'alert'));
 });

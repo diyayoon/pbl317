@@ -5,6 +5,7 @@ from flask_login import current_user, login_user
 from app.extensions import db
 from app.models import AuditLog, User
 from app.services.account_service import LayananAkun
+from app.services.sesi_service import LayananSesi
 from . import admin_bp
 from app.utils.decorators import admin_required
 
@@ -30,8 +31,10 @@ def akun():
             db.session.rollback()
             flash(str(exc), "danger")
         else:
+            LayananSesi.cabut_semua(user.id)
             session.clear()
             login_user(user)
+            LayananSesi.mulai(user)
             flash("Kata sandi admin diperbarui. Sesi di perangkat lain telah dikeluarkan.", "success")
             return redirect(url_for("admin.akun"))
     return render_template("admin/account.html")

@@ -7,7 +7,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 from uuid import uuid4
 from flask import current_app
-from sqlalchemy import func, or_, select
+from sqlalchemy import case, func, or_, select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.exc import IntegrityError
 from app.extensions import db
@@ -35,20 +35,59 @@ class CatalogService:
             slug = f"{base}-{index}"
             index += 1
 
+    MAKS_KATA = 6
+    MAKS_PANJANG_Q = 100
+
+    @classmethod
+    def tokenisasi(cls, query: str) -> list[str]:
+        """Normalisasi spasi/huruf, buang duplikat, batasi jumlah kata. Kata 1 huruf dibuang kecuali satu-satunya."""
+        kata = []
+        for k in " ".join(str(query or "").split())[: cls.MAKS_PANJANG_Q].lower().split(" "):
+            if k and k not in kata:
+                kata.append(k[:40])
+        panjang = [k for k in kata if len(k) > 1]
+        return (panjang or kata)[: cls.MAKS_KATA]
+
+    @staticmethod
+    def _pola(kata: str) -> str:
+        return "%" + kata.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+
+    @classmethod
+    def cari(cls, query: str, category_slug: str = "", active_only: bool = True, limit: int = 200) -> list[dict]:
+        """Pencarian ke PostgreSQL (ILIKE terparameter). Produk dengan lebih banyak kata cocok tampil lebih dulu,
+        lalu berdasarkan bobot bidang (nama > kategori > material/asal/era > kondisi/deskripsi), lalu terbaru."""
+        kata = cls.tokenisasi(query)
+        if not kata:
+            return cls.list_products(category_slug=category_slug, active_only=active_only)
+        bidang = [(Product.name, 5), (Category.name, 3), (Product.material, 2), (Product.origin, 2),
+                  (Product.era, 2), (Product.condition, 1), (Product.description, 1)]
+        jumlah_cocok, skor = 0, 0
+        for k in kata:
+            pola = cls._pola(k)
+            jumlah_cocok = jumlah_cocok + case((or_(*[f.ilike(pola, escape="\\") for f, _ in bidang]), 1), else_=0)
+            for f, bobot in bidang:
+                skor = skor + case((f.ilike(pola, escape="\\"), bobot), else_=0)
+        frasa = cls._pola(" ".join(kata))
+        skor = skor + case((Product.name.ilike(frasa, escape="\\"), 10), else_=0)  # bonus frasa utuh di nama
+        statement = (select(Product).join(Category, Product.category_id == Category.id)
+                     .options(selectinload(Product.images), selectinload(Product.category), selectinload(Product.reviews))
+                     .where(jumlah_cocok >= 1))
+        if active_only:
+            statement = statement.where(Product.is_active.is_(True))
+        if category_slug:
+            statement = statement.where(Category.slug == category_slug)
+        statement = statement.order_by(jumlah_cocok.desc(), skor.desc(), Product.id.desc()).limit(limit)
+        return [product.to_dict() for product in db.session.scalars(statement).unique().all()]
+
     @classmethod
     def list_products(cls, query: str = "", category_slug: str = "", active_only: bool = True) -> list[dict]:
+        if query.strip():
+            return cls.cari(query, category_slug, active_only)
         statement = select(Product).options(
             selectinload(Product.images), selectinload(Product.category), selectinload(Product.reviews)
         ).order_by(Product.id.desc())
         if active_only:
             statement = statement.where(Product.is_active.is_(True))
-        if query.strip():
-            esc = query.strip().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
-            needle = f"%{esc}%"
-            statement = statement.where(or_(
-                Product.name.ilike(needle, escape="\\"), Product.description.ilike(needle, escape="\\"),
-                Product.origin.ilike(needle, escape="\\"),
-            ))
         if category_slug:
             statement = statement.join(Category).where(Category.slug == category_slug)
         return [product.to_dict() for product in db.session.scalars(statement).unique().all()]

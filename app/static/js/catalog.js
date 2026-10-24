@@ -17,6 +17,48 @@ class FilterKatalog {
         this.pagination = document.getElementById('catalogPagination');
         this.perHalaman = 8;
         this.halamanAktif = 1;
+        this.modeServer = true;      // teks pencarian diselesaikan PostgreSQL; false hanya bila fetch gagal
+        this.qTerakhir = this.normalisasiQuery(this.pencarian?.value || '');
+        this.urutanFetch = 0;
+        this.timerCari = null;
+        this.tandaiPeringkat();
+    }
+
+    normalisasiQuery(teks) {
+        return String(teks || '').split(/\s+/).filter(Boolean).join(' ').slice(0, 100);
+    }
+
+    // Urutan DOM dari server = peringkat relevansi; disimpan agar bisa dipulihkan setelah sorting lain.
+    tandaiPeringkat() {
+        [...(this.grid?.querySelectorAll('[data-product]') || [])].forEach((kartu, i) => { kartu.dataset.rank = String(i); });
+    }
+
+    async muatDariServer(query) {
+        const nomor = ++this.urutanFetch;
+        try {
+            const respons = await fetch(`/katalog/hasil?q=${encodeURIComponent(query)}`, { credentials: 'same-origin', headers: { Accept: 'text/html' } });
+            if (!respons.ok) throw new Error(String(respons.status));
+            const html = await respons.text();
+            if (nomor !== this.urutanFetch) return;   // respons usang (user sudah mengetik lagi)
+            this.grid.innerHTML = html;
+            this.modeServer = true;
+            this.qTerakhir = query;
+            this.tandaiPeringkat();
+            const url = new URL(window.location.href);
+            if (query) url.searchParams.set('q', query); else url.searchParams.delete('q');
+            window.history.replaceState(null, '', url);
+        } catch (galat) {
+            if (nomor !== this.urutanFetch) return;
+            this.modeServer = false;                   // cadangan: saring kartu yang sudah ada di halaman
+        }
+        this.terapkan(true);
+    }
+
+    jadwalkanCari() {
+        const query = this.normalisasiQuery(this.pencarian?.value || '');
+        window.clearTimeout(this.timerCari);
+        if (query === this.qTerakhir && this.modeServer) { this.terapkan(true); return; }
+        this.timerCari = window.setTimeout(() => this.muatDariServer(query), 250);
     }
 
     normalisasi(teks) {
@@ -33,7 +75,7 @@ class FilterKatalog {
         const hargaMin = this.hargaMin?.value === '' || this.hargaMin?.value == null ? null : Number(this.hargaMin.value);
         const hargaMax = this.hargaMax?.value === '' || this.hargaMax?.value == null ? null : Number(this.hargaMax.value);
         const harga = Number(kartu.dataset.price || 0);
-        return kata.every(item => teksProduk.includes(item))
+        return (this.modeServer || kata.every(item => teksProduk.includes(item)))
             && (!kategori || kartu.dataset.category === kategori)
             && (!era || this.normalisasi(kartu.dataset.era).replace(/[–—]/g, '-') === this.normalisasi(era).replace(/[–—]/g, '-'))
             && (!kondisi || kartu.dataset.condition === kondisi)
@@ -48,6 +90,7 @@ class FilterKatalog {
             if (mode === 'price-low') return Number(a.dataset.price) - Number(b.dataset.price);
             if (mode === 'price-high') return Number(b.dataset.price) - Number(a.dataset.price);
             if (mode === 'newest') return Number(b.dataset.id) - Number(a.dataset.id);
+            if (this.modeServer && this.qTerakhir) return Number(a.dataset.rank) - Number(b.dataset.rank);  // relevansi saat mencari
             return Number(b.dataset.rating) - Number(a.dataset.rating);
         });
     }
@@ -112,11 +155,12 @@ class FilterKatalog {
     }
 
     pasang() {
-        [this.pencarian, this.kategori, this.era, this.kondisi, this.hargaMin, this.hargaMax].forEach(elemen => {
-            elemen?.addEventListener(elemen === this.pencarian ? 'input' : 'change', () => this.terapkan(true));
+        this.pencarian?.addEventListener('input', () => this.jadwalkanCari());
+        [this.kategori, this.era, this.kondisi, this.hargaMin, this.hargaMax].forEach(elemen => {
+            elemen?.addEventListener('change', () => this.terapkan(true));
         });
         this.urutan?.addEventListener('change', () => this.terapkan(true));
-        this.resetFilter?.addEventListener('click', () => {
+        const resetSemua = () => {
             if (this.pencarian) this.pencarian.value = '';
             if (this.kategori) this.kategori.value = '';
             if (this.era) this.era.value = '';
@@ -124,8 +168,10 @@ class FilterKatalog {
             if (this.hargaMin) this.hargaMin.value = '';
             if (this.hargaMax) this.hargaMax.value = '';
             if (this.urutan) this.urutan.value = 'popular';
-            this.terapkan(true);
-        });
+            if (this.qTerakhir || !this.modeServer) this.muatDariServer(''); else this.terapkan(true);
+        };
+        this.resetFilter?.addEventListener('click', resetSemua);
+        document.getElementById('catalogEmptyReset')?.addEventListener('click', resetSemua);
         this.terapkan(true);
     }
 }

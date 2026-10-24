@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block title %}Verifikasi Email — Albis Antique{% endblock %}
+{% block body_class %}halaman-penuh auth-page{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/auth.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/verifikasi.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="auth-shell">
+    <div class="auth-form-area">
+        <div class="auth-card verif-card">
+            <div class="verif-ikon" aria-hidden="true">✉️</div>
+            <h2>Registrasi berhasil, cek email Anda</h2>
+            <p class="verif-sub">Kami mengirim kode dan tautan verifikasi ke <strong>{{ email_samar }}</strong>.
+               Klik tautan di email, atau masukkan kodenya di halaman berikut.</p>
+            <a class="button button-primary button-full" href="{{ url_for('auth.verifikasi_kode') }}">Masukkan kode</a>
+            <a class="button button-secondary button-full verif-gap" href="{{ url_for('auth.login') }}">Kembali ke login</a>
+            <form method="post" action="{{ url_for('auth.kirim_ulang_verifikasi') }}" class="verif-ulang">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="kembali" value="cek">
+                <span>Tidak menerima email?</span>
+                <button class="text-link" type="submit">Kirim ulang</button>
+            </form>
+        </div>
+    </div>
+</section>
+{% endblock %}
