@@ -7,7 +7,7 @@ HURUF_NAMA_TAMBAHAN = " .'-"
 
 
 class ValidasiRegistrasi:
-    """Memeriksa kolom email, password, nama, alamat, dan nomor telepon."""
+    """Memeriksa kolom email, password, konfirmasi password, dan nama. Alamat/telepon diisi setelah login (profil)."""
     def __init__(self, data):
         self.data = data
         self.nilai = {}
@@ -85,7 +85,5 @@ class ValidasiRegistrasi:
         self._email()
         self._password()
         self._nama()
-        self._alamat()
-        self._telepon()
         # Password tidak pernah dikembalikan sebagai data isian.
         return self.nilai, self.galat

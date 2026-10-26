@@ -1,7 +1,7 @@
 """Laporan admin dihitung langsung dari PostgreSQL (satu definisi pendapatan: pesanan Selesai)."""
 from sqlalchemy import func, select
 from app.extensions import db
-from app.models import Order, OrderItem, Payment, Product, Review, User
+from app.models import Order, OrderItem, Product, Review, User
 
 
 class LayananLaporan:

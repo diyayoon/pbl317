@@ -1,5 +1,5 @@
 """Route publik Albis Antique: beranda, katalog, detail produk (data dari PostgreSQL)."""
-from flask import abort, make_response, render_template, request
+from flask import abort, make_response, redirect, render_template, request, url_for
 
 from app.services.catalog_service import CatalogService
 from app.services.review_service import LayananUlasan
@@ -31,6 +31,12 @@ def beranda():
         "main/index.html", kategori_unggulan=CatalogService.category_summary(),
         produk_unggulan=unggulan, produk_slide=slide, produk_terbaru=terbaru,
     )
+
+
+@main_bp.get("/favicon.ico")
+def favicon():
+    """Browser/aplikasi tertentu meminta /favicon.ico langsung; arahkan ke berkas statis agar tidak 404."""
+    return redirect(url_for("static", filename="images/favicon/favicon.ico"), code=301)
 
 
 @main_bp.get("/katalog")

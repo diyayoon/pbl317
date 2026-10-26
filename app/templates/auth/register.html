@@ -162,54 +162,6 @@
                     </div>
                 </div>
 
-                <div class="form-field">
-                    <div class="label-baris">
-                        <label for="alamat" data-i18n="address">Alamat utama</label>
-                        <span class="char-count" id="alamatCount" aria-hidden="true">0 / 255</span>
-                    </div>
-                    <textarea
-                        class="form-control{% if galat.alamat %} is-invalid{% endif %}"
-                        id="alamat"
-                        name="alamat"
-                        rows="3"
-                        placeholder="Jalan, nomor, kelurahan, kota, kode pos"
-                        data-i18n-placeholder="address_placeholder"
-                        autocomplete="street-address"
-                        minlength="10"
-                        maxlength="255"
-                        aria-describedby="alamatError"
-                        {% if galat.alamat %}aria-invalid="true"{% endif %}
-                        required
-                    >{{ nilai.alamat or '' }}</textarea>
-                    <p class="field-error" id="alamatError" role="alert" {% if not galat.alamat %}hidden{% endif %}>
-                        {{ galat.alamat or '' }}
-                    </p>
-                </div>
-
-                <div class="form-field">
-                    <div class="label-baris">
-                        <label for="telepon" data-i18n="phone">Nomor telepon</label>
-                    </div>
-                    <input
-                        class="form-control{% if galat.telepon %} is-invalid{% endif %}"
-                        id="telepon"
-                        name="telepon"
-                        type="tel"
-                        inputmode="tel"
-                        value="{{ nilai.telepon or '' }}"
-                        placeholder="Contoh: 628123456789"
-                        data-i18n-placeholder="phone_placeholder"
-                        autocomplete="tel"
-                        maxlength="20"
-                        aria-describedby="teleponHint teleponError"
-                        {% if galat.telepon %}aria-invalid="true"{% endif %}
-                        required
-                    >
-                    <p class="field-error" id="teleponError" role="alert" {% if not galat.telepon %}hidden{% endif %}>
-                        {{ galat.telepon or '' }}
-                    </p>
-                </div>
-
                 <button
                     class="button button-primary button-full"
                     type="submit"

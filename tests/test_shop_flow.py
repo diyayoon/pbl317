@@ -22,7 +22,7 @@ def test_checkout_harga_dihitung_server_dan_stok_berkurang(client, app):
     daftar_dan_login(client)
     alamat = buat_alamat(client)
     r = _pesan(client, alamat, qty=2)
-    assert r.status_code == 201 and r.get_json()["order"]["total"] == 2_000_000
+    assert r.status_code == 201 and r.get_json()["order"]["total"] == 2_000_000 + 25_000   # subtotal + ongkir tetap
     with app.app_context():
         assert db.session.get(Product, 1).stock == 1
     assert _pesan(client, alamat, qty=5).status_code == 422          # stok kurang

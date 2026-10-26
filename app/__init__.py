@@ -6,7 +6,7 @@ from pathlib import Path
 from flask import Flask, abort, send_file, send_from_directory
 from flask_login import current_user
 
-from .config import DevelopmentConfig, ProductionConfig, TestingConfig
+from .config import DevelopmentConfig, ProductionConfig
 from .extensions import csrf, db, login_manager, migrate
 
 _PLACEHOLDER_SECRET = (
@@ -32,6 +32,7 @@ def _validasi_konfigurasi(app: Flask) -> None:
         secret = str(app.config.get("SECRET_KEY") or "").strip()
         if len(secret) < 32 or any(m in secret.lower() for m in _PLACEHOLDER_SECRET):
             raise RuntimeError("Production membutuhkan SECRET_KEY acak minimal 32 karakter; nilai contoh/placeholder tidak boleh digunakan.")
+        # Mode Midtrans hanya ditentukan MIDTRANS_IS_PRODUCTION; awalan kunci tidak andal untuk membedakan sandbox/production.
         # Tautan email dibuat dari nilai ini, bukan header Host (anti Host header injection).
         if not str(app.config.get("APP_BASE_URL") or "").startswith(("http://", "https://")):
             raise RuntimeError("Production membutuhkan APP_BASE_URL (mis. https://domain-anda) untuk tautan verifikasi email.")
@@ -59,13 +60,21 @@ def buat_app(konfigurasi=None):
     init_security(app)
     from .sesi import init_sesi
     init_sesi(app)
+    from .kedaluwarsa import init_kedaluwarsa
+    init_kedaluwarsa(app)
 
     from .blueprints.main import main_bp
     from .blueprints.auth import auth_bp
     from .blueprints.customer import customer_bp
     from .blueprints.admin import admin_bp
-    for bp in (main_bp, auth_bp, customer_bp, admin_bp):
+    from .blueprints.midtrans import midtrans_bp
+    for bp in (main_bp, auth_bp, customer_bp, admin_bp, midtrans_bp):
         app.register_blueprint(bp)
+
+    @app.context_processor
+    def _konteks_pembayaran():
+        from .services.midtrans_service import aktif
+        return {"midtrans_aktif": aktif()}
 
     from .commands import register_commands
     register_commands(app)

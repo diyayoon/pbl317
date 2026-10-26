@@ -17,6 +17,65 @@ def register_commands(app):
             db.session.rollback()
             raise click.ClickException(f"Koneksi database gagal: {exc.__class__.__name__}") from exc
 
+    @app.cli.command("uji-email")
+    @click.argument("tujuan")
+    def uji_email(tujuan):
+        """Periksa konfigurasi email lalu kirim satu email uji ke TUJUAN. Tidak menampilkan password."""
+        import re
+        from .utils.email import kirim_email, smtp_terkonfigurasi
+        c = app.config
+        masalah = []
+        if not smtp_terkonfigurasi():
+            masalah.append("MAIL_SERVER / MAIL_USERNAME / MAIL_PASSWORD / MAIL_FROM belum lengkap di .env.")
+        if "example" in str(c.get("APP_BASE_URL") or "") or not c.get("APP_BASE_URL"):
+            masalah.append("APP_BASE_URL masih kosong/placeholder: tautan di email akan menunjuk ke alamat yang salah.")
+        if c.get("MAIL_SERVER") == "smtp.gmail.com" and not re.fullmatch(r"[a-z]{16}", str(c.get("MAIL_PASSWORD") or "").replace(" ", "")):
+            masalah.append("MAIL_PASSWORD bukan format App Password Gmail (16 huruf kecil). Password akun biasa akan ditolak Gmail.")
+        if c.get("MAIL_USERNAME") != c.get("MAIL_FROM"):
+            masalah.append("MAIL_FROM sebaiknya sama dengan MAIL_USERNAME (Gmail mengganti pengirim dengan akun yang login).")
+        if c.get("SESSION_COOKIE_SECURE") and str(c.get("APP_BASE_URL") or "").startswith("http://"):
+            masalah.append("SESSION_COOKIE_SECURE=1 tetapi APP_BASE_URL memakai http://: browser bisa menolak cookie sesi (isi SESSION_COOKIE_SECURE=0 untuk uji lewat HTTP).")
+        for m in masalah:
+            click.echo(f"PERIKSA: {m}")
+        try:
+            with app.test_request_context():
+                hasil = kirim_email(tujuan, "Uji email Albis Antique", "Jika Anda membaca ini, pengiriman email berhasil.")
+        except Exception as exc:  # noqa: BLE001
+            raise click.ClickException(f"Gagal: {exc.__class__.__name__}") from exc
+        if hasil:
+            click.echo(f"BERHASIL: email uji dikirim ke {tujuan}. Cek inbox dan folder spam.")
+        else:
+            click.echo("GAGAL: lihat baris 'Gagal mengirim email' di atas untuk jenis errornya "
+                       "(SMTPAuthenticationError 535 = App Password salah / 2-Step belum aktif; gaierror = tidak ada internet/DNS).")
+            raise SystemExit(1)
+
+    @app.cli.command("uji-midtrans")
+    def uji_midtrans():
+        """Coba Server Key ke SANDBOX Midtrans dengan satu transaksi uji (tanpa uang). Tidak menampilkan kunci."""
+        import secrets
+        from .services import midtrans_service as ms
+        if not ms.aktif():
+            raise click.ClickException("MIDTRANS_SERVER_KEY belum diisi di .env.")
+        if app.config.get("MIDTRANS_IS_PRODUCTION"):
+            raise click.ClickException("MIDTRANS_IS_PRODUCTION=1: perintah uji ini hanya untuk sandbox. Ubah ke 0 dulu.")
+        ref = f"UJI-{secrets.token_hex(4).upper()}"
+        try:
+            with app.test_request_context():
+                status, hasil = ms._http("POST", f"{ms._basis()[0]}/snap/v1/transactions",
+                                         {"transaction_details": {"order_id": ref, "gross_amount": 10000}})
+        except ms.ErrorMidtrans as exc:
+            raise click.ClickException(f"Tidak terhubung ke Midtrans: {exc.pesan}") from exc
+        if status in (200, 201) and hasil.get("redirect_url"):
+            click.echo(f"BERHASIL: kunci diterima server SANDBOX (transaksi uji {ref}, Rp10.000, tidak ditagihkan).")
+        elif status == 401:
+            click.echo("DITOLAK (401): kunci tidak dikenali server sandbox. Pastikan dashboard dalam mode Sandbox, salin Server Key "
+                       "(bukan Client Key), tanpa spasi, atau kunci sudah di-Regenerate.")
+            raise SystemExit(1)
+        else:
+            alasan = "; ".join(map(str, hasil.get("error_messages", [])))[:300] if isinstance(hasil, dict) else ""
+            click.echo(f"GAGAL (HTTP {status}): {alasan}")
+            raise SystemExit(1)
+
     @app.cli.command("init-dev-db")
     @click.option("--tanpa-produk", is_flag=True, help="Hanya kategori, tanpa koleksi pembuka.")
     @click.pass_context

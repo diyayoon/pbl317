@@ -3,7 +3,7 @@ import io
 import re
 
 from app.extensions import db
-from app.models import Cart, User
+from app.models import User
 from tests.conftest import buat_alamat, daftar_dan_login, login_admin
 
 PNG = b"\x89PNG\r\n\x1a\n" + b"\x00" * 64

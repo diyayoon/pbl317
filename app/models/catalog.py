@@ -1,7 +1,6 @@
 """Entitas kategori dan produk katalog."""
 import re
 from datetime import datetime, timezone
-from decimal import Decimal
 from app.extensions import db
 
 

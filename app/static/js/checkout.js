@@ -96,7 +96,10 @@
                 row.append(copy, make('strong', 'checkout-item-price', money(price * qty)));
                 itemsNode.append(row);
             });
-            subtotalNode.textContent = money(subtotal); totalNode.textContent = money(subtotal);
+            const ongkir = Number(data.ongkir || 0);   // dihitung server; total final tetap dihitung ulang server saat pesan
+            const ongkirNode = document.getElementById('checkoutShipping');
+            if (ongkirNode) ongkirNode.textContent = ongkir > 0 ? money(ongkir) : 'Gratis';
+            subtotalNode.textContent = money(subtotal); totalNode.textContent = money(subtotal + ongkir);
             if (!checkoutItems.length) { form.hidden = true; empty.hidden = false; return; }
             empty.hidden = true; form.hidden = false;
             submit.disabled = !selectedAddressId;

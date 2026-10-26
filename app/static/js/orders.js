@@ -33,6 +33,35 @@ document.addEventListener('DOMContentLoaded', () => {
         catch (error) { list.replaceChildren(tag('div', 'account-empty-state', error.message)); }
     }
 
+    function kotakMidtrans(order) {
+        const box = tag('div', 'order-payment-info');
+        box.append(tag('strong', '', `Total yang harus dibayar: ${money(order.total)}`));
+        box.append(tag('p', '', 'Bayar aman lewat halaman Midtrans (VA bank, QRIS, e-wallet, kartu). Pesanan otomatis diproses setelah pembayaran berhasil.'));
+        const catatan = tag('small', 'field-hint', '');
+        const tombol = tag('button', 'button button-primary button-small', 'Bayar sekarang');
+        tombol.type = 'button';
+        tombol.addEventListener('click', async () => {
+            tombol.disabled = true; catatan.textContent = 'Menyiapkan halaman pembayaran…';
+            try {
+                const hasil = await request(`/customer/api/orders/${order.id}/midtrans`, { method: 'POST' });
+                if (!String(hasil.redirectUrl || '').startsWith('https://')) throw new Error('Alamat pembayaran tidak valid.');
+                window.location.assign(hasil.redirectUrl);
+            } catch (error) { catatan.textContent = error.message; tombol.disabled = false; }
+        });
+        box.append(tombol, catatan);
+        const batas = new Date(order.batasBayar);
+        if (!Number.isNaN(batas.getTime())) box.append(tag('small', 'field-hint', `Bayar sebelum ${batas.toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}.`));
+        return box;
+    }
+
+    async function sinkronSetelahKembali() {
+        if (new URLSearchParams(window.location.search).get('midtrans') !== 'selesai') return;
+        const pending = orders.filter(o => o.pembayaran === 'Midtrans' && o.status === 'Menunggu pembayaran');
+        for (const o of pending) { try { await request(`/customer/api/orders/${o.id}/midtrans/sinkron`, { method: 'POST' }); } catch (_) { /* webhook akan menyusul */ } }
+        window.history.replaceState(null, '', window.location.pathname);
+        if (pending.length) await muat();
+    }
+
     function kotakInstruksi(order) {
         const box = tag('div', 'order-payment-info');
         box.append(tag('strong', '', `Total yang harus dibayar: ${money(order.total)}`));
@@ -135,9 +164,20 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             const bottom = tag('div', 'order-card-bottom');
-            bottom.append(tag('span', '', `Total ${money(order.total)} · ${order.pembayaran}`));
+            bottom.append(tag('span', '', `Total ${money(order.total)}${order.ongkir > 0 ? ` (termasuk ongkir ${money(order.ongkir)})` : ''} · ${order.pembayaran}`));
             bottom.append(tag('span', '', `Penerima: ${order.nama} · ${order.alamat || ''}`));
             card.append(top, items, bottom);
+            if (order.status === 'Menunggu pembayaran') {
+                const batal = tag('button', 'button button-secondary button-small', 'Batalkan pesanan');
+                batal.type = 'button';
+                batal.addEventListener('click', async () => {
+                    if (!window.confirm(`Batalkan pesanan ${order.orderNumber}? Stok akan dikembalikan.`)) return;
+                    batal.disabled = true;
+                    try { await request(`/customer/api/orders/${order.id}/batal`, { method: 'POST' }); await muat(); }
+                    catch (error) { batal.disabled = false; window.alert(error.message); }
+                });
+                card.append(batal);
+            }
 
             const bukti = order.buktiBayar;
             if (bukti) {
@@ -146,7 +186,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 state.append(link); bottom.append(state);
                 if (bukti.status === 'Ditolak') card.append(tag('p', 'order-rejected-note', `Bukti ditolak admin: ${bukti.catatan || 'tidak sesuai'}. Silakan unggah ulang.`));
             }
-            if (order.status === 'Menunggu pembayaran') card.append(kotakInstruksi(order), formUnggah(order, bukti?.status === 'Ditolak'));
+            if (order.status === 'Menunggu pembayaran' && order.pembayaran === 'Midtrans') card.append(kotakMidtrans(order));
+            else if (order.status === 'Menunggu pembayaran') card.append(kotakInstruksi(order), formUnggah(order, bukti?.status === 'Ditolak'));
             list.append(card);
         });
     }
@@ -156,5 +197,5 @@ document.addEventListener('DOMContentLoaded', () => {
         buttons.forEach(node => node.classList.toggle('is-active', node === button));
         render();
     }));
-    muat();
+    muat().then(sinkronSetelahKembali);
 });

@@ -1,4 +1,3 @@
-from app.extensions import db
 from app.models import AuditLog, User
 from tests.conftest import PASSWORD, daftar_dan_login, login_admin
 

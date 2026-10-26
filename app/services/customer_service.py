@@ -4,7 +4,6 @@ import binascii
 import re
 from flask import current_app
 from sqlalchemy import select
-from sqlalchemy.exc import IntegrityError
 from app.extensions import db
 from app.models import Address, Cart, CartItem, Product, User
 
@@ -168,8 +167,10 @@ class LayananPelanggan:
         digits = re.sub(r"[^\d+]", "", phone).replace("+", "")
         if digits.startswith("0"):
             digits = "62" + digits[1:]
-        if not re.fullmatch(r"62\d{8,13}", digits):
+        if phone and not re.fullmatch(r"62\d{8,13}", digits):
             raise ValueError("Nomor telepon harus diawali 62 dan berisi 10–15 angka.")
+        if not phone:
+            digits = ""  # telepon opsional di profil (wajib hanya di alamat pengiriman)
         if avatar is not None:
             if not isinstance(avatar, str):
                 raise ValueError("Foto profil tidak valid.")

@@ -32,5 +32,6 @@ def kirim_email(tujuan: str, subjek: str, isi: str) -> bool:
             server.send_message(pesan)
         return True
     except (smtplib.SMTPException, OSError) as exc:
-        current_app.logger.error("Gagal mengirim email verifikasi (%s).", type(exc).__name__)
+        kode = getattr(exc, "smtp_code", "")  # kode numerik SMTP saja (mis. 535); pesan server bisa memuat data sensitif
+        current_app.logger.error("Gagal mengirim email verifikasi (%s %s).", type(exc).__name__, kode)
         return False

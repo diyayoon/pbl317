@@ -103,7 +103,7 @@ def register():
             galat["email"] = "Email ini sudah terdaftar. Silakan masuk atau gunakan email lain."
         if galat:
             return render_template("auth/register.html", nilai=nilai, galat=galat), 422
-        user = User(email=email, nama=nilai["nama"], role="customer", telepon=nilai["telepon"], alamat_registrasi=nilai["alamat"])
+        user = User(email=email, nama=nilai["nama"], role="customer")  # alamat & telepon diisi setelah login
         user.set_password(request.form.get("password", ""))
         try:
             db.session.add(user)

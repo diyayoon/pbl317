@@ -4,6 +4,7 @@ from flask import current_app
 from sqlalchemy import select
 from app.extensions import db
 from app.models import Order, Product, User
+from app.utils import audit
 
 STATUS = ("Menunggu pembayaran", "Menunggu persetujuan", "Diproses", "Dikirim", "Selesai", "Dibatalkan")
 TRANSISI = {
@@ -45,6 +46,23 @@ class LayananPesanan:
                 order.payment.reviewed_at = datetime.now(timezone.utc)
                 order.payment.review_note = "Pesanan dibatalkan oleh admin."
         order.status = status
+        db.session.commit()
+        return order
+
+    @classmethod
+    def batalkan_oleh_customer(cls, order_id: int, customer: User) -> Order:
+        """Pelanggan membatalkan pesanannya sendiri selama belum dibayar/diajukan; stok dikembalikan."""
+        order = db.session.scalar(select(Order).where(Order.id == order_id, Order.user_id == customer.id).with_for_update())
+        if order is None:
+            raise LookupError("Pesanan tidak ditemukan.")
+        if order.status != "Menunggu pembayaran":
+            raise ValueError("Pesanan ini sudah tidak bisa dibatalkan sendiri. Hubungi admin bila perlu.")
+        cls.kembalikan_stok(order)
+        order.status = "Dibatalkan"
+        if order.payment:
+            order.payment.status = "Dibatalkan"
+            order.payment.review_note = "Dibatalkan oleh pelanggan."
+        audit.catat("pesanan_dibatalkan_pelanggan", "order", order.id, order.order_number)
         db.session.commit()
         return order
 

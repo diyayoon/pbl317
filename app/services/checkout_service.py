@@ -14,6 +14,14 @@ class LayananCheckout:
     def __init__(self, customer: User):
         self.customer = customer
 
+    @staticmethod
+    def hitung_ongkir(subtotal: Decimal) -> Decimal:
+        flat = Decimal(int(current_app.config.get("SHIPPING_COST_FLAT", 0)))
+        gratis = Decimal(int(current_app.config.get("SHIPPING_FREE_ABOVE", 0)))
+        if flat <= 0 or (gratis > 0 and subtotal >= gratis):
+            return Decimal("0")
+        return flat
+
     def data_checkout(self, direct_product_id: int | None = None, quantity: int = 1):
         if direct_product_id:
             product = Product.query.filter_by(id=direct_product_id, is_active=True).first()
@@ -24,10 +32,15 @@ class LayananCheckout:
             items = [dict(product.to_dict(), jumlah=quantity, dipilih=True)]
         else:
             items = [item for item in LayananPelanggan.daftar_keranjang(self.customer) if item.get("dipilih") is not False]
-        return {"items": items, "addresses": LayananPelanggan.daftar_alamat(self.customer)}
+        subtotal = sum(Decimal(str(i.get("harga") or 0)) * int(i.get("jumlah") or 1) for i in items)
+        ongkir = self.hitung_ongkir(subtotal) if items else Decimal("0")
+        gratis = int(current_app.config.get("SHIPPING_FREE_ABOVE", 0))
+        return {"items": items, "addresses": LayananPelanggan.daftar_alamat(self.customer),
+                "ongkir": int(ongkir), "gratisOngkirDi": gratis}
 
     def buat_pesanan(self, address_id: int, payment_method: str, direct_product_id: int | None = None, quantity: int = 1):
-        if payment_method not in self.METODE_BAYAR:
+        from app.services.midtrans_service import aktif as midtrans_aktif
+        if payment_method not in self.METODE_BAYAR | ({"Midtrans"} if midtrans_aktif() else set()):
             raise ValueError("Metode pembayaran tidak tersedia.")
         address = Address.query.filter_by(id=address_id, user_id=self.customer.id).first()
         if not address:
@@ -66,7 +79,7 @@ class LayananCheckout:
             if qty < 1 or product.stock < qty:
                 raise ValueError(f"Stok {product.name} tidak mencukupi; stok tersedia {product.stock}.")
             subtotal += Decimal(product.price) * qty
-        shipping = Decimal("0")
+        shipping = self.hitung_ongkir(subtotal)
         total = subtotal + shipping
         stamp = datetime.now(timezone.utc).strftime("%Y%m%d")
         order_number = f"AA-{stamp}-{uuid4().hex[:8].upper()}"

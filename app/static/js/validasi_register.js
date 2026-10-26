@@ -59,8 +59,6 @@ class ValidasiRegister {
             password: { cek: () => this.cekPassword(), error: 'passwordError' },
             konfirmasiPassword: { cek: () => this.cekKonfirmasiPassword(), error: 'konfirmasiPasswordError' },
             nama: { cek: () => this.cekNama(), error: 'namaError' },
-            alamat: { cek: () => this.cekAlamat(), error: 'alamatError' },
-            telepon: { cek: () => this.cekTelepon(), error: 'teleponError' },
         };
 
         this.kolom = {};
@@ -112,23 +110,6 @@ class ValidasiRegister {
         if (nilai === '') return 'nama_wajib';
         if (nilai.length < 3) return 'nama_pendek';
         if (nilai.length > 100 || !/^\p{L}[\p{L}\s.'-]*$/u.test(nilai)) return 'nama_format';
-        return null;
-    }
-
-    /* ===== ATURAN: ALAMAT ===== */
-    cekAlamat() {
-        const nilai = this.kolom.alamat.value.trim();
-        if (nilai === '') return 'alamat_wajib';
-        if (nilai.length < 10) return 'alamat_pendek';
-        if (nilai.length > 255) return 'alamat_panjang';
-        return null;
-    }
-
-    /* ===== ATURAN: NOMOR TELEPON ===== */
-    cekTelepon() {
-        const nilai = this.normalisasiTelepon(this.kolom.telepon.value);
-        if (nilai === '') return 'telepon_wajib';
-        if (!/^62\d{8,13}$/.test(nilai)) return 'telepon_format';
         return null;
     }
 
@@ -199,12 +180,6 @@ class ValidasiRegister {
             hitung.textContent = `${jumlah} / ${MINIMAL_PASSWORD}`;
             hitung.classList.toggle('tercapai', jumlah >= MINIMAL_PASSWORD);
         }
-    }
-
-    /* ===== FUNGSI: MEMPERBARUI PENGHITUNG KARAKTER ALAMAT ===== */
-    perbaruiHitungAlamat() {
-        const penghitung = document.getElementById('alamatCount');
-        if (penghitung) penghitung.textContent = `${this.kolom.alamat.value.length} / 255`;
     }
 
     /* ===== FUNGSI: MENAMPILKAN ULANG PESAN ERROR SETELAH GANTI BAHASA ===== */
@@ -278,9 +253,6 @@ class ValidasiRegister {
             if (kolom.classList.contains('is-invalid')) this.sudahDisentuh.add(id);
 
             kolom.addEventListener('blur', () => {
-                if (id === 'telepon' && kolom.value.trim() !== '') {
-                    kolom.value = this.normalisasiTelepon(kolom.value);
-                }
                 if (!['password', 'konfirmasiPassword'].includes(id) && kolom.value !== kolom.value.trim()) {
                     kolom.value = kolom.value.trim();
                 }
@@ -294,7 +266,6 @@ class ValidasiRegister {
                     if (this.sudahDisentuh.has('konfirmasiPassword')) this.validasiKolom('konfirmasiPassword');
                 }
                 if (id === 'konfirmasiPassword' && this.sudahDisentuh.has('konfirmasiPassword')) this.validasiKolom('konfirmasiPassword');
-                if (id === 'alamat') this.perbaruiHitungAlamat();
                 if (this.sudahDisentuh.has(id)) this.validasiKolom(id);
             });
         });
@@ -313,7 +284,6 @@ class ValidasiRegister {
         this.pasangTombolPassword();
         this.perbaruiLabelTombolMata();
         this.perbaruiKekuatan();
-        this.perbaruiHitungAlamat();
 
         /* ganti bahasa -> pesan error ikut berganti */
         new MutationObserver(() => this.perbaruiBahasa()).observe(document.documentElement, {

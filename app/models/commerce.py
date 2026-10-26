@@ -74,7 +74,7 @@ class Order(db.Model):
             }
         return {
             "id": self.id, "orderNumber": self.order_number, "date": self.created_at.isoformat(),
-            "status": self.status, "pembayaran": self.payment_method, "total": int(self.total or 0),
+            "status": self.status, "pembayaran": self.payment_method, "total": int(self.total or 0), "ongkir": int(self.shipping_cost or 0),
             "statusPembayaran": payment.status if payment else "Menunggu pembayaran",
             "batasBayar": self.batas_bayar.isoformat(),
             "nama": self.recipient_name, "telepon": self.recipient_phone,
@@ -112,6 +112,12 @@ class Payment(db.Model):
     reviewed_by = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     reviewed_at = db.Column(db.DateTime(timezone=True), nullable=True)
     review_note = db.Column(db.String(500), nullable=True)
+    # Payment gateway (Midtrans). Token/URL Snap hanya tautan sekali-bayar; kunci server tidak pernah disimpan.
+    snap_redirect_url = db.Column(db.String(500), nullable=True)
+    gateway_status = db.Column(db.String(30), nullable=True)
+    gateway_payment_type = db.Column(db.String(40), nullable=True)
+    gateway_transaction_id = db.Column(db.String(64), nullable=True)
+    paid_at = db.Column(db.DateTime(timezone=True), nullable=True)
     order = db.relationship("Order", back_populates="payment")
     reviewer = db.relationship("User", foreign_keys=[reviewed_by])
 

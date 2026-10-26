@@ -11,7 +11,7 @@ from sqlalchemy import case, func, or_, select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.exc import IntegrityError
 from app.extensions import db
-from app.models import Category, OrderItem, Product, ProductImage, Review
+from app.models import Category, OrderItem, Product, ProductImage
 from app.models.catalog import slugify
 
 

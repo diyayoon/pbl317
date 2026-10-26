@@ -1,12 +1,14 @@
 """Customer: riwayat pesanan, bukti bayar, ulasan. (pemilik: Intan)"""
 from flask import current_app, jsonify, render_template, request
 from flask_login import current_user, login_required
+from app.extensions import db
 from app.models import Order
+from app.services.midtrans_service import ErrorMidtrans, LayananMidtrans
 from app.services.order_service import LayananPesanan
 from app.services.payment_service import LayananPembayaran
 from app.services.review_service import LayananUlasan
 from app.utils import audit
-from app.utils.decorators import role_required
+from app.utils.decorators import role_required, terverifikasi_required
 from . import customer_bp
 
 
@@ -44,9 +46,38 @@ def api_orders():
     return jsonify(hasil)
 
 
+@customer_bp.post("/api/orders/<int:order_id>/batal")
+@login_required
+@role_required("customer")
+def api_batalkan_pesanan(order_id: int):
+    order = Order.query.filter_by(id=order_id, user_id=current_user.id).first()
+    if order is None:
+        return jsonify(error="Pesanan tidak ditemukan."), 404
+    midtrans = order.payment_method == "Midtrans" and order.payment is not None and bool(order.payment.snap_redirect_url)
+    try:
+        if midtrans:   # pastikan belum terbayar sebelum dibatalkan; bila Midtrans tidak terjangkau, jangan batalkan
+            if LayananMidtrans.sinkron(order) in ("lunas", "perlu_penanganan"):
+                db.session.refresh(order)
+                return jsonify(error="Pembayaran pesanan ini sudah diterima, jadi tidak bisa dibatalkan."), 409
+        LayananPesanan.batalkan_oleh_customer(order_id, current_user)
+    except ErrorMidtrans as exc:
+        db.session.rollback()
+        return jsonify(error=exc.pesan), exc.kode
+    except LookupError as exc:
+        db.session.rollback()
+        return jsonify(error=str(exc)), 404
+    except ValueError as exc:
+        db.session.rollback()
+        return jsonify(error=str(exc)), 409
+    if midtrans:
+        LayananMidtrans.batalkan_di_midtrans(order)
+    return jsonify(ok=True, status="Dibatalkan")
+
+
 @customer_bp.post("/api/orders/<int:order_id>/bukti")
 @login_required
 @role_required("customer")
+@terverifikasi_required
 def api_upload_payment_proof(order_id: int):
     order = Order.query.filter_by(id=order_id, user_id=current_user.id).first()
     if not order:
@@ -65,6 +96,7 @@ def api_upload_payment_proof(order_id: int):
 @customer_bp.post("/api/reviews")
 @login_required
 @role_required("customer")
+@terverifikasi_required
 def api_save_review():
     try:
         ulasan = LayananUlasan.simpan(current_user, request.get_json(silent=True))

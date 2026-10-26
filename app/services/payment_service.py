@@ -17,6 +17,8 @@ class LayananPembayaran:
     def simpan_bukti(self, order: Order, file):
         if not order or order.user_id != self.customer.id:
             raise LookupError("Pesanan tidak ditemukan pada akun ini.")
+        if order.payment_method == "Midtrans":
+            raise ValueError("Pesanan Midtrans dibayar lewat tombol Bayar sekarang, bukan unggah bukti.")
         if order.status not in {"Menunggu pembayaran", "Menunggu persetujuan"}:
             raise ValueError("Pesanan ini tidak menerima bukti pembayaran baru.")
         if not file or not file.filename:

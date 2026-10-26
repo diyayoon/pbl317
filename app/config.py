@@ -76,8 +76,17 @@ class Config:
     SESI_MAKS_MENIT = _int("SESI_MAKS_MENIT", 480)   # batas mutlak sejak login
     SESI_SENTUH_DETIK = _int("SESI_SENTUH_DETIK", 10)  # jeda minimum antar penulisan last_activity
 
+    # Midtrans (Snap Redirect). Kunci hanya dari environment; kosong = metode Midtrans nonaktif.
+    MIDTRANS_SERVER_KEY = os.getenv("MIDTRANS_SERVER_KEY", "").strip()
+    MIDTRANS_IS_PRODUCTION = _bool("MIDTRANS_IS_PRODUCTION", False)
+
     # Aturan bisnis
     ORDER_PAYMENT_TTL_JAM = _int("ORDER_PAYMENT_TTL_JAM", 24)
+    # Kedaluwarsa pesanan dijalankan berkala di dalam aplikasi (detik; 0 = nonaktif, pakai `flask expire-orders` terjadwal).
+    ORDER_EXPIRE_INTERVAL_DETIK = _int("ORDER_EXPIRE_INTERVAL_DETIK", 60)
+    # Ongkir tarif tetap (rupiah). SHIPPING_FREE_ABOVE > 0: gratis ongkir bila subtotal mencapai nilai itu.
+    SHIPPING_COST_FLAT = _int("SHIPPING_COST_FLAT", 25000)
+    SHIPPING_FREE_ABOVE = _int("SHIPPING_FREE_ABOVE", 0)
     MAX_OPEN_ORDERS = _int("MAX_OPEN_ORDERS", 5)
 
     # Verifikasi email & SMTP (kredensial hanya dari environment)
@@ -113,6 +122,7 @@ class TestingConfig(Config):
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
     SQLALCHEMY_ENGINE_OPTIONS = {}
     WTF_CSRF_ENABLED = False
+    ORDER_EXPIRE_INTERVAL_DETIK = 0   # test memicu kedaluwarsa secara eksplisit
     SECRET_KEY = "kunci-khusus-pengujian-otomatis-0123456789abcdef"
     LOGIN_MAX_PER_EMAIL = 5
     PAYMENT_UPLOAD_FOLDER = "/tmp/albis_test_uploads/payments"  # nosec B108 (hanya konfigurasi uji)

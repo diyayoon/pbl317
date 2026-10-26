@@ -700,7 +700,7 @@ class HalamanProfil {
     async simpanProfil() {
         const galatNama = ValidatorForm.nama(this.draf.nama, 'Nama lengkap');
         const galatEmail = ValidatorForm.email(this.draf.email);
-        const galatTelepon = ValidatorForm.telepon(this.draf.telepon || '');
+        const galatTelepon = (this.draf.telepon || '').trim() ? ValidatorForm.telepon(this.draf.telepon) : '';  // opsional di profil
         this.aturGalat('namaLengkap', 'galatNama', galatNama);
         this.aturGalat('emailProfil', 'galatEmail', galatEmail);
         this.aturGalat('teleponProfil', 'galatTeleponProfil', galatTelepon);
