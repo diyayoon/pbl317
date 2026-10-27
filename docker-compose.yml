@@ -33,7 +33,7 @@ services:
       EMAIL_VERIFY_KODE_DIGIT: ${EMAIL_VERIFY_KODE_DIGIT:-6}
       EMAIL_VERIFY_KODE_MAX_SALAH: ${EMAIL_VERIFY_KODE_MAX_SALAH:-5}
       # Ongkir tarif tetap (rupiah) dan kedaluwarsa pesanan berkala (detik)
-      SHIPPING_COST_FLAT: ${SHIPPING_COST_FLAT:-25000}
+      SHIPPING_COST_FLAT: ${SHIPPING_COST_FLAT:-0}
       SHIPPING_FREE_ABOVE: ${SHIPPING_FREE_ABOVE:-0}
       ORDER_EXPIRE_INTERVAL_DETIK: ${ORDER_EXPIRE_INTERVAL_DETIK:-60}
       # Timeout inaktivitas sesi (menit)
