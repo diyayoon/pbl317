@@ -9,7 +9,7 @@ from .customer_service import LayananPelanggan
 
 
 class LayananCheckout:
-    METODE_BAYAR = {"Transfer Bank", "QRIS"}
+    METODE_BAYAR = set()  # pembayaran manual dinonaktifkan; transaksi baru wajib lewat Midtrans
 
     def __init__(self, customer: User):
         self.customer = customer
@@ -40,8 +40,8 @@ class LayananCheckout:
 
     def buat_pesanan(self, address_id: int, payment_method: str, direct_product_id: int | None = None, quantity: int = 1):
         from app.services.midtrans_service import aktif as midtrans_aktif
-        if payment_method not in self.METODE_BAYAR | ({"Midtrans"} if midtrans_aktif() else set()):
-            raise ValueError("Metode pembayaran tidak tersedia.")
+        if payment_method != "Midtrans" or not midtrans_aktif():
+            raise ValueError("Pembayaran online Midtrans belum aktif. Periksa konfigurasi sandbox di .env.")
         address = Address.query.filter_by(id=address_id, user_id=self.customer.id).first()
         if not address:
             raise LookupError("Alamat pengiriman tidak ditemukan pada akun ini.")

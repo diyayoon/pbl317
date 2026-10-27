@@ -3,6 +3,7 @@ from flask_login import current_user, login_required
 from app.extensions import db
 from app.services.checkout_service import LayananCheckout
 from app.services.order_service import LayananPesanan
+from app.services.midtrans_service import ErrorMidtrans, LayananMidtrans, aktif as midtrans_aktif
 from app.utils import audit
 from app.utils.decorators import role_required, terverifikasi_required
 from . import customer_bp
@@ -13,7 +14,7 @@ from . import customer_bp
 @login_required
 @role_required("customer")
 def checkout():
-    return render_template("customer/checkout.html")
+    return render_template("customer/checkout.html", midtrans_aktif=midtrans_aktif())
 
 
 @customer_bp.get("/api/checkout")
@@ -43,7 +44,12 @@ def api_create_order():
         quantity = int(payload.get("quantity", 1))
         order = LayananCheckout(current_user).buat_pesanan(address_id, str(payload.get("payment_method", "")), direct_id, quantity)
         audit.catat("pesanan_dibuat", "order", order.id, f"{order.order_number} total={int(order.total)}", commit=True)
-        return jsonify(message="Pesanan berhasil dibuat.", order=order.to_dict()), 201
+        # Begitu order disimpan, langsung siapkan URL Snap; customer tidak perlu membuka riwayat dulu.
+        redirect_url = LayananMidtrans.buat_transaksi(order)
+        return jsonify(message="Lanjutkan pembayaran melalui Midtrans.", order=order.to_dict(), redirectUrl=redirect_url), 201
+    except ErrorMidtrans as exc:
+        db.session.rollback()
+        return jsonify(error=f"Pesanan tersimpan, tetapi halaman Midtrans belum bisa dibuka. Buka Riwayat Pesanan untuk mencoba pembayaran lagi. Detail: {exc.pesan}", orderId=locals().get("order").id if locals().get("order") else None), exc.kode
     except (ValueError, TypeError) as exc:
         db.session.rollback()
         return jsonify(error=str(exc) or "Data checkout tidak valid."), 422

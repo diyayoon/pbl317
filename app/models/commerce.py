@@ -131,7 +131,8 @@ class Payment(db.Model):
             "bukti_url": f"/media/payments/{self.id}" if self.proof_path else "",
             "catatan": self.review_note or "",
             "total": int(self.order.total or 0) if self.order else 0,
-            "method": self.method,
+            "method": self.method, "gateway_status": self.gateway_status or "",
+            "gateway_payment_type": self.gateway_payment_type or "",
             "uploaded_at": self.uploaded_at.isoformat() if self.uploaded_at else None,
         }
 
@@ -144,6 +145,7 @@ class Review(db.Model):
     product_id = db.Column(db.Integer, db.ForeignKey("products.id", ondelete="CASCADE"), nullable=False, index=True)
     rating = db.Column(db.Integer, nullable=False)
     comment = db.Column(db.Text, nullable=False, default="")
+    image_path = db.Column(db.String(500), nullable=True)
     is_hidden = db.Column(db.Boolean, nullable=False, default=False, index=True)
     hidden_reason = db.Column(db.String(300), nullable=True)
     moderated_by = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
@@ -159,6 +161,7 @@ class Review(db.Model):
             "id": self.id, "produk_id": self.product_id, "rating": self.rating,
             "komentar": self.comment, "tanggal": self.created_at.isoformat(),
             "nama": self.user.nama if self.user else "Pelanggan",
+            "gambar_url": f"/media/reviews/{self.id}" if self.image_path else "",
         }
         if admin:
             data.update({

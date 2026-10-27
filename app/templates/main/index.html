@@ -63,7 +63,7 @@
                             aria-roledescription="slide"
                             aria-label="{{ loop.index }} dari {{ produk_slide|length }}"
                         >
-                            <a class="slider-visual" href="{{ url_for('main.katalog') }}" draggable="false" aria-label="Jelajahi etalase Albis Antique: {{ item.nama }}">
+                            <a class="slider-visual" href="{{ url_for('main.detail_produk', produk_id=item.id) }}" draggable="false" aria-label="Lihat detail produk {{ item.nama }}">
                                 <img
                                     class="hero-object-image"
                                     src="{{ item.gambar }}"
@@ -73,7 +73,7 @@
                                     referrerpolicy="no-referrer"
                                 >
                             </a>
-                            <a class="slider-copy-link" href="{{ url_for('main.katalog') }}" aria-label="Lihat etalase koleksi {{ item.nama }}">
+                            <a class="slider-copy-link" href="{{ url_for('main.detail_produk', produk_id=item.id) }}" aria-label="Lihat detail koleksi {{ item.nama }}">
                                 <span class="eyebrow">{{ item.kategori }} · {{ item.era }}</span>
                                 <h2>{{ item.nama }}</h2>
                                 <p>{{ item.asal }} · {{ item.material }} · {{ item.kondisi }}</p>
@@ -130,13 +130,11 @@
                 <!-- ===== BARIS ATAS: FOTO KECIL + NOMOR URUT ===== -->
                 <span class="category-top">
                     <span class="category-icon" aria-hidden="true">
-                        <span class="category-icon-emoji">{{ kategori.ikon }}</span>
                         <img
                             class="category-photo"
                             src="{{ kategori.gambar }}"
                             alt=""
                             loading="lazy"
-                            referrerpolicy="no-referrer"
                             data-img-fallback="remove"
                         >
                     </span>

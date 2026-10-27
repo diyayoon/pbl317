@@ -282,3 +282,14 @@ body {
 body { display: flex; flex-direction: column; }
 #konten-utama { flex: 1 0 auto; width: 100%; }
 .site-footer, footer { flex-shrink: 0; }
+
+
+/* Toggle bahasa ID / EN */
+.language-toggle { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 86px; min-height: 40px; padding: 5px 9px; border: 1px solid var(--warna-garis); border-radius: 999px; background: rgba(255,255,255,.88); color: var(--warna-muted); cursor: pointer; }
+.language-toggle .language-code { font: 800 .67rem var(--font-ui); letter-spacing: .04em; opacity: .55; }
+.language-toggle:not(.is-en) .language-code-id, .language-toggle.is-en .language-code-en { color: var(--warna-biru-dalam); opacity: 1; }
+.language-switch-track { position: relative; width: 28px; height: 16px; border: 1px solid rgba(97,168,214,.4); border-radius: 99px; background: #dff3fb; }
+.language-switch-track span { position: absolute; top: 2px; left: 2px; width: 10px; height: 10px; border-radius: 50%; background: var(--warna-biru); box-shadow: 0 1px 3px rgba(25,49,61,.2); transition: transform .18s ease; }
+.language-toggle.is-en .language-switch-track span { transform: translateX(12px); }
+.language-toggle:focus-visible { outline: 3px solid rgba(97,168,214,.55); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { .language-switch-track span { transition: none; } }

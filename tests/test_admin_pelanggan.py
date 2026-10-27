@@ -9,7 +9,7 @@ def _siapkan(app, dengan_order=False):
     daftar_dan_login(cust, "cust@test.local", "Customer Uji")
     if dengan_order:
         a = buat_alamat(cust)
-        r = cust.post("/customer/api/orders", json={"address_id": a, "payment_method": "Transfer Bank",
+        r = cust.post("/customer/api/orders", json={"address_id": a, "payment_method": "Midtrans",
                                                     "direct_product_id": 1, "quantity": 1})
         assert r.status_code in (200, 201)
     login_admin(adm)
@@ -64,7 +64,7 @@ def test_customer_tidak_bisa_mengelola_customer_lain(app):
     assert cust.get("/customer/api/profile").status_code == 200
 
 
-def test_hapus_lunak_menjaga_pesanan_dan_menganonimkan(app):
+def test_hapus_lunak_menjaga_pesanan_dan_menganonimkan(app, midtrans_ready):
     cust, adm, uid = _siapkan(app, dengan_order=True)
     assert adm.delete(f"/admin/api/pengguna/{uid}", json={"konfirmasi_email": "salah@test.local"}).status_code == 422
     r = adm.delete(f"/admin/api/pengguna/{uid}", json={"konfirmasi_email": "cust@test.local"})

@@ -14,7 +14,8 @@ class Category(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80), nullable=False, unique=True)
     slug = db.Column(db.String(100), nullable=False, unique=True, index=True)
-    icon = db.Column(db.String(20), nullable=False, default="✧")
+    icon = db.Column(db.String(20), nullable=False, default="✧")  # legacy, dipertahankan untuk kompatibilitas data lama
+    image_url = db.Column(db.String(500), nullable=True, default="")
     is_active = db.Column(db.Boolean, nullable=False, default=True)
     created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utcnow)
 

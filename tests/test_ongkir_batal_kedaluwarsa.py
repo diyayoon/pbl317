@@ -9,7 +9,7 @@ from app.services import midtrans_service as ms
 from tests.conftest import buat_alamat, daftar_dan_login, login_admin
 
 
-def _pesan(client, metode="Transfer Bank", qty=1):
+def _pesan(client, metode="Midtrans", qty=1):
     a = buat_alamat(client)
     r = client.post("/customer/api/orders", json={"address_id": a, "payment_method": metode, "direct_product_id": 1, "quantity": qty})
     assert r.status_code in (200, 201), r.get_json()
@@ -22,7 +22,7 @@ def _stok(app):
 
 
 # ---------------- ongkir ----------------
-def test_ongkir_masuk_total_dan_data_checkout(app, client):
+def test_ongkir_masuk_total_dan_data_checkout(app, client, midtrans_ready):
     daftar_dan_login(client)
     data = client.get("/customer/api/checkout?direct_product_id=1&quantity=1").get_json()
     assert data["ongkir"] == 25_000
@@ -33,7 +33,7 @@ def test_ongkir_masuk_total_dan_data_checkout(app, client):
     assert client.get("/customer/api/orders").get_json()[0]["ongkir"] == 25_000
 
 
-def test_gratis_ongkir_di_atas_ambang_dan_ongkir_nol(app, client):
+def test_gratis_ongkir_di_atas_ambang_dan_ongkir_nol(app, client, midtrans_ready):
     daftar_dan_login(client)
     app.config["SHIPPING_FREE_ABOVE"] = 1_000_000
     assert _pesan(client, qty=2)["total"] == 2_000_000          # subtotal 2 jt >= ambang: gratis
@@ -41,10 +41,10 @@ def test_gratis_ongkir_di_atas_ambang_dan_ongkir_nol(app, client):
     assert client.get("/customer/api/checkout?direct_product_id=1&quantity=1").get_json()["ongkir"] == 0
 
 
-def test_klien_tidak_bisa_menentukan_ongkir(app, client):
+def test_klien_tidak_bisa_menentukan_ongkir(app, client, midtrans_ready):
     daftar_dan_login(client)
     a = buat_alamat(client)
-    r = client.post("/customer/api/orders", json={"address_id": a, "payment_method": "Transfer Bank", "direct_product_id": 1,
+    r = client.post("/customer/api/orders", json={"address_id": a, "payment_method": "Midtrans", "direct_product_id": 1,
                                                   "quantity": 1, "shipping_cost": 0, "ongkir": 0, "total": 1})
     assert r.get_json()["order"]["total"] == 1_000_000 + 25_000
 
@@ -60,7 +60,7 @@ def test_midtrans_menagih_total_termasuk_ongkir(app, client, monkeypatch):
 
 
 # ---------------- pembatalan oleh pelanggan ----------------
-def test_pelanggan_membatalkan_pesanan_sendiri_dan_stok_kembali(app, client):
+def test_pelanggan_membatalkan_pesanan_sendiri_dan_stok_kembali(app, client, midtrans_ready):
     daftar_dan_login(client)
     awal = _stok(app)
     o = _pesan(client)
@@ -75,18 +75,18 @@ def test_pelanggan_membatalkan_pesanan_sendiri_dan_stok_kembali(app, client):
     assert _stok(app) == awal                                                          # stok tidak bertambah ganda
 
 
-def test_batal_membuka_kembali_kuota_pesanan_terbuka(app, client):
+def test_batal_membuka_kembali_kuota_pesanan_terbuka(app, client, midtrans_ready):
     daftar_dan_login(client)
     app.config["MAX_OPEN_ORDERS"] = 1
     o = _pesan(client)
     a = buat_alamat(client)
-    bayar = {"address_id": a, "payment_method": "Transfer Bank", "direct_product_id": 1, "quantity": 1}
+    bayar = {"address_id": a, "payment_method": "Midtrans", "direct_product_id": 1, "quantity": 1}
     assert client.post("/customer/api/orders", json=bayar).status_code == 422          # kuota penuh
     client.post(f"/customer/api/orders/{o['id']}/batal")
     assert client.post("/customer/api/orders", json=bayar).status_code in (200, 201)
 
 
-def test_pembatalan_milik_orang_lain_dan_akses_tanpa_hak_ditolak(app, client):
+def test_pembatalan_milik_orang_lain_dan_akses_tanpa_hak_ditolak(app, client, midtrans_ready):
     daftar_dan_login(client, "a@batal.local", "Pemilik Satu")
     o = _pesan(client)
     lain = app.test_client(); daftar_dan_login(lain, "b@batal.local", "Pemilik Dua")
@@ -99,7 +99,7 @@ def test_pembatalan_milik_orang_lain_dan_akses_tanpa_hak_ditolak(app, client):
 
 
 @pytest.mark.parametrize("status", ["Menunggu persetujuan", "Diproses", "Dikirim", "Selesai"])
-def test_pesanan_yang_sudah_diajukan_atau_dibayar_tidak_bisa_dibatalkan_sendiri(app, client, status):
+def test_pesanan_yang_sudah_diajukan_atau_dibayar_tidak_bisa_dibatalkan_sendiri(app, client, status, midtrans_ready):
     daftar_dan_login(client)
     o = _pesan(client)
     with app.app_context():
@@ -113,6 +113,8 @@ class _Midtrans:
     def __call__(self, metode, url, body=None):
         if self.mati: raise ms.ErrorMidtrans("Layanan pembayaran sedang tidak dapat dihubungi.", 503)
         self.panggilan.append((metode, url))
+        if metode == "POST" and "/snap/v1/transactions" in url:
+            return (201, {"redirect_url": "https://app.sandbox.midtrans.com/snap/v4/redirection/x"})
         return (200, self.status)
 
 
@@ -165,7 +167,7 @@ def _usangkan(app, order_id, jam=25):
         db.session.commit()
 
 
-def test_kedaluwarsa_berjalan_sendiri_saat_halaman_dibuka(app, client):
+def test_kedaluwarsa_berjalan_sendiri_saat_halaman_dibuka(app, client, midtrans_ready):
     from app import kedaluwarsa
     daftar_dan_login(client)
     awal = _stok(app)
@@ -180,7 +182,7 @@ def test_kedaluwarsa_berjalan_sendiri_saat_halaman_dibuka(app, client):
     assert _stok(app) == awal                                          # stok kembali tanpa menunggu checkout orang lain
 
 
-def test_kedaluwarsa_dibatasi_interval_dan_tidak_menyentuh_pesanan_baru(app, client):
+def test_kedaluwarsa_dibatasi_interval_dan_tidak_menyentuh_pesanan_baru(app, client, midtrans_ready):
     from app import kedaluwarsa
     daftar_dan_login(client)
     o = _pesan(client)
@@ -205,7 +207,7 @@ def test_kegagalan_kedaluwarsa_tidak_merusak_halaman(app, client, monkeypatch):
     assert client.get("/katalog").status_code == 200
 
 
-def test_kedaluwarsa_jalan_walau_mesin_baru_menyala(app, client, monkeypatch):
+def test_kedaluwarsa_jalan_walau_mesin_baru_menyala(app, client, monkeypatch, midtrans_ready):
     """Regresi: jangan bergantung pada nilai time.monotonic (uptime mesin yang kecil membuat hook tidak jalan)."""
     from app import kedaluwarsa
     daftar_dan_login(client)

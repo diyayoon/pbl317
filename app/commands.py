@@ -97,8 +97,11 @@ def register_commands(app):
         from .services.catalog_service import CatalogService
         try:
             for item in KATEGORI_AWAL:
-                if Category.query.filter_by(slug=item["slug"]).first() is None:
-                    db.session.add(Category(name=item["nama"], slug=item["slug"], icon=item.get("ikon", "✧")))
+                kategori = Category.query.filter_by(slug=item["slug"]).first()
+                if kategori is None:
+                    db.session.add(Category(name=item["nama"], slug=item["slug"], icon=item.get("ikon", "✧"), image_url=item.get("gambar", "")))
+                elif not kategori.image_url:
+                    kategori.image_url = item.get("gambar", "")
             db.session.flush()
             if not tanpa_produk and Product.query.count() == 0:
                 by_slug = {c.slug: c for c in Category.query.all()}

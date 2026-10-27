@@ -106,10 +106,21 @@ class CatalogService:
                 selectinload(Category.products).selectinload(Product.images)
             ).order_by(Category.id.asc())
         ).all()
+        gambar_bawaan = {
+            "timepiece": "/static/images/categories/jam-timepiece.jpg",
+            "camera": "/static/images/categories/kamera-vintage.jpg",
+            "porcelain": "/static/images/categories/porselen-keramik.jpg",
+            "books": "/static/images/categories/buku-manuskrip.jpg",
+            "jewelry": "/static/images/categories/perhiasan-antik.jpg",
+            "music": "/static/images/categories/musik-vintage.jpg",
+            "decor": "/static/images/categories/dekorasi-interior.jpg",
+            "travel": "/static/images/categories/travel-collectibles.jpg",
+        }
         results = []
         for category in categories:
             products = [item for item in category.products if item.is_active]
-            cover = next((p.gambar for p in products if p.gambar), "")
+            # Sampul kategori merupakan aset milik kategori, bukan gambar produk pertamanya.
+            cover = category.image_url or gambar_bawaan.get(category.slug, "/static/images/categories/jam-timepiece.jpg")
             results.append({
                 "id": category.id, "slug": category.slug, "nama": category.name,
                 "ikon": category.icon, "jumlah": len(products), "gambar": cover,

@@ -18,7 +18,7 @@ def _dua_customer(app):
 
 def _buat_order(client):
     alamat = buat_alamat(client)
-    r = client.post("/customer/api/orders", json={"address_id": alamat, "payment_method": "Transfer Bank",
+    r = client.post("/customer/api/orders", json={"address_id": alamat, "payment_method": "Midtrans",
                                                   "direct_product_id": 1, "quantity": 1})
     assert r.status_code in (200, 201), r.get_json()
     return client.get("/customer/api/orders").get_json()[0]["id"]
@@ -34,7 +34,7 @@ def test_cart_tidak_bocor_antar_customer(app):
     assert len(a.get("/customer/api/cart").get_json()["items"]) == 1
 
 
-def test_pesanan_dan_bukti_bayar_antar_customer(app):
+def test_pesanan_dan_bukti_bayar_antar_customer(app, midtrans_ready):
     a, b = _dua_customer(app)
     oid = _buat_order(a)
     assert b.get("/customer/api/orders").get_json() == []

@@ -3,13 +3,14 @@
 {% block title %}{{ item.nama }} — Albis Antique{% endblock %}
 {% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/catalog.css') }}">{% endblock %}
 {% block content %}
-<section class="section-shell">
+<section class="section-shell product-detail-section">
     <div class="container product-detail" id="productDetailRoot" data-product-id="{{ item.id }}">
         <div class="product-detail-content" data-product-detail-content>
             <div class="product-gallery">
                 <div class="product-main-image royal-frame">
                     <button class="product-image-zoom" type="button" aria-label="Perbesar foto produk" data-image-zoom>
-                        <img id="detailProductImage" src="{{ item.gambar }}" alt="{{ item.alt_gambar }}" referrerpolicy="no-referrer">
+                        {% if item.gambar %}<img id="detailProductImage" src="{{ item.gambar }}" alt="{{ item.alt_gambar }}" referrerpolicy="no-referrer">
+                        {% else %}<span class="product-image-placeholder" aria-hidden="true">Foto belum tersedia</span>{% endif %}
                         <span class="zoom-hint" aria-hidden="true">⌕ Perbesar</span>
                     </button>
                 </div>
@@ -19,32 +20,41 @@
                 <h1 id="detailProductName">{{ item.nama }}</h1>
                 <div class="rating" id="detailProductRatingLine" aria-label="Rating {{ item.rating }} dari 5">{% set penuh = item.rating|round|int %}<span aria-hidden="true">{{ '★' * penuh }}{{ '☆' * (5 - penuh) }}</span> <span class="muted" id="detailProductRating">{% if item.ulasan %}{{ item.rating }} · {{ item.ulasan }} ulasan{% else %}Belum ada ulasan{% endif %}</span></div>
                 <p class="detail-price" id="detailProductPrice">Rp{{ "{:,.0f}".format(item.harga).replace(',', '.') }}</p>
-                <p id="detailProductDescription">{{ item.deskripsi }}</p>
+                <p class="detail-description" id="detailProductDescription">{{ item.deskripsi }}</p>
 
                 {% if not current_user.is_authenticated or current_user.role == 'customer' %}
-                <div class="detail-actions">
-                    <div class="quantity-control" aria-label="Jumlah produk">
-                        <button type="button" aria-label="Kurangi jumlah">−</button>
-                        <strong>1</strong>
-                        <button type="button" aria-label="Tambah jumlah">＋</button>
-                    </div>
-                    <button class="button button-primary" type="button" {% if item.stok < 1 %}disabled{% endif %}
-                        id="detailAddToCart" data-add-cart="{{ item.id }}" data-product-id="{{ item.id }}"
-                        data-product-name="{{ item.nama }}" data-product-price="{{ item.harga }}"
-                        data-product-image="{{ item.gambar }}" data-product-category="{{ item.kategori }}"
-                        data-product-origin="{{ item.asal }}" data-product-stock="{{ item.stok }}"
-                        data-product-url="{{ url_for('main.detail_produk', produk_id=item.id) }}" data-i18n="detail_add">Tambah ke Keranjang</button>
-                </div>
-                <div class="detail-secondary-actions">
-                    <button class="button button-gold" type="button" id="detailBuyNow" {% if item.stok < 1 %}disabled{% endif %} data-buy-now
+                <div class="detail-purchase-actions">
+                    <button class="detail-cart-icon-button" id="detailOpenCart" type="button" aria-controls="detailCartPanel" aria-expanded="false" aria-label="Pilih jumlah dan tambahkan ke keranjang" {% if item.stok < 1 %}disabled{% endif %}>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2.1 10.1a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 1.9-1.4L21 8H6"/><circle cx="10" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/></svg>
+                    </button>
+                    <button class="button button-gold detail-buy-button" type="button" id="detailBuyNow" {% if item.stok < 1 %}disabled{% endif %} data-buy-now
                         data-product-id="{{ item.id }}" data-product-name="{{ item.nama }}" data-product-price="{{ item.harga }}"
                         data-product-image="{{ item.gambar }}" data-product-category="{{ item.kategori }}"
                         data-product-origin="{{ item.asal }}" data-product-stock="{{ item.stok }}"
                         data-product-url="{{ url_for('main.detail_produk', produk_id=item.id) }}"
                         data-checkout-url="{{ url_for('customer.checkout') }}" data-i18n="detail_buy">Beli Sekarang</button>
                 </div>
-                {% else %}
-                
+                <div class="detail-cart-panel" id="detailCartPanel" hidden>
+                    <div class="detail-cart-panel-heading">
+                        <div><strong>Tambah ke keranjang</strong><span class="muted">Pilih jumlah yang kamu inginkan.</span></div>
+                        <button type="button" id="detailCloseCart" class="detail-cart-close" aria-label="Tutup pilihan jumlah">×</button>
+                    </div>
+                    <div class="detail-cart-panel-row">
+                        <span>Jumlah</span>
+                        <div class="quantity-control" aria-label="Jumlah produk">
+                            <button type="button" data-quantity-minus aria-label="Kurangi jumlah">−</button>
+                            <strong data-quantity-value>1</strong>
+                            <button type="button" data-quantity-plus aria-label="Tambah jumlah">＋</button>
+                        </div>
+                    </div>
+                    <button class="button button-primary detail-add-button" type="button" id="detailAddToCart" {% if item.stok < 1 %}disabled{% endif %}
+                        data-add-cart="{{ item.id }}" data-product-id="{{ item.id }}"
+                        data-product-name="{{ item.nama }}" data-product-price="{{ item.harga }}"
+                        data-product-image="{{ item.gambar }}" data-product-category="{{ item.kategori }}"
+                        data-product-origin="{{ item.asal }}" data-product-stock="{{ item.stok }}"
+                        data-product-url="{{ url_for('main.detail_produk', produk_id=item.id) }}" data-i18n="detail_add">Tambah ke Keranjang</button>
+                    <small class="field-hint">Stok tersedia: {{ item.stok }} item</small>
+                </div>
                 {% endif %}
 
                 <div class="spec-grid">
@@ -63,7 +73,7 @@
 
 <section class="section-shell" id="reviewsSection">
     <div class="container">
-        <div class="section-heading"><div><span class="eyebrow">Testimoni</span><h2>Ulasan pembeli</h2></div></div>
+        <div class="section-heading"><div><span class="eyebrow">Testimoni</span><h2>Ulasan pembeli</h2><p class="muted">Ulasan dari pelanggan yang telah menyelesaikan pesanan.</p></div></div>
         {% if daftar_ulasan %}
         <div class="review-list">
             {% for ul in daftar_ulasan %}
@@ -74,21 +84,13 @@
                     <time datetime="{{ ul.tanggal }}">{{ ul.tanggal[:10] }}</time>
                 </div>
                 {% if ul.komentar %}<p>{{ ul.komentar }}</p>{% endif %}
+                {% if ul.gambar_url %}<a class="review-image-link" href="{{ ul.gambar_url }}" target="_blank" rel="noopener noreferrer"><img class="review-image" src="{{ ul.gambar_url }}" alt="Foto dari ulasan {{ ul.nama }}" loading="lazy"></a>{% endif %}
             </article>
             {% endfor %}
         </div>
         {% else %}
-        <p class="muted">Belum ada ulasan. Ulasan hanya dapat ditulis oleh pembeli yang pesanannya sudah selesai.</p>
+        <p class="muted">Belum ada ulasan untuk produk ini.</p>
         {% endif %}
-    </div>
-</section>
-
-<section class="section-shell section-soft" id="relatedProductsSection">
-    <div class="container">
-        <div class="section-heading"><div><span class="eyebrow">Curated Pairing</span><h2 data-i18n="related_title">Koleksi terkait</h2></div></div>
-        <div class="product-grid" id="relatedProductGrid">
-            {% for produk in produk_terkait %}{% include 'partials/product_card.html' %}{% endfor %}
-        </div>
     </div>
 </section>
 {% endblock %}

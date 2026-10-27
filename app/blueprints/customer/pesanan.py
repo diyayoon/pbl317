@@ -40,8 +40,11 @@ def api_orders():
     for order in orders:
         data = order.to_dict()
         for item in data["items"]:
-            item["bisaUlas"] = order.status == "Selesai" and item["id"] is not None
             item["ulasanSaya"] = ulasan.get(item["id"])
+            item["bisaUlas"] = bool(
+                order.status == "Selesai" and item["id"] is not None
+                and not item["ulasanSaya"] and LayananUlasan.bisa_direview(current_user, item["id"])
+            )
         hasil.append(data)
     return jsonify(hasil)
 
@@ -98,8 +101,10 @@ def api_upload_payment_proof(order_id: int):
 @role_required("customer")
 @terverifikasi_required
 def api_save_review():
+    payload = request.form.to_dict() if request.mimetype == "multipart/form-data" else request.get_json(silent=True)
+    image_file = request.files.get("gambarUlasan")
     try:
-        ulasan = LayananUlasan.simpan(current_user, request.get_json(silent=True))
+        ulasan = LayananUlasan.simpan(current_user, payload, image_file=image_file)
         audit.catat("ulasan_disimpan", "product", ulasan.product_id, f"rating={ulasan.rating}", commit=True)
         return jsonify(message="Ulasan disimpan. Terima kasih!", review=ulasan.to_dict()), 201
     except ValueError as exc:

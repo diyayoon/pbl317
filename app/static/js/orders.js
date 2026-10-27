@@ -62,74 +62,46 @@ document.addEventListener('DOMContentLoaded', () => {
         if (pending.length) await muat();
     }
 
-    function kotakInstruksi(order) {
-        const box = tag('div', 'order-payment-info');
-        box.append(tag('strong', '', `Total yang harus dibayar: ${money(order.total)}`));
-        const batas = new Date(order.batasBayar);
-        if (order.pembayaran === 'QRIS') {
-            box.append(tag('p', '', info.qris || 'Hubungi admin Albis Antique untuk mendapatkan kode QRIS pembayaran.'));
-        } else if (info.rekening) {
-            box.append(tag('p', '', `Transfer ke ${info.bank || 'rekening toko'} ${info.rekening}${info.atasNama ? ` a.n. ${info.atasNama}` : ''}.`));
-        } else {
-            box.append(tag('p', '', 'Hubungi admin Albis Antique untuk mendapatkan nomor rekening pembayaran.'));
-        }
-        if (!Number.isNaN(batas.getTime())) {
-            box.append(tag('small', 'field-hint', `Bayar sebelum ${batas.toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}; pesanan otomatis dibatalkan setelah itu.`));
-        }
-        return box;
-    }
-
-    function formUnggah(order, ulang) {
-        const box = tag('div', 'order-proof-upload');
-        const label = tag('label', '', ulang ? 'Unggah ulang bukti pembayaran' : 'Unggah bukti pembayaran');
-        const input = document.createElement('input');
-        input.type = 'file'; input.accept = 'image/jpeg,image/png,image/webp,application/pdf';
-        input.setAttribute('aria-label', 'Pilih file bukti pembayaran');
-        const note = tag('small', 'field-hint', 'JPG, PNG, WEBP, atau PDF — maksimal 5 MB.');
-        const action = tag('button', 'button button-primary button-small', 'Kirim bukti');
-        action.type = 'button'; action.disabled = true;
-        input.addEventListener('change', () => {
-            const file = input.files?.[0];
-            action.disabled = !file;
-            if (file && (file.size > 5 * 1024 * 1024 || !['image/jpeg', 'image/png', 'image/webp', 'application/pdf'].includes(file.type))) {
-                input.value = ''; action.disabled = true; note.textContent = 'Gunakan JPG, PNG, WEBP, atau PDF maksimal 5 MB.';
-            } else if (file) note.textContent = `${file.name} siap dikirim.`;
-        });
-        action.addEventListener('click', async () => {
-            const file = input.files?.[0]; if (!file) return;
-            const data = new FormData(); data.append('buktiBayar', file);
-            action.disabled = true; note.textContent = 'Mengunggah bukti pembayaran…';
-            try { await request(`/customer/api/orders/${order.id}/bukti`, { method: 'POST', body: data }); await muat(); }
-            catch (error) { note.textContent = error.message; action.disabled = false; }
-        });
-        label.append(input);
-        box.append(label, note, action);
-        return box;
-    }
-
     function formUlasan(item) {
         const wrap = tag('div', 'order-review');
         const saya = item.ulasanSaya;
-        const toggle = tag('button', 'button button-secondary button-small', saya ? 'Ubah ulasan' : 'Tulis ulasan');
+        if (saya) {
+            wrap.append(tag('strong', 'order-review-submitted', 'Ulasan sudah dikirim'));
+            wrap.append(tag('p', '', `${'★'.repeat(Number(saya.rating || 0))}${'☆'.repeat(5 - Number(saya.rating || 0))}${saya.komentar ? ` · ${saya.komentar}` : ''}`));
+            if (saya.gambar_url) {
+                const link = tag('a', 'order-review-photo-link'); link.href = saya.gambar_url; link.target = '_blank'; link.rel = 'noopener noreferrer';
+                const img = tag('img', 'order-review-photo'); img.src = saya.gambar_url; img.alt = `Foto ulasan ${item.nama}`; img.loading = 'lazy'; link.append(img); wrap.append(link);
+            }
+            if (saya.tersembunyi) wrap.append(tag('small', 'field-hint', 'Ulasanmu saat ini disembunyikan oleh admin.'));
+            return wrap;
+        }
+        const toggle = tag('button', 'button button-secondary button-small', 'Tulis ulasan');
         toggle.type = 'button';
         const form = tag('div', 'order-review-form'); form.hidden = true;
-        const select = tag('select', 'form-control');
-        select.setAttribute('aria-label', `Rating untuk ${item.nama}`);
+        const select = tag('select', 'form-control'); select.setAttribute('aria-label', `Rating untuk ${item.nama}`);
         for (let n = 5; n >= 1; n -= 1) { const o = tag('option', '', `${'★'.repeat(n)}${'☆'.repeat(5 - n)} (${n})`); o.value = String(n); select.append(o); }
-        if (saya) select.value = String(saya.rating);
         const area = tag('textarea', 'form-control'); area.maxLength = 1000; area.rows = 3;
-        area.placeholder = 'Ceritakan kondisi barang dan pengalamanmu (opsional)'; area.value = saya?.komentar || '';
-        const kirim = tag('button', 'button button-primary button-small', 'Simpan ulasan'); kirim.type = 'button';
-        const note = tag('small', 'field-hint', saya?.tersembunyi ? 'Ulasanmu disembunyikan oleh admin.' : '');
+        area.placeholder = 'Ceritakan kondisi barang dan pengalamanmu (opsional)';
+        const fileLabel = tag('label', 'order-review-file-label', 'Lampirkan foto (opsional)');
+        const fileInput = document.createElement('input'); fileInput.type = 'file'; fileInput.accept = 'image/jpeg,image/png,image/webp'; fileInput.setAttribute('aria-label', 'Foto untuk ulasan');
+        const note = tag('small', 'field-hint', 'JPG, PNG, WEBP maksimal 3 MB. Batas waktu ulasan: 7 hari setelah pesanan selesai; setiap produk hanya bisa diulas sekali.');
+        fileInput.addEventListener('change', () => {
+            const file = fileInput.files?.[0];
+            if (file && (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 3 * 1024 * 1024)) {
+                fileInput.value = ''; note.textContent = 'Pilih foto JPG, PNG, atau WEBP maksimal 3 MB.';
+            }
+        });
+        const kirim = tag('button', 'button button-primary button-small', 'Kirim ulasan'); kirim.type = 'button';
         toggle.addEventListener('click', () => { form.hidden = !form.hidden; });
         kirim.addEventListener('click', async () => {
-            kirim.disabled = true;
-            try {
-                await request('/customer/api/reviews', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ product_id: item.id, rating: Number(select.value), komentar: area.value }) });
-                await muat();
-            } catch (error) { note.textContent = error.message; kirim.disabled = false; }
+            const data = new FormData(); data.append('product_id', String(item.id)); data.append('rating', select.value); data.append('komentar', area.value);
+            const file = fileInput.files?.[0]; if (file) data.append('gambarUlasan', file);
+            kirim.disabled = true; note.textContent = 'Mengirim ulasan…';
+            try { await request('/customer/api/reviews', { method: 'POST', body: data }); await muat(); }
+            catch (error) { note.textContent = error.message; kirim.disabled = false; }
         });
-        form.append(select, area, kirim, note);
+        fileLabel.append(fileInput);
+        form.append(select, area, fileLabel, kirim, note);
         wrap.append(toggle, form);
         return wrap;
     }
@@ -153,14 +125,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const items = tag('div', 'order-items');
             (order.items || []).forEach(item => {
                 const row = tag('div', 'order-product');
-                const visual = tag('div', 'order-product-visual', '♜'); visual.setAttribute('aria-hidden', 'true');
+                const visual = tag('div', 'order-product-visual'); visual.setAttribute('aria-hidden', 'true');
+                if (item.gambar) { const foto = tag('img'); foto.src = item.gambar; foto.alt = ''; foto.loading = 'lazy'; foto.referrerPolicy = 'no-referrer'; visual.append(foto); }
+                else visual.textContent = 'Foto belum tersedia';
                 const copy = tag('div', 'order-product-copy');
                 const title = tag('h3');
                 if (item.id) { const a = tag('a', '', item.nama); a.href = `/produk/${item.id}`; title.append(a); } else title.textContent = item.nama;
                 copy.append(title, tag('p', '', `${item.jumlah} × ${money(item.harga)}`));
                 row.append(visual, copy, tag('strong', '', money(Number(item.harga) * Number(item.jumlah))));
                 items.append(row);
-                if (item.bisaUlas) items.append(formUlasan(item));
+                if (item.bisaUlas || item.ulasanSaya) items.append(formUlasan(item));
             });
 
             const bottom = tag('div', 'order-card-bottom');
@@ -187,7 +161,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (bukti.status === 'Ditolak') card.append(tag('p', 'order-rejected-note', `Bukti ditolak admin: ${bukti.catatan || 'tidak sesuai'}. Silakan unggah ulang.`));
             }
             if (order.status === 'Menunggu pembayaran' && order.pembayaran === 'Midtrans') card.append(kotakMidtrans(order));
-            else if (order.status === 'Menunggu pembayaran') card.append(kotakInstruksi(order), formUnggah(order, bukti?.status === 'Ditolak'));
+            else if (order.status === 'Menunggu pembayaran') card.append(tag('p', 'order-payment-info', 'Metode pembayaran pada pesanan lama tidak lagi tersedia. Hubungi admin jika kamu memerlukan bantuan.'));
             list.append(card);
         });
     }

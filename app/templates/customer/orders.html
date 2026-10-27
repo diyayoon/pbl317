@@ -30,10 +30,7 @@
             <button type="button" data-order-filter="Dibatalkan">Dibatalkan</button>
         </div>
 
-        <div class="order-list" id="orderList" aria-live="polite"
-             data-bank="{{ info_pembayaran.bank }}" data-rekening="{{ info_pembayaran.rekening }}"
-             data-atas-nama="{{ info_pembayaran.atasNama }}" data-qris="{{ info_pembayaran.catatanQris }}"
-             data-batas-jam="{{ info_pembayaran.batasJam }}">
+        <div class="order-list" id="orderList" aria-live="polite" data-batas-jam="{{ info_pembayaran.batasJam }}">
             <div class="account-empty-state">
                 <p>Riwayat pesanan akan tampil setelah kamu melakukan checkout.</p>
                 <a href="{{ url_for('main.katalog') }}">Jelajahi katalog →</a>

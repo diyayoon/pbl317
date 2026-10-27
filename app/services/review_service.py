@@ -1,21 +1,37 @@
-"""Ulasan produk: hanya pembeli dengan pesanan Selesai, satu ulasan per produk."""
-from datetime import datetime, timezone
+"""Ulasan produk: pembelian selesai, maksimal 7 hari, satu kali per produk, foto opsional."""
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from sqlalchemy import select
 from app.extensions import db
 from app.models import Order, OrderItem, Product, Review, User
+from app.utils.uploads import simpan_gambar_upload
 
 
 class LayananUlasan:
+    BATAS_HARI = 7
+
     @staticmethod
-    def sudah_membeli(user: User, product_id: int) -> bool:
-        return db.session.scalar(
-            select(OrderItem.id).join(Order).where(
+    def pesanan_selesai_terbaru(user: User, product_id: int) -> Order | None:
+        return db.session.scalars(
+            select(Order).join(OrderItem, OrderItem.order_id == Order.id).where(
                 Order.user_id == user.id, Order.status == "Selesai", OrderItem.product_id == product_id
-            ).limit(1)
-        ) is not None
+            ).order_by(Order.updated_at.desc(), Order.created_at.desc())
+        ).first()
 
     @classmethod
-    def simpan(cls, user: User, payload) -> Review:
+    def bisa_direview(cls, user: User, product_id: int) -> bool:
+        if not product_id or Review.query.filter_by(user_id=user.id, product_id=product_id).first():
+            return False
+        order = cls.pesanan_selesai_terbaru(user, product_id)
+        if order is None:
+            return False
+        selesai_pada = order.updated_at or order.created_at
+        if selesai_pada.tzinfo is None:
+            selesai_pada = selesai_pada.replace(tzinfo=timezone.utc)
+        return datetime.now(timezone.utc) - selesai_pada <= timedelta(days=cls.BATAS_HARI)
+
+    @classmethod
+    def simpan(cls, user: User, payload, image_file=None) -> Review:
         if not isinstance(payload, dict):
             raise ValueError("Data ulasan tidak valid.")
         try:
@@ -30,19 +46,40 @@ class LayananUlasan:
             raise ValueError("Komentar maksimal 1000 karakter.")
         if db.session.get(Product, product_id) is None:
             raise LookupError("Produk tidak ditemukan.")
-        if not cls.sudah_membeli(user, product_id):
+        if Review.query.filter_by(user_id=user.id, product_id=product_id).first():
+            raise ValueError("Kamu sudah mengirim ulasan untuk produk ini. Setiap produk hanya bisa diulas satu kali.")
+        order = cls.pesanan_selesai_terbaru(user, product_id)
+        if order is None:
             raise PermissionError("Ulasan hanya dapat diberikan untuk produk dari pesanan yang sudah selesai.")
-        ulasan = Review.query.filter_by(user_id=user.id, product_id=product_id).first()
-        if ulasan is None:
-            ulasan = Review(user_id=user.id, product_id=product_id)
+        selesai_pada = order.updated_at or order.created_at
+        if selesai_pada.tzinfo is None:
+            selesai_pada = selesai_pada.replace(tzinfo=timezone.utc)
+        if datetime.now(timezone.utc) - selesai_pada > timedelta(days=cls.BATAS_HARI):
+            raise PermissionError("Masa ulasan sudah berakhir. Ulasan hanya dapat dikirim maksimal 7 hari setelah pesanan selesai.")
+
+        saved_path: Path | None = None
+        try:
+            if image_file and getattr(image_file, "filename", ""):
+                from flask import current_app
+                saved_path = simpan_gambar_upload(
+                    image_file, current_app.config["REVIEW_UPLOAD_FOLDER"], current_app.config["REVIEW_MAX_BYTES"]
+                )
+            ulasan = Review(user_id=user.id, product_id=product_id, rating=rating, comment=komentar,
+                            image_path=str(saved_path) if saved_path else None)
             db.session.add(ulasan)
-        ulasan.rating, ulasan.comment = rating, komentar
-        db.session.commit()
-        return ulasan
+            db.session.commit()
+            return ulasan
+        except Exception:
+            db.session.rollback()
+            if saved_path and saved_path.exists():
+                saved_path.unlink(missing_ok=True)
+            raise
 
     @staticmethod
     def milik_user(user: User) -> dict[int, dict]:
-        return {r.product_id: {"rating": r.rating, "komentar": r.comment, "tersembunyi": r.is_hidden}
+        return {r.product_id: {"id": r.id, "rating": r.rating, "komentar": r.comment,
+                               "gambar_url": f"/media/reviews/{r.id}" if r.image_path else "",
+                               "tersembunyi": r.is_hidden}
                 for r in Review.query.filter_by(user_id=user.id).all()}
 
     @staticmethod

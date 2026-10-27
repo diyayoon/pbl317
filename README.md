@@ -31,8 +31,9 @@ python run.py                                         # http://127.0.0.1:5000
 SQLite ditolak otomatis bila `APP_ENV=production`. Untuk uji yang setara produksi (rebutan stok, dsb.) pakai PostgreSQL lewat Docker.
 
 ## Menjalankan
-Lihat [`docs/REVISI-FINAL.md`](docs/REVISI-FINAL.md) (migrasi, konfigurasi, perilaku keamanan, cara uji) dan
-[`docs/REVISI-MIDTRANS.md`](docs/REVISI-MIDTRANS.md) (registrasi, email, dan pembayaran Midtrans sandbox).
+Lihat [`docs/REVISI-FINAL.md`](docs/REVISI-FINAL.md) (migrasi, konfigurasi, perilaku keamanan, cara uji),
+[`docs/REVISI-MIDTRANS.md`](docs/REVISI-MIDTRANS.md) (registrasi, email, dan pembayaran Midtrans sandbox), serta
+[`docs/REVISI-FRONTEND-20261027.md`](docs/REVISI-FRONTEND-20261027.md) (perbaikan UI, upload kategori/ulasan, migrasi, dan checklist testing).
 
 Lokal tanpa Docker:
 ```bash
@@ -50,6 +51,6 @@ python run.py
 
 ## Tes
 ```bash
-python -m pytest -q        # 118 tes (SQLite in-memory); lihat docs/REVISI-FINAL.md untuk uji di PostgreSQL
+python -m pytest -q        # 144 tes (SQLite in-memory); lihat docs/REVISI-FINAL.md untuk uji di PostgreSQL
 pip-audit -r requirements.txt && bandit -q -r app -ll
 ```

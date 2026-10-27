@@ -3,14 +3,14 @@
 Rating dan jumlah ulasan sengaja tidak ada di sini: keduanya dihitung dari tabel reviews.
 """
 
-KATEGORI_AWAL = [{'slug': 'timepiece', 'nama': 'Jam & Timepiece', 'ikon': '⌚'},
- {'slug': 'camera', 'nama': 'Kamera Vintage', 'ikon': '📷'},
- {'slug': 'porcelain', 'nama': 'Porselen & Keramik', 'ikon': '🏺'},
- {'slug': 'books', 'nama': 'Buku & Manuskrip', 'ikon': '📚'},
- {'slug': 'jewelry', 'nama': 'Perhiasan Antik', 'ikon': '💍'},
- {'slug': 'music', 'nama': 'Musik Vintage', 'ikon': '🎼'},
- {'slug': 'decor', 'nama': 'Dekorasi & Interior', 'ikon': '🪞'},
- {'slug': 'travel', 'nama': 'Travel Collectibles', 'ikon': '🧭'}]
+KATEGORI_AWAL = [{'slug': 'timepiece', 'nama': 'Jam & Timepiece', 'ikon': '⌚', 'gambar': '/static/images/categories/jam-timepiece.jpg'},
+ {'slug': 'camera', 'nama': 'Kamera Vintage', 'ikon': '📷', 'gambar': '/static/images/categories/kamera-vintage.jpg'},
+ {'slug': 'porcelain', 'nama': 'Porselen & Keramik', 'ikon': '🏺', 'gambar': '/static/images/categories/porselen-keramik.jpg'},
+ {'slug': 'books', 'nama': 'Buku & Manuskrip', 'ikon': '📚', 'gambar': '/static/images/categories/buku-manuskrip.jpg'},
+ {'slug': 'jewelry', 'nama': 'Perhiasan Antik', 'ikon': '💍', 'gambar': '/static/images/categories/perhiasan-antik.jpg'},
+ {'slug': 'music', 'nama': 'Musik Vintage', 'ikon': '🎼', 'gambar': '/static/images/categories/musik-vintage.jpg'},
+ {'slug': 'decor', 'nama': 'Dekorasi & Interior', 'ikon': '🪞', 'gambar': '/static/images/categories/dekorasi-interior.jpg'},
+ {'slug': 'travel', 'nama': 'Travel Collectibles', 'ikon': '🧭', 'gambar': '/static/images/categories/travel-collectibles.jpg'}]
 
 PRODUK_AWAL = [{'nama': 'Brass Pocket Watch',
   'kategori': 'Jam & Timepiece',

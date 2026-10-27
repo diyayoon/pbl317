@@ -67,10 +67,7 @@ def detail_produk(produk_id):
     if product_model is None:
         abort(404)
     product = product_model.to_dict()
-    products = CatalogService.list_products()
-    terkait = [p for p in products if p["id"] != produk_id and p["slug_kategori"] == product["slug_kategori"]]
-    lain = [p for p in products if p["id"] != produk_id and p not in terkait]
     return render_template(
         "main/product.html", produk=product, produk_id=produk_id,
-        produk_terkait=(terkait + lain)[:4], daftar_ulasan=LayananUlasan.terlihat(produk_id),
+        daftar_ulasan=LayananUlasan.terlihat(produk_id),
     )

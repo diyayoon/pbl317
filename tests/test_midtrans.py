@@ -70,10 +70,23 @@ def test_metode_midtrans_hanya_ada_bila_dikonfigurasi(app, client):
     a = buat_alamat(client)
     r = client.post("/customer/api/orders", json={"address_id": a, "payment_method": "Midtrans", "direct_product_id": 1, "quantity": 1})
     assert r.status_code in (400, 422)                                   # kunci kosong -> ditolak
-    assert "Bayar Online" not in client.get("/customer/checkout").get_data(as_text=True)
+    html = client.get("/customer/checkout").get_data(as_text=True)
+    assert "Bayar Online (Midtrans)" in html and 'data-midtrans-ready="false" disabled' in html
     app.config["MIDTRANS_SERVER_KEY"] = KUNCI
-    assert "Bayar Online (Midtrans)" in client.get("/customer/checkout").get_data(as_text=True)
+    html = client.get("/customer/checkout").get_data(as_text=True)
+    assert "Bayar Online (Midtrans)" in html and 'data-midtrans-ready="true"' in html
 
+
+
+def test_checkout_membuat_pesanan_dan_langsung_memberi_url_snap(client, mid):
+    daftar_dan_login(client)
+    alamat = buat_alamat(client)
+    r = client.post("/customer/api/orders", json={"address_id": alamat, "payment_method": "Midtrans", "direct_product_id": 1, "quantity": 1})
+    assert r.status_code == 201
+    payload = r.get_json()
+    assert payload["redirectUrl"] == URL_BAYAR
+    assert payload["order"]["status"] == "Menunggu pembayaran"
+    assert len(mid.panggilan) == 1 and mid.panggilan[0][0] == "POST"
 
 def test_buat_transaksi_mengirim_data_benar_dan_dipakai_ulang(client, mid):
     daftar_dan_login(client)
@@ -100,26 +113,33 @@ def test_hanya_pemilik_terverifikasi_yang_bisa_bayar(app, client, mid):
     assert adm.post(f"/customer/api/orders/{order['id']}/midtrans").status_code == 403
     belum = app.test_client(); daftar_dan_login(belum, "c@mid.local", "Belum Verifikasi", verifikasi=False)
     assert belum.post("/customer/api/orders/1/midtrans").status_code == 403
-    assert mid.panggilan == []
+    assert len(mid.panggilan) == 1  # hanya transaksi pemilik; upaya lintas akun tidak memanggil Midtrans
 
 
-def test_pesanan_transfer_tidak_bisa_dibayar_midtrans_dan_sebaliknya(client, mid):
+def test_checkout_hanya_menerima_midtrans_dan_menolak_bukti_manual(client, mid):
     daftar_dan_login(client)
-    transfer = _pesan(client, "Transfer Bank")
-    assert client.post(f"/customer/api/orders/{transfer['id']}/midtrans").status_code == 409
+    alamat = buat_alamat(client)
+    transfer = client.post("/customer/api/orders", json={"address_id": alamat, "payment_method": "Transfer Bank", "direct_product_id": 1, "quantity": 1})
+    assert transfer.status_code == 422
     online = _pesan(client)
     r = client.post(f"/customer/api/orders/{online['id']}/bukti", data={"buktiBayar": (io.BytesIO(b"\x89PNG\r\n\x1a\n" + b"0" * 50), "x.png")},
                     content_type="multipart/form-data")
     assert r.status_code in (400, 409, 422)
 
 
-def test_gagal_membuat_transaksi_tidak_mengubah_pesanan(client, mid):
+def test_gagal_membuat_transaksi_memberi_error_dan_order_pending_bisa_dicoba_lagi(client, mid):
     daftar_dan_login(client)
-    order = _pesan(client)
+    alamat = buat_alamat(client)
     mid.snap_resp = (401, {"error_messages": ["Access denied"]})
-    assert client.post(f"/customer/api/orders/{order['id']}/midtrans").status_code == 502
+    dibuat = client.post("/customer/api/orders", json={"address_id": alamat, "payment_method": "Midtrans", "direct_product_id": 1, "quantity": 1})
+    assert dibuat.status_code == 502
+    order_id = dibuat.get_json()["orderId"]
+    assert order_id is not None
+    with client.application.app_context():
+        order = Order.query.filter_by(id=order_id).one()
+        assert order.status == "Menunggu pembayaran" and not order.payment.snap_redirect_url
     mid.mati = True
-    assert client.post(f"/customer/api/orders/{order['id']}/midtrans").status_code == 503
+    assert client.post(f"/customer/api/orders/{order_id}/midtrans").status_code == 503
     assert client.get("/customer/api/orders").get_json()[0]["status"] == "Menunggu pembayaran"
 
 

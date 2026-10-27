@@ -27,7 +27,7 @@ def _daftar(client, email="baru@test.local"):
 
 def _order(client):
     a = buat_alamat(client)
-    return client.post("/customer/api/orders", json={"address_id": a, "payment_method": "Transfer Bank",
+    return client.post("/customer/api/orders", json={"address_id": a, "payment_method": "Midtrans",
                                                      "direct_product_id": 1, "quantity": 1})
 
 
@@ -58,7 +58,7 @@ def test_akun_belum_verifikasi_bisa_login_tapi_tidak_bisa_pesan_bayar_ulas(clien
     assert client.post("/customer/api/reviews", json={"product_id": 1, "rating": 5, "komentar": "bagus"}).status_code == 403
 
 
-def test_get_tautan_tidak_memverifikasi_post_memverifikasi_dan_sekali_pakai(client, app, surat):
+def test_get_tautan_tidak_memverifikasi_post_memverifikasi_dan_sekali_pakai(client, app, surat, midtrans_ready):
     _daftar(client)
     raw = _token(surat[0])
     assert client.get(f"/auth/verifikasi/{raw}").status_code == 200  # hanya halaman konfirmasi
@@ -181,7 +181,7 @@ def test_halaman_kode_menampilkan_input_dan_hitung_mundur(client, surat):
     assert 0 < sisa <= 60                                              # cooldown kirim ulang berjalan
 
 
-def test_kode_benar_memverifikasi_tanpa_login_lalu_bisa_belanja(client, app, surat):
+def test_kode_benar_memverifikasi_tanpa_login_lalu_bisa_belanja(client, app, surat, midtrans_ready):
     _daftar_tanpa_login(client)
     r = client.post("/auth/verifikasi/kode", data={"kode": _kode(surat[0])})
     assert r.status_code == 302 and r.headers["Location"].endswith("/auth/login")

@@ -46,6 +46,10 @@ class Config:
     UPLOAD_FOLDER = str(BASE_DIR / "instance" / "uploads")
     PAYMENT_UPLOAD_FOLDER = str(BASE_DIR / "instance" / "uploads" / "payments")
     PRODUCT_UPLOAD_FOLDER = str(BASE_DIR / "instance" / "uploads" / "products")
+    CATEGORY_UPLOAD_FOLDER = str(BASE_DIR / "instance" / "uploads" / "categories")
+    REVIEW_UPLOAD_FOLDER = str(BASE_DIR / "instance" / "uploads" / "reviews")
+    CATEGORY_MAX_BYTES = 3 * 1024 * 1024
+    REVIEW_MAX_BYTES = 3 * 1024 * 1024
     PAYMENT_MAX_BYTES = 5 * 1024 * 1024
     AVATAR_MAX_BYTES = 1024 * 1024
     PAYMENT_ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "webp", "pdf"}
@@ -127,6 +131,8 @@ class TestingConfig(Config):
     LOGIN_MAX_PER_EMAIL = 5
     PAYMENT_UPLOAD_FOLDER = "/tmp/albis_test_uploads/payments"  # nosec B108 (hanya konfigurasi uji)
     PRODUCT_UPLOAD_FOLDER = "/tmp/albis_test_uploads/products"  # nosec B108
+    CATEGORY_UPLOAD_FOLDER = "/tmp/albis_test_uploads/categories"  # nosec B108
+    REVIEW_UPLOAD_FOLDER = "/tmp/albis_test_uploads/reviews"  # nosec B108
 
 
 class ProductionConfig(Config):

@@ -1,11 +1,12 @@
 """Admin: produk dan kategori. (pemilik: Fiony)"""
 from __future__ import annotations
-from flask import jsonify, render_template, request
+from flask import current_app, jsonify, render_template, request
 from app.extensions import db
 from app.models import Category
 from app.services.catalog_service import CatalogService
 from app.services.category_service import LayananKategori
 from app.utils import audit
+from app.utils.uploads import simpan_gambar_upload
 from . import admin_bp
 from app.utils.decorators import admin_required
 
@@ -89,9 +90,15 @@ def api_kategori():
 @admin_bp.post("/api/kategori")
 @admin_required
 def api_tambah_kategori():
+    payload = request.form.to_dict() if request.mimetype == "multipart/form-data" else (request.get_json(silent=True) or {})
+    foto = request.files.get("gambar")
+    path = None
     try:
-        k = LayananKategori.tambah(request.get_json(silent=True))
+        path = simpan_gambar_upload(foto, current_app.config["CATEGORY_UPLOAD_FOLDER"], current_app.config["CATEGORY_MAX_BYTES"])
+        k = LayananKategori.tambah(payload, f"/media/categories/{path.name}")
     except ValueError as exc:
+        if path and path.exists():
+            path.unlink(missing_ok=True)
         return jsonify(error=str(exc)), 422
     audit.catat("kategori_dibuat", "category", k.id, k.name, commit=True)
     return jsonify(message="Kategori ditambahkan.", kategori=LayananKategori.daftar()), 201
@@ -103,10 +110,19 @@ def api_ubah_kategori(kategori_id: int):
     k = db.session.get(Category, kategori_id)
     if k is None:
         return jsonify(error="Kategori tidak ditemukan."), 404
+    payload = request.form.to_dict() if request.mimetype == "multipart/form-data" else (request.get_json(silent=True) or {})
+    foto = request.files.get("gambar")
+    path = None
     try:
-        LayananKategori.ubah(k, request.get_json(silent=True) or {})
+        image_url = None
+        if foto and foto.filename:
+            path = simpan_gambar_upload(foto, current_app.config["CATEGORY_UPLOAD_FOLDER"], current_app.config["CATEGORY_MAX_BYTES"])
+            image_url = f"/media/categories/{path.name}"
+        LayananKategori.ubah(k, payload, image_url=image_url)
     except ValueError as exc:
         db.session.rollback()
+        if path and path.exists():
+            path.unlink(missing_ok=True)
         return jsonify(error=str(exc)), 422
     audit.catat("kategori_diubah", "category", k.id, k.name, commit=True)
     return jsonify(message="Kategori diperbarui.", kategori=LayananKategori.daftar())

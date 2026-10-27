@@ -25,7 +25,7 @@
             <div>
                 <h3>Pesanan berhasil dibuat.</h3>
                 <p>
-                    Pesanan tersimpan. Lanjutkan dengan transfer, lalu unggah bukti bayar di halaman Pesanan agar admin dapat memverifikasi.
+Pembayaran melalui Midtrans sedang diproses. Status pesanan akan diperbarui otomatis setelah pembayaran terkonfirmasi.
                 </p>
                 <p id="checkoutSuccessOrder" class="checkout-success-order"></p>
             </div>
@@ -77,23 +77,24 @@
                     </div>
                 </section>
 
-                <div class="form-field">
-                    <label for="checkoutPayment">Metode pembayaran</label>
-                    <select class="form-control" id="checkoutPayment" name="pembayaran" required>
-                        <option value="Transfer Bank">Transfer Bank</option>
-                        <option value="QRIS">QRIS</option>
-                        {% if midtrans_aktif %}<option value="Midtrans">Bayar Online (Midtrans)</option>{% endif %}
-                    </select>
+                <div class="form-field checkout-payment-choice">
+                    <span class="form-label">Metode pembayaran</span>
+                    <input type="hidden" id="checkoutPayment" name="pembayaran" value="Midtrans">
+                    <div class="checkout-midtrans-method" aria-label="Bayar Online melalui Midtrans">
+                        <span class="checkout-midtrans-mark" aria-hidden="true">M</span>
+                        <span><strong>Bayar Online (Midtrans)</strong><small>QRIS, virtual account, e-wallet, dan kanal yang tersedia di akun Midtrans.</small></span>
+                        <span class="checkout-method-selected">Dipilih</span>
+                    </div>
                     <small class="checkout-payment-note">
-                        {% if midtrans_aktif %}Transfer Bank dan QRIS diverifikasi manual melalui bukti bayar. Bayar Online memproses pembayaran otomatis lewat Midtrans.{% else %}Pembayaran diverifikasi manual melalui bukti bayar.{% endif %}
+                        {% if midtrans_aktif %}Kamu akan langsung diarahkan ke halaman pembayaran Midtrans setelah menekan tombol di bawah. Status pesanan diperbarui otomatis oleh notifikasi pembayaran.{% else %}Midtrans belum aktif. Isi MIDTRANS_SERVER_KEY sandbox di konfigurasi lokal sebelum menguji checkout.{% endif %}
                     </small>
                 </div>
 
-                <button class="button button-primary" id="checkoutSubmit" type="submit">
-                    Buat Pesanan
+                <button class="button button-primary" id="checkoutSubmit" type="submit" data-midtrans-ready="{{ 'true' if midtrans_aktif else 'false' }}" {% if not midtrans_aktif %}disabled{% endif %}>
+                    Bayar Sekarang via Midtrans
                 </button>
                 <p class="checkout-disclaimer">
-                    Total dan stok dihitung ulang oleh server. Pesanan yang belum dibayar dibatalkan otomatis setelah batas waktu dan stok dikembalikan.
+Total dan stok dihitung ulang oleh server. Jika pembayaran tidak selesai sebelum batas waktu, pesanan dibatalkan otomatis dan stok dikembalikan.
                 </p>
             </div>
 

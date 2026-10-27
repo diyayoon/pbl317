@@ -102,6 +102,27 @@ def buat_app(konfigurasi=None):
             abort(404)
         return send_from_directory(folder, nama_file, conditional=True)
 
+    @app.get("/media/categories/<path:nama_file>")
+    def media_kategori(nama_file):
+        folder = Path(app.config["CATEGORY_UPLOAD_FOLDER"]).resolve()
+        target = (folder / nama_file).resolve()
+        if folder not in target.parents or not target.is_file():
+            abort(404)
+        return send_from_directory(folder, nama_file, conditional=True)
+
+    @app.get("/media/reviews/<int:review_id>")
+    def media_ulasan(review_id):
+        """Foto ulasan publik hanya tersedia bila ulasan tidak disembunyikan admin."""
+        from .models import Review
+        ulasan = db.session.get(Review, review_id)
+        if not ulasan or ulasan.is_hidden or not ulasan.image_path:
+            abort(404)
+        path = Path(ulasan.image_path).resolve()
+        base = Path(app.config["REVIEW_UPLOAD_FOLDER"]).resolve()
+        if base not in path.parents or not path.is_file():
+            abort(404)
+        return send_file(path, conditional=True, as_attachment=False)
+
     @app.get("/media/payments/<int:payment_id>")
     def media_pembayaran(payment_id):
         """Bukti bayar hanya untuk pemilik pesanan atau admin; dicari lewat ID, bukan nama file."""

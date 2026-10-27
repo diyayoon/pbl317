@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function api(url, options = {}) {
         const method = String(options.method || 'GET').toUpperCase();
         const headers = { Accept: 'application/json', ...(options.headers || {}) };
-        if (options.body !== undefined) headers['Content-Type'] = 'application/json';
+        if (options.body !== undefined && !(options.body instanceof FormData)) headers['Content-Type'] = 'application/json';
         if (!['GET', 'HEAD'].includes(method)) headers['X-CSRFToken'] = csrfToken;
         const response = await fetch(url, { credentials: 'same-origin', ...options, headers });
         const payload = await response.json().catch(() => ({}));
@@ -55,9 +55,6 @@ document.addEventListener('DOMContentLoaded', () => {
         body.replaceChildren();
         const row = make('tr'); const cell = make('td', 'table-empty', teks); cell.colSpan = kolom; row.append(cell); body.append(row);
     };
-    const tautanBukti = (url, nama) => {
-        const link = make('a', 'table-footnote', nama); link.href = url; link.target = '_blank'; link.rel = 'noopener'; return link;
-    };
     const tombol = (label, kelas, aksi) => {
         const b = make('button', kelas, label); b.type = 'button'; b.addEventListener('click', aksi); return b;
     };
@@ -67,15 +64,13 @@ document.addEventListener('DOMContentLoaded', () => {
     async function dashboard() {
         const body = element('adminRecentOrders'); if (!body) return;
         const orders = await api('/admin/api/pesanan');
-        if (!orders.length) { barisKosong(body, 5, 'Belum ada pesanan.'); return; }
+        if (!orders.length) { barisKosong(body, 4, 'Belum ada pesanan.'); return; }
         body.replaceChildren();
         orders.slice(0, 5).forEach(order => {
             const row = make('tr');
             row.append(make('td', '', `#${order.orderNumber}`), make('td', '', order.nama), make('td', '', money(order.total)));
             const st = make('td'); st.append(statusTag(order.status)); row.append(st);
-            const proof = make('td');
-            if (order.buktiBayar) proof.append(tautanBukti(order.buktiBayar.url, order.buktiBayar.namaFile)); else proof.textContent = 'Belum ada';
-            row.append(proof); body.append(row);
+            body.append(row);
         });
     }
 
@@ -85,16 +80,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const body = element('adminOrdersBody'); if (!body) return;
         const term = String(element('adminOrderSearch')?.value || '').trim().toLocaleLowerCase('id-ID');
         const rows = orders.filter(o => `${o.orderNumber} ${o.nama} ${o.status}`.toLocaleLowerCase('id-ID').includes(term));
-        if (!rows.length) { barisKosong(body, 7, 'Belum ada pesanan yang cocok.'); return; }
+        if (!rows.length) { barisKosong(body, 6, 'Belum ada pesanan yang cocok.'); return; }
         body.replaceChildren();
         rows.forEach(order => {
             const row = make('tr');
             const names = (order.items || []).map(i => `${i.nama} × ${i.jumlah}`).join(', ') || '—';
             row.append(make('td', '', `#${order.orderNumber}`), make('td', '', order.nama), make('td', '', names), make('td', '', money(order.total)));
             const st = make('td'); st.append(statusTag(order.status)); row.append(st);
-            const proof = make('td');
-            if (order.buktiBayar) proof.append(tautanBukti(order.buktiBayar.url, order.buktiBayar.namaFile)); else proof.textContent = 'Belum ada';
-            row.append(proof);
             const act = make('td');
             const opsi = NEXT[order.status] || [];
             if (!opsi.length) act.append(make('span', 'table-footnote', 'Final'));
@@ -126,26 +118,11 @@ document.addEventListener('DOMContentLoaded', () => {
         payments.forEach(p => {
             const row = make('tr');
             row.append(make('td', '', `#${p.order_number}`), make('td', '', p.customer));
-            const file = make('td');
-            if (p.bukti_url) file.append(tautanBukti(p.bukti_url, p.file_name)); else file.textContent = 'Belum diunggah';
-            row.append(file, make('td', '', money(p.total)));
+            row.append(make('td', '', p.gateway_payment_type || p.method || 'Midtrans'), make('td', '', money(p.total)));
             const st = make('td'); st.append(statusTag(p.status));
-            if (p.catatan) st.append(make('small', 'table-footnote', ` — ${p.catatan}`));
-            row.append(st);
-            const act = make('td');
-            if (p.bukti_url && p.status === 'Menunggu persetujuan') {
-                act.append(
-                    tombol('Setujui', 'button button-primary button-small', async () => {
-                        if (!window.confirm(`Setujui pembayaran #${p.order_number} sebesar ${money(p.total)}? Pastikan nominal sesuai.`)) return;
-                        await tinjau(p, 'approve', '');
-                    }),
-                    tombol('Tolak', 'button button-secondary button-small', async () => {
-                        const alasan = (window.prompt(`Alasan menolak pembayaran #${p.order_number} (wajib, dilihat customer):`) || '').trim();
-                        if (alasan.length < 3) { toast('Alasan penolakan wajib diisi.', 'alert'); return; }
-                        await tinjau(p, 'reject', alasan);
-                    }),
-                );
-            } else act.append(make('span', 'table-footnote', p.status === 'Menunggu pembayaran' ? 'Menunggu bukti dari pelanggan' : 'Tidak ada tindakan'));
+            const detailStatus = p.gateway_status ? `Status gateway: ${p.gateway_status}` : (p.catatan || 'Status diperbarui otomatis oleh Midtrans.');
+            st.append(make('small', 'table-footnote', ` — ${detailStatus}`)); row.append(st);
+            const act = make('td', '', p.status === 'Disetujui' ? 'Terkonfirmasi otomatis' : (p.status === 'Menunggu pembayaran' ? 'Menunggu pembayaran pelanggan' : 'Tidak ada tindakan'));
             row.append(act); body.append(row);
         });
     }
@@ -157,7 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
     /* ---------------- LAPORAN ---------------- */
     async function laporan() {
         const r = await api('/admin/api/laporan');
-        put('reportOrderCount', r.pesanan); put('reportPendingCount', r.menunggu_persetujuan);
+        put('reportOrderCount', r.pesanan); put('reportPendingCount', r.menunggu_pembayaran);
         put('reportCompletedCount', r.selesai); put('reportCompletedValue', money(r.pendapatan));
         const summary = element('reportStatusSummary');
         if (summary) {
@@ -202,6 +179,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /* ---------------- KATEGORI ---------------- */
     let editId = null;
+    const categoryForm = element('categoryForm');
+    const categoryImage = element('categoryImageInput');
+    const categoryPreview = element('categoryImagePreview');
+    categoryImage?.addEventListener('change', () => {
+        const file = categoryImage.files?.[0];
+        if (!file) return;
+        if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 3 * 1024 * 1024) {
+            categoryImage.value = '';
+            toast('Pilih foto JPG, PNG, atau WEBP maksimal 3 MB.', 'alert');
+            return;
+        }
+        if (categoryPreview) { categoryPreview.src = URL.createObjectURL(file); categoryPreview.hidden = false; }
+    });
     async function kategori() {
         const body = element('adminCategoriesBody'); if (!body) return;
         const data = await api('/admin/api/kategori');
@@ -209,33 +199,52 @@ document.addEventListener('DOMContentLoaded', () => {
         body.replaceChildren();
         data.forEach(k => {
             const row = make('tr');
-            row.append(make('td', '', k.ikon), make('td', '', k.nama), make('td', '', String(k.jumlah_produk)));
+            const photoCell = make('td');
+            if (k.gambar) {
+                const img = make('img', 'category-admin-table-photo'); img.src = k.gambar; img.alt = `Foto kategori ${k.nama}`; img.loading = 'lazy'; photoCell.append(img);
+            } else photoCell.textContent = 'Belum ada foto';
+            row.append(photoCell, make('td', '', k.nama), make('td', '', String(k.jumlah_produk)));
             const st = make('td'); st.append(make('span', `admin-status ${k.aktif ? 'is-paid' : 'is-pending'}`, k.aktif ? 'Aktif' : 'Nonaktif')); row.append(st);
-            const act = make('td');
+            const act = make('td', 'table-actions');
             act.append(
                 tombol('Ubah', 'button button-secondary button-small', () => {
-                    editId = k.id; element('categoryName').value = k.nama; element('categoryIcon').value = k.ikon;
+                    editId = k.id; element('categoryName').value = k.nama;
+                    if (categoryImage) { categoryImage.value = ''; categoryImage.required = false; }
+                    if (categoryPreview) { categoryPreview.src = k.gambar || ''; categoryPreview.hidden = !k.gambar; }
                     element('categorySubmit').textContent = 'Simpan perubahan'; element('categoryName').focus();
+                    categoryForm?.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }),
-                tombol(k.aktif ? 'Hapus/Nonaktifkan' : 'Aktifkan', 'button button-secondary button-small', async () => {
-                    try {
-                        if (k.aktif) {
-                            if (!window.confirm(`Hapus kategori "${k.nama}"? Bila masih dipakai produk, kategori hanya dinonaktifkan.`)) return;
-                            const res = await kirim(`/admin/api/kategori/${k.id}`, 'DELETE'); toast(res.message);
-                        } else { await kirim(`/admin/api/kategori/${k.id}`, 'PUT', { nama: k.nama, ikon: k.ikon, aktif: true }); toast('Kategori diaktifkan.'); }
-                        await kategori();
-                    } catch (error) { toast(error.message, 'alert'); }
+                tombol('Hapus', 'button button-secondary button-small', async () => {
+                    const pesan = k.jumlah_produk > 0
+                        ? `Kategori "${k.nama}" masih dipakai ${k.jumlah_produk} produk. Kategori akan dinonaktifkan agar produk dan riwayat tetap utuh. Lanjutkan?`
+                        : `Hapus kategori "${k.nama}"?`;
+                    if (!window.confirm(pesan)) return;
+                    try { const res = await kirim(`/admin/api/kategori/${k.id}`, 'DELETE'); toast(res.message); if (editId === k.id) resetFormKategori(); await kategori(); }
+                    catch (error) { toast(error.message, 'alert'); }
                 }),
             );
             row.append(act); body.append(row);
         });
     }
-    element('categoryForm')?.addEventListener('submit', async event => {
+    function resetFormKategori() {
+        editId = null; categoryForm?.reset();
+        if (categoryImage) categoryImage.required = true;
+        if (categoryPreview) { categoryPreview.removeAttribute('src'); categoryPreview.hidden = true; }
+        if (element('categorySubmit')) element('categorySubmit').textContent = 'Tambah kategori';
+    }
+    categoryForm?.addEventListener('submit', async event => {
         event.preventDefault();
-        const data = { nama: element('categoryName').value, ikon: element('categoryIcon').value };
+        const nama = element('categoryName').value.trim();
+        const file = categoryImage?.files?.[0];
+        if (!editId && !file) { toast('Foto kategori wajib dipilih.', 'alert'); categoryImage?.focus(); return; }
+        const data = new FormData(); data.append('nama', nama); data.append('aktif', 'true');
+        if (file) data.append('gambar', file);
+        const url = editId ? `/admin/api/kategori/${editId}` : '/admin/api/kategori';
         try {
-            if (editId) await kirim(`/admin/api/kategori/${editId}`, 'PUT', data); else await kirim('/admin/api/kategori', 'POST', data);
-            toast('Kategori tersimpan.'); editId = null; event.target.reset(); element('categorySubmit').textContent = 'Tambah kategori'; await kategori();
+            const response = await fetch(url, { method: editId ? 'PUT' : 'POST', credentials: 'same-origin', headers: { Accept: 'application/json', 'X-CSRFToken': csrfToken }, body: data });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(result.error || `Permintaan gagal (${response.status}).`);
+            toast(result.message || 'Kategori tersimpan.'); resetFormKategori(); await kategori();
         } catch (error) { toast(error.message, 'alert'); }
     });
 

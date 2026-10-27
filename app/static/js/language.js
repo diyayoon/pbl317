@@ -315,7 +315,11 @@ class PengelolaBahasa {
         });
 
         const tombolBahasa = document.getElementById('languageToggle');
-        if (tombolBahasa) tombolBahasa.textContent = this.bahasaAktif === 'id' ? 'EN' : 'ID';
+        if (tombolBahasa) {
+            tombolBahasa.classList.toggle('is-en', this.bahasaAktif === 'en');
+            tombolBahasa.setAttribute('aria-pressed', String(this.bahasaAktif === 'en'));
+            tombolBahasa.setAttribute('aria-label', this.bahasaAktif === 'id' ? 'Ganti bahasa ke English' : 'Switch language to Indonesian');
+        }
     }
 
     /* ===== FUNGSI: MENGGANTI BAHASA ===== */
