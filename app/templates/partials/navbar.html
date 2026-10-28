@@ -29,7 +29,6 @@
             <button class="language-toggle" id="languageToggle" type="button" aria-label="Ganti bahasa" aria-pressed="false" title="Ganti bahasa / Switch language">
                 <span class="language-code language-code-id">ID</span>
                 <span class="language-switch-track" aria-hidden="true"><span></span></span>
-                <span class="language-code language-code-en">EN</span>
             </button>
             {% if not current_user.is_authenticated or current_user.role == 'customer' %}
             <a class="icon-button" href="{{ url_for('customer.keranjang') }}" data-auth-action="cart" aria-label="Keranjang" title="Keranjang belanja">

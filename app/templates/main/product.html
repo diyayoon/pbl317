@@ -65,7 +65,6 @@
                     <div class="spec-card"><span data-i18n="spec_authenticity">Autentikasi</span><strong id="detailProductAuthenticity">{{ item.autentikasi }}</strong></div>
                     <div class="spec-card"><span data-i18n="spec_stock">Stok</span><strong id="detailProductStock">{% if item.stok < 1 %}Stok habis{% else %}{{ item.stok }} item{% endif %}</strong></div>
                 </div>
-                {% if item.sumber_gambar %}<p class="image-credit" id="detailProductCredit"><a id="detailProductCreditLink" href="{{ item.sumber_gambar }}" target="_blank" rel="noopener noreferrer">Sumber foto produk</a></p>{% endif %}
             </div>
         </div>
     </div>
