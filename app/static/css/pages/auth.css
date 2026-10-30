@@ -260,17 +260,8 @@ body.auth-page .auth-card-daftar {
     font-weight: 700;
 }
 
-/* Kolom password: pembungkus untuk tombol mata dan garis kemajuan */
-.password-wrap {
-    position: relative;
-}
-
-/* Kolom password: sisakan ruang untuk tombol mata di kanan */
-.password-wrap .form-control {
-    padding-right: 54px;
-}
-
-/* Tombol mata: tahan untuk melihat password */
+.password-wrap { position: relative; }
+.password-wrap .form-control { padding-right: 54px; }
 .password-toggle {
     position: absolute;
     top: 50%;
@@ -287,35 +278,41 @@ body.auth-page .auth-card-daftar {
     cursor: pointer;
     touch-action: manipulation;
     user-select: none;
-    -webkit-user-select: none;
-    -webkit-touch-callout: none;
 }
-
-/* Tombol mata › saat hover */
-.password-toggle:hover {
-    background: rgba(97,168,214,.14);
-}
-
-/* Tombol mata › saat ditahan (password terlihat) */
-.password-toggle[aria-pressed="true"] {
-    background: rgba(97,168,214,.22);
-    color: var(--warna-biru-dalam);
-}
-
-/* Ikon mata terbuka: hanya tampil saat tombol ditahan */
-.password-toggle .ikon-mata {
-    display: none;
-}
-
-/* Ikon mata terbuka › saat ditahan */
-.password-toggle[aria-pressed="true"] .ikon-mata {
+.password-toggle:hover { background: rgba(97,168,214,.14); }
+.password-toggle[aria-pressed="true"] { background: rgba(97,168,214,.22); }
+.ikon-mata,
+.ikon-mata-coret {
+    position: relative;
     display: block;
+    width: 22px;
+    height: 16px;
 }
-
-/* Ikon mata dicoret › disembunyikan saat tombol ditahan */
-.password-toggle[aria-pressed="true"] .ikon-mata-coret {
-    display: none;
+.ikon-mata::before,
+.ikon-mata-coret::before {
+    content: "";
+    position: absolute;
+    inset: 2px 1px;
+    border: 1.7px solid currentColor;
+    border-radius: 75% 25% / 50%;
 }
+.ikon-mata::after,
+.ikon-mata-coret::after {
+    content: "";
+    position: absolute;
+    top: 5px;
+    left: 8px;
+    width: 5px;
+    height: 5px;
+    border: 1.7px solid currentColor;
+    border-radius: 50%;
+}
+.ikon-mata-coret {
+    background: linear-gradient(45deg, transparent 46%, currentColor 48%, currentColor 53%, transparent 55%);
+}
+.password-toggle .ikon-mata { display: none; }
+.password-toggle[aria-pressed="true"] .ikon-mata { display: block; }
+.password-toggle[aria-pressed="true"] .ikon-mata-coret { display: none; }
 
 /* Garis kemajuan panjang password: menempel di dasar kolom, tidak menambah tinggi form */
 .strength-meter {

@@ -324,8 +324,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 5200 + indeks * 250);
     });
 
-    const bahasa = new window.PengelolaBahasa();
-    bahasa.terapkanBahasa();
     const hero = document.querySelector('.hero');
     const judulKetik = document.querySelector('[data-ketik]');
     const kurangGerak = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -334,7 +332,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const efekKetik = new window.EfekKetik(judulKetik, { saatSelesai: tandaiHeroSiap });
     efekKetik.mulai();
     window.setTimeout(tandaiHeroSiap, 6000);
-    document.getElementById('languageToggle')?.addEventListener('click', () => { bahasa.gantiBahasa(); efekKetik.ulangi(); });
     new window.EfekMuncul().pasang();
     new window.EfekSalju(document.getElementById('snowfall')).mulai();
     inisialisasiNavigasi();

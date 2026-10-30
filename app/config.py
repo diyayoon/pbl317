@@ -46,6 +46,7 @@ class Config:
     UPLOAD_FOLDER = str(BASE_DIR / "instance" / "uploads")
     PAYMENT_UPLOAD_FOLDER = str(BASE_DIR / "instance" / "uploads" / "payments")
     PRODUCT_UPLOAD_FOLDER = str(BASE_DIR / "instance" / "uploads" / "products")
+    PRODUCT_MAX_BYTES = 2 * 1024 * 1024
     CATEGORY_UPLOAD_FOLDER = str(BASE_DIR / "instance" / "uploads" / "categories")
     REVIEW_UPLOAD_FOLDER = str(BASE_DIR / "instance" / "uploads" / "reviews")
     CATEGORY_MAX_BYTES = 3 * 1024 * 1024

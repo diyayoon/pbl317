@@ -225,11 +225,6 @@
         margin-left: auto;
     }
 
-    /* Tombol ganti bahasa ID/EN */
-    .language-toggle {
-        width: 42px;
-    }
-
     /* Hero: blok teks › judul h1 */
     .hero-copy h1 {
         font-size: clamp(2.8rem, 15vw, 4rem);

@@ -14,19 +14,16 @@
     ('alamat', 'Alamat'),
 ] %}
 
-<!-- ===== PROFIL PELANGGAN ===== -->
 <section class="section-shell profil-halaman" id="halamanProfil">
     <div class="container" style="max-width:760px;">
-        <!-- ===== JUDUL HALAMAN ===== -->
         <div class="section-heading">
             <div>
-                <span class="eyebrow">Account Settings</span>
+                <span class="eyebrow">Pengaturan Akun</span>
                 <h2>Profil Pribadi</h2>
                 <p>Kelola identitas akun dan alamat pengirimanmu di satu tempat.</p>
             </div>
         </div>
 
-        <!-- ===== TAB PENGATURAN ===== -->
         <div class="profil-tab" role="tablist" aria-label="Pengaturan akun">
             {% for kunci, judul in daftar_tab %}
             <button
@@ -43,12 +40,10 @@
         </div>
 
         <div class="glass-card profil-kartu">
-            <!-- ===== PANEL: PROFIL ===== -->
             <section class="profil-panel" id="panel-profil" role="tabpanel" aria-labelledby="tab-profil">
                 <h3>Edit profil</h3>
                 <p class="profil-bantuan">Atur identitas akun yang tampil di Albis Antique.</p>
 
-                <!-- ===== FOTO PROFIL ===== -->
                 <div class="profil-foto">
                     <div class="avatar-bulat" id="avatarBulat" aria-live="polite"></div>
                     <div class="profil-foto-aksi">
@@ -66,7 +61,6 @@
                     </div>
                 </div>
 
-                <!-- ===== FORM IDENTITAS ===== -->
                 <form class="profil-form" id="formProfil" novalidate>
                     <div class="form-field">
                         <label for="namaLengkap">Nama lengkap</label>
@@ -109,19 +103,17 @@
                 </form>
             </section>
 
-            <!-- ===== PANEL: ALAMAT ===== -->
             <section class="profil-panel" id="panel-alamat" role="tabpanel" aria-labelledby="tab-alamat" hidden>
                 <div class="profil-panel-kepala">
                     <div>
                         <h3>Alamat saya</h3>
-                        <p class="profil-bantuan">Alamat tersimpan bisa dipilih kembali saat checkout.</p>
+                        <p class="profil-bantuan">Alamat tersimpan bisa dipilih kembali saat melakukan pemesanan.</p>
                     </div>
                     <button class="button button-primary button-small" id="alamatBaru" type="button">+ Tambah alamat</button>
                 </div>
 
                 <div class="daftar-alamat" id="daftarAlamat"></div>
 
-                <!-- ===== FORM TAMBAH / EDIT ALAMAT ===== -->
                 <form class="form-alamat" id="formAlamat" novalidate hidden>
                     <h4 id="judulFormAlamat">Tambah alamat</h4>
                     <div class="form-baris">
@@ -185,7 +177,6 @@
     </div>
 </section>
 
-<!-- ===== BAR PERUBAHAN BELUM DISIMPAN ===== -->
 <div class="bar-perubahan" id="barPerubahan" role="status" aria-live="polite" hidden>
     <p>Ada perubahan yang belum disimpan.</p>
     <div class="bar-aksi">
@@ -194,7 +185,6 @@
     </div>
 </div>
 
-<!-- ===== EDITOR FOTO PROFIL (GESER + ZOOM) ===== -->
 <div class="editor-foto" id="editorFoto" role="dialog" aria-modal="true" aria-labelledby="judulEditorFoto" hidden>
     <div class="editor-foto-kartu">
         <div class="editor-foto-kepala">
@@ -230,7 +220,6 @@
     </div>
 </div>
 
-<!-- ===== TOAST PEMBERITAHUAN ===== -->
 <div class="toast-profil" id="toastProfil" role="status" aria-live="polite" hidden></div>
 {% endblock %}
 

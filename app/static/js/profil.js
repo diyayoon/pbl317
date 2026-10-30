@@ -608,10 +608,11 @@ class HalamanProfil {
             gambar.alt = 'Foto profil';
             this.avatar.append(gambar);
         } else {
-            this.avatar.innerHTML =
-                '<svg viewBox="0 0 48 48" fill="currentColor" aria-hidden="true">' +
-                '<circle cx="24" cy="17" r="9"></circle>' +
-                '<path d="M7 43c1.9-9.2 8.2-14 17-14s15.1 4.8 17 14H7Z"></path></svg>';
+            const fallback = document.createElement('span');
+            fallback.className = 'avatar-ikon-default';
+            fallback.setAttribute('aria-hidden', 'true');
+            fallback.textContent = '♙';
+            this.avatar.append(fallback);
         }
         document.getElementById('hapusFoto').hidden = !this.draf.foto;
     }

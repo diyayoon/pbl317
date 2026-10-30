@@ -1,11 +1,6 @@
 """Aturan bisnis katalog; semua CRUD database dilakukan dalam satu lapisan OOP."""
 from __future__ import annotations
-import base64
-import binascii
-import re
 from pathlib import Path
-from urllib.parse import urlsplit
-from uuid import uuid4
 from flask import current_app
 from sqlalchemy import case, func, or_, select
 from sqlalchemy.orm import selectinload
@@ -19,7 +14,6 @@ class CatalogService:
     ERA = {"1800s", "1900–1949", "1950–1999", "2000–sekarang"}
     KONDISI = {"Excellent", "Good", "Fair", "Needs restoration"}
     AUTENTIKASI = {"Verified", "Documented", "Inspected", "Not verified"}
-    DATA_IMAGE_PATTERN = re.compile(r"^data:image/(jpeg|png|webp);base64,([A-Za-z0-9+/=\r\n]+)$")
 
     @staticmethod
     def slug_unik(name: str, exclude_id: int | None = None) -> str:
@@ -119,8 +113,17 @@ class CatalogService:
         results = []
         for category in categories:
             products = [item for item in category.products if item.is_active]
-            # Sampul kategori merupakan aset milik kategori, bukan gambar produk pertamanya.
-            cover = category.image_url or gambar_bawaan.get(category.slug, "/static/images/categories/jam-timepiece.jpg")
+            foto_produk = next((item.gambar for item in products if item.gambar), "")
+            gambar_khusus = (category.image_url or "").strip()
+            gambar_placeholder = gambar_khusus.lower().endswith(".svg") or "/assets/categories/" in gambar_khusus.lower()
+            if gambar_placeholder:
+                gambar_khusus = ""
+            cover = (
+                gambar_khusus
+                or gambar_bawaan.get(category.slug)
+                or foto_produk
+                or "/static/images/categories/jam-timepiece.jpg"
+            )
             results.append({
                 "id": category.id, "slug": category.slug, "nama": category.name,
                 "ikon": category.icon, "jumlah": len(products), "gambar": cover,
@@ -128,7 +131,7 @@ class CatalogService:
         return results
 
     @classmethod
-    def normalize_payload(cls, payload, existing: Product | None = None):
+    def normalize_payload(cls, payload, existing: Product | None = None, image_url: str = ""):
         if not isinstance(payload, dict):
             return None, {"umum": "Data produk tidak valid."}
         errors = {}
@@ -176,16 +179,9 @@ class CatalogService:
         except (ValueError, TypeError, OverflowError):
             stock = 0
             errors["stok"] = "Stok harus bilangan bulat nonnegatif."
-        image = payload.get("gambar", "")
-        image = image.strip() if isinstance(image, str) else ""
-        if len(image) > 2_800_000:
-            errors["gambar"] = "Foto terlalu besar. Gunakan foto maksimal 2 MB."
-        elif image and not image.startswith("data:"):
-            parsed = urlsplit(image)
-            if parsed.scheme not in {"https", "/"} and not image.startswith("/media/products/"):
-                errors["gambar"] = "URL foto eksternal harus HTTPS atau path media produk."
-        elif image and not cls.DATA_IMAGE_PATTERN.fullmatch(image):
-            errors["gambar"] = "Format foto tidak valid. Gunakan JPG, PNG, atau WEBP."
+        image = str(image_url or "").strip()
+        if image and not image.startswith("/media/products/"):
+            errors["gambar"] = "Lokasi foto produk tidak valid."
         if errors:
             return None, errors
         return {
@@ -197,34 +193,8 @@ class CatalogService:
         }, {}
 
     @classmethod
-    def _store_image(cls, image: str, alt: str) -> str:
-        if not image:
-            return ""
-        if image.startswith("/media/products/") or image.startswith("https://"):
-            return image
-        match = cls.DATA_IMAGE_PATTERN.fullmatch(image)
-        if not match:
-            raise ValueError("Format gambar tidak diizinkan.")
-        extension = match.group(1).lower()
-        raw = base64.b64decode(match.group(2), validate=True)
-        if len(raw) > 2 * 1024 * 1024:
-            raise ValueError("Ukuran gambar melebihi 2 MB.")
-        signatures = {
-            "png": raw.startswith(b"\x89PNG\r\n\x1a\n"),
-            "jpeg": raw.startswith(b"\xff\xd8\xff"),
-            "webp": len(raw) >= 12 and raw[:4] == b"RIFF" and raw[8:12] == b"WEBP",
-        }
-        if not signatures.get(extension, False):
-            raise ValueError("Isi file tidak sesuai dengan format gambar.")
-        folder = Path(current_app.config["PRODUCT_UPLOAD_FOLDER"]).resolve()
-        folder.mkdir(parents=True, exist_ok=True)
-        filename = f"{uuid4().hex}.{ 'jpg' if extension == 'jpeg' else extension }"
-        (folder / filename).write_bytes(raw)
-        return f"/media/products/{filename}"
-
-    @classmethod
-    def create_product(cls, payload):
-        values, errors = cls.normalize_payload(payload)
+    def create_product(cls, payload, image_url: str = ""):
+        values, errors = cls.normalize_payload(payload, image_url=image_url)
         if errors:
             return None, errors
         product = Product(
@@ -235,22 +205,18 @@ class CatalogService:
             image_alt=values["image_alt"], image_source=values["image_source"],
         )
         try:
-            image_url = cls._store_image(values["image"], values["image_alt"])
-            if image_url:
-                product.images.append(ProductImage(image_url=image_url, alt_text=values["image_alt"], is_primary=True, position=0))
+            if values["image"]:
+                product.images.append(ProductImage(image_url=values["image"], alt_text=values["image_alt"], is_primary=True, position=0))
             db.session.add(product)
             db.session.commit()
             return product, {}
-        except (ValueError, binascii.Error) as exc:
-            db.session.rollback()
-            return None, {"gambar": str(exc)}
         except IntegrityError:
             db.session.rollback()
             return None, {"umum": "Data produk bentrok dengan data lain. Coba lagi."}
 
     @classmethod
-    def update_product(cls, product: Product, payload):
-        values, errors = cls.normalize_payload(payload, existing=product)
+    def update_product(cls, product: Product, payload, image_url: str = ""):
+        values, errors = cls.normalize_payload(payload, existing=product, image_url=image_url)
         if errors:
             return None, errors
         new_image = values.pop("image")
@@ -261,18 +227,14 @@ class CatalogService:
             for key in ("description", "price", "stock", "era", "origin", "material", "condition", "authenticity_status", "image_alt", "image_source"):
                 setattr(product, key, values[key])
             if new_image:
-                image_url = cls._store_image(new_image, values["image_alt"])
                 primary = next((image for image in product.images if image.is_primary), None)
                 if primary is None:
                     primary = ProductImage(product=product, is_primary=True, position=0)
                     db.session.add(primary)
-                primary.image_url = image_url
+                primary.image_url = new_image
                 primary.alt_text = values["image_alt"]
             db.session.commit()
             return product, {}
-        except (ValueError, binascii.Error) as exc:
-            db.session.rollback()
-            return None, {"gambar": str(exc)}
         except IntegrityError:
             db.session.rollback()
             return None, {"umum": "Perubahan produk bentrok dengan data lain. Coba lagi."}

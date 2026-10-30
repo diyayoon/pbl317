@@ -1,5 +1,8 @@
 {% extends 'base.html' %}
 {% set item = produk %}
+{% set label_era = {'1800s': '1800-an'}.get(item.era, item.era) %}
+{% set label_kondisi = {'Excellent': 'Sangat baik', 'Good': 'Baik', 'Fair': 'Cukup', 'Needs restoration': 'Perlu restorasi'}.get(item.kondisi, item.kondisi) %}
+{% set label_autentikasi = {'Verified': 'Terverifikasi', 'Documented': 'Memiliki dokumentasi', 'Inspected': 'Telah diperiksa', 'Not verified': 'Belum terverifikasi'}.get(item.autentikasi, item.autentikasi) %}
 {% block title %}{{ item.nama }} — Albis Antique{% endblock %}
 {% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/catalog.css') }}">{% endblock %}
 {% block content %}
@@ -16,7 +19,7 @@
                 </div>
             </div>
             <div class="product-copy">
-                <span class="eyebrow" data-i18n="detail_eyebrow">Detail Koleksi</span>
+                <span class="eyebrow">Detail Koleksi</span>
                 <h1 id="detailProductName">{{ item.nama }}</h1>
                 <div class="rating" id="detailProductRatingLine" aria-label="Rating {{ item.rating }} dari 5">{% set penuh = item.rating|round|int %}<span aria-hidden="true">{{ '★' * penuh }}{{ '☆' * (5 - penuh) }}</span> <span class="muted" id="detailProductRating">{% if item.ulasan %}{{ item.rating }} · {{ item.ulasan }} ulasan{% else %}Belum ada ulasan{% endif %}</span></div>
                 <p class="detail-price" id="detailProductPrice">Rp{{ "{:,.0f}".format(item.harga).replace(',', '.') }}</p>
@@ -25,14 +28,14 @@
                 {% if not current_user.is_authenticated or current_user.role == 'customer' %}
                 <div class="detail-purchase-actions">
                     <button class="detail-cart-icon-button" id="detailOpenCart" type="button" aria-controls="detailCartPanel" aria-expanded="false" aria-label="Pilih jumlah dan tambahkan ke keranjang" {% if item.stok < 1 %}disabled{% endif %}>
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2.1 10.1a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 1.9-1.4L21 8H6"/><circle cx="10" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/></svg>
+                        <span class="detail-cart-glyph" aria-hidden="true">🛍</span>
                     </button>
                     <button class="button button-gold detail-buy-button" type="button" id="detailBuyNow" {% if item.stok < 1 %}disabled{% endif %} data-buy-now
                         data-product-id="{{ item.id }}" data-product-name="{{ item.nama }}" data-product-price="{{ item.harga }}"
                         data-product-image="{{ item.gambar }}" data-product-category="{{ item.kategori }}"
                         data-product-origin="{{ item.asal }}" data-product-stock="{{ item.stok }}"
                         data-product-url="{{ url_for('main.detail_produk', produk_id=item.id) }}"
-                        data-checkout-url="{{ url_for('customer.checkout') }}" data-i18n="detail_buy">Beli Sekarang</button>
+                        data-checkout-url="{{ url_for('customer.checkout') }}">Beli Sekarang</button>
                 </div>
                 <div class="detail-cart-panel" id="detailCartPanel" hidden>
                     <div class="detail-cart-panel-heading">
@@ -52,18 +55,18 @@
                         data-product-name="{{ item.nama }}" data-product-price="{{ item.harga }}"
                         data-product-image="{{ item.gambar }}" data-product-category="{{ item.kategori }}"
                         data-product-origin="{{ item.asal }}" data-product-stock="{{ item.stok }}"
-                        data-product-url="{{ url_for('main.detail_produk', produk_id=item.id) }}" data-i18n="detail_add">Tambah ke Keranjang</button>
+                        data-product-url="{{ url_for('main.detail_produk', produk_id=item.id) }}">Tambah ke Keranjang</button>
                     <small class="field-hint">Stok tersedia: {{ item.stok }} item</small>
                 </div>
                 {% endif %}
 
                 <div class="spec-grid">
-                    <div class="spec-card"><span data-i18n="spec_era">Era</span><strong id="detailProductEra">{{ item.era }}</strong></div>
-                    <div class="spec-card"><span data-i18n="spec_origin">Asal</span><strong id="detailProductOrigin">{{ item.asal }}</strong></div>
-                    <div class="spec-card"><span data-i18n="spec_condition">Kondisi</span><strong id="detailProductCondition">{{ item.kondisi }}</strong></div>
-                    <div class="spec-card"><span data-i18n="spec_material">Material</span><strong id="detailProductMaterial">{{ item.material }}</strong></div>
-                    <div class="spec-card"><span data-i18n="spec_authenticity">Autentikasi</span><strong id="detailProductAuthenticity">{{ item.autentikasi }}</strong></div>
-                    <div class="spec-card"><span data-i18n="spec_stock">Stok</span><strong id="detailProductStock">{% if item.stok < 1 %}Stok habis{% else %}{{ item.stok }} item{% endif %}</strong></div>
+                    <div class="spec-card"><span>Era</span><strong id="detailProductEra">{{ label_era }}</strong></div>
+                    <div class="spec-card"><span>Asal</span><strong id="detailProductOrigin">{{ item.asal }}</strong></div>
+                    <div class="spec-card"><span>Kondisi</span><strong id="detailProductCondition">{{ label_kondisi }}</strong></div>
+                    <div class="spec-card"><span>Material</span><strong id="detailProductMaterial">{{ item.material }}</strong></div>
+                    <div class="spec-card"><span>Autentikasi</span><strong id="detailProductAuthenticity">{{ label_autentikasi }}</strong></div>
+                    <div class="spec-card"><span>Stok</span><strong id="detailProductStock">{% if item.stok < 1 %}Stok habis{% else %}{{ item.stok }} item{% endif %}</strong></div>
                 </div>
             </div>
         </div>
@@ -78,7 +81,14 @@
             {% for ul in daftar_ulasan %}
             <article class="review-card">
                 <div class="review-head">
-                    <strong>{{ ul.nama }}</strong>
+                    <div class="review-author">
+                        {% if ul.foto %}
+                        <img class="review-avatar" src="{{ ul.foto }}" alt="Foto profil {{ ul.nama }}" loading="lazy">
+                        {% else %}
+                        <span class="review-avatar review-avatar-fallback" aria-hidden="true">{{ ul.nama[:1]|upper }}</span>
+                        {% endif %}
+                        <strong>{{ ul.nama }}</strong>
+                    </div>
                     <span class="review-stars" aria-label="{{ ul.rating }} dari 5">{{ '★' * ul.rating }}{{ '☆' * (5 - ul.rating) }}</span>
                     <time datetime="{{ ul.tanggal }}">{{ ul.tanggal[:10] }}</time>
                 </div>

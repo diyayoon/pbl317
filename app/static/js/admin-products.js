@@ -25,6 +25,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let apiReady = false;
     let newImageFile = null;
     let previewUrl = '';
+    let imageProcessing = false;
+    let imageSelectionVersion = 0;
 
 
     const fieldIds = {
@@ -83,6 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         toast.textContent = message;
+        toast.setAttribute('role', type);
         toast.classList.add('is-visible');
         window.clearTimeout(toast._timer);
         toast._timer = window.setTimeout(() => toast.classList.remove('is-visible'), 3500);
@@ -132,6 +135,8 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('productImagePreview').replaceChildren();
         document.getElementById('productImagePreview').hidden = true;
         newImageFile = null;
+        imageSelectionVersion += 1;
+        imageProcessing = false;
         clearPreviewUrl();
         clearErrors();
     }
@@ -286,7 +291,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Perkecil foto (maks. 1000px) lalu kembalikan sebagai Blob JPEG untuk dikirim via multipart.
     async function buildImageFile(file) {
         if (typeof createImageBitmap !== 'function') return file;
         const bitmap = await createImageBitmap(file);
@@ -329,7 +333,6 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    // Susun multipart/form-data: field teks + (opsional) berkas foto pada field "gambar".
     function buildMultipart(payload, oldProduct = null) {
         const data = new FormData();
         Object.entries(payload).forEach(([key, value]) => {
@@ -376,9 +379,16 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('productImage')?.addEventListener('change', async event => {
         const input = event.currentTarget;
         const file = input.files?.[0];
+        const rawId = document.getElementById('productId').value;
+        const oldProduct = rawId
+            ? products.find(product => Number(product.id) === Number(rawId))
+            : null;
+        const version = ++imageSelectionVersion;
+        const saveButton = document.getElementById('saveProductButton');
+
         newImageFile = null;
         clearPreviewUrl();
-        showImagePreview('', 'produk');
+        showImagePreview(oldProduct?.gambar || '', oldProduct?.nama || 'produk');
         if (!file) return;
 
         const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
@@ -388,14 +398,25 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        imageProcessing = true;
+        saveButton.disabled = true;
         try {
-            newImageFile = await buildImageFile(file);
+            const processedFile = await buildImageFile(file);
+            if (version !== imageSelectionVersion) return;
+            newImageFile = processedFile;
             previewUrl = URL.createObjectURL(newImageFile);
             showImagePreview(previewUrl, file.name);
         } catch (error) {
+            if (version !== imageSelectionVersion) return;
             input.value = '';
             newImageFile = null;
+            showImagePreview(oldProduct?.gambar || '', oldProduct?.nama || 'produk');
             showToast(error.message || 'Foto belum bisa dibaca.', 'alert');
+        } finally {
+            if (version === imageSelectionVersion) {
+                imageProcessing = false;
+                saveButton.disabled = !apiReady;
+            }
         }
     });
 
@@ -403,6 +424,10 @@ document.addEventListener('DOMContentLoaded', () => {
         event.preventDefault();
         if (!apiReady) {
             showToast('Sumber data belum siap. Perubahan belum disimpan.', 'alert');
+            return;
+        }
+        if (imageProcessing) {
+            showToast('Tunggu sampai foto selesai diproses.', 'alert');
             return;
         }
 

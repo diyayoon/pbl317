@@ -17,19 +17,19 @@
             <a class="auth-brand" href="{{ url_for('main.beranda') }}" aria-label="Albis Antique - Beranda">
             </a>
             <div class="auth-message">
-                <span class="eyebrow" data-i18n="login_eyebrow">Welcome Back</span>
-                <h1 data-i18n="login_visual_title">Senang Melihat Anda Kembali.</h1>
+                <span class="eyebrow">Selamat Datang Kembali</span>
+                <h1>Senang Melihat Anda Kembali.</h1>
             </div>
 
             <br class="auth-divider" aria-hidden="true">
-            <h2 data-i18n="login_title">Selamat datang kembali</h2>
-            <p data-i18n="login_desc">Masuk menggunakan akun yang telah terdaftar.</p>
+            <h2>Selamat datang kembali</h2>
+            <p>Masuk menggunakan akun yang telah terdaftar.</p>
 
             <form method="post" novalidate>
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
                 <div class="form-field">
-                    <label for="email" data-i18n="email">Email</label>
+                    <label for="email">Email</label>
                     <input
                         class="form-control"
                         id="email"
@@ -41,7 +41,7 @@
                 </div>
 
                 <div class="form-field">
-                    <label for="password" data-i18n="password">Kata sandi</label>
+                    <label for="password">Kata sandi</label>
                     <div class="password-wrap">
                         <input
                             class="form-control"
@@ -57,39 +57,11 @@
                             type="button"
                             aria-controls="password"
                             aria-pressed="false"
-                            aria-label="Tahan untuk melihat kata sandi"
-                            title="Tahan untuk melihat kata sandi"
+                            aria-label="Tampilkan kata sandi"
+                            title="Tampilkan kata sandi"
                         >
-                            <svg
-                                class="ikon-mata-coret"
-                                viewBox="0 0 24 24"
-                                width="20"
-                                height="20"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="1.8"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                aria-hidden="true"
-                            >
-                                <path d="M17.94 17.94A10.9 10.9 0 0 1 12 19c-6.4 0-10-7-10-7a18.5 18.5 0 0 1 4.06-5.06M9.9 4.24A10.1 10.1 0 0 1 12 5c6.4 0 10 7 10 7a18.6 18.6 0 0 1-2.16 3.19M14.12 14.12a3 3 0 1 1-4.24-4.24"/>
-                                <path d="M1 1l22 22"/>
-                            </svg>
-                            <svg
-                                class="ikon-mata"
-                                viewBox="0 0 24 24"
-                                width="20"
-                                height="20"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="1.8"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                aria-hidden="true"
-                            >
-                                <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/>
-                                <circle cx="12" cy="12" r="3"/>
-                            </svg>
+                            <span class="ikon-mata-coret" aria-hidden="true"></span>
+                                <span class="ikon-mata" aria-hidden="true"></span>
                         </button>
                     </div>
                 </div>
@@ -101,7 +73,7 @@
                         id="forgotPasswordButton"
                         aria-expanded="false"
                         aria-controls="forgotPasswordInfo"
-                        data-i18n="forgot"
+                       
                     >
                         Lupa kata sandi?
                     </button>
@@ -110,7 +82,7 @@
                 <button
                     class="button button-primary button-full"
                     type="submit"
-                    data-i18n="login_button"
+                   
                 >
                     Masuk
                 </button>
@@ -125,8 +97,8 @@
             </div>
 
             <p class="auth-note">
-                <span data-i18n="no_account">Belum punya akun?</span>
-                <a href="{{ url_for('auth.register') }}" data-i18n="register_link">Daftar</a>
+                <span>Belum punya akun?</span>
+                <a href="{{ url_for('auth.register') }}">Daftar</a>
             </p>
         </div>
     </div>

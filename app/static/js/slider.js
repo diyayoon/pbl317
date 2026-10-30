@@ -18,20 +18,11 @@ const AMBANG_GESER = 0.18; /* geseran minimal (rasio lebar) agar pindah slide */
 const AMBANG_KECEPATAN = 0.45; /* px per ms: sentakan cepat tetap memindahkan slide */
 
 const TEKS_SLIDER = {
-    id: {
-        sebelumnya: 'Slide sebelumnya',
-        berikutnya: 'Slide berikutnya',
-        jeda: 'Jeda pergantian otomatis',
-        putar: 'Putar pergantian otomatis',
-        ke: (nomor) => `Ke slide ${nomor}`,
-    },
-    en: {
-        sebelumnya: 'Previous slide',
-        berikutnya: 'Next slide',
-        jeda: 'Pause automatic rotation',
-        putar: 'Start automatic rotation',
-        ke: (nomor) => `Go to slide ${nomor}`,
-    },
+    sebelumnya: 'Slide sebelumnya',
+    berikutnya: 'Slide berikutnya',
+    jeda: 'Jeda pergantian otomatis',
+    putar: 'Putar pergantian otomatis',
+    ke: (nomor) => `Ke slide ${nomor}`,
 };
 
 /* ===== KELAS SLIDER HERO ===== */
@@ -58,13 +49,6 @@ class SliderHero {
         this.barusajaGeser = false;
     }
 
-    /* ===== FUNGSI: BAHASA AKTIF ('id' ATAU 'en') ===== */
-    bahasa() {
-        const lang = document.documentElement.lang;
-        if (lang === 'en' || lang === 'id') return lang;
-        return localStorage.getItem('albis_antique_bahasa') === 'en' ? 'en' : 'id';
-    }
-
     /* ===== FUNGSI: MENJALANKAN SLIDER ===== */
     mulai() {
         if (this.jumlah < 2) return; /* satu slide saja: tampilkan apa adanya */
@@ -78,11 +62,6 @@ class SliderHero {
         this.render();
         this.jadwalkan();
 
-        /* ganti bahasa -> label tombol ikut berganti */
-        new MutationObserver(() => this.perbaruiLabel()).observe(document.documentElement, {
-            attributes: true,
-            attributeFilter: ['lang'],
-        });
     }
 
     /* ===== FUNGSI: MEMBUAT TITIK NAVIGASI ===== */
@@ -97,9 +76,9 @@ class SliderHero {
         });
     }
 
-    /* ===== FUNGSI: MEMPERBARUI LABEL ARIA TOMBOL SESUAI BAHASA ===== */
+    /* ===== FUNGSI: MEMPERBARUI LABEL ARIA TOMBOL ===== */
     perbaruiLabel() {
-        const teks = TEKS_SLIDER[this.bahasa()];
+        const teks = TEKS_SLIDER;
         this.akar.querySelectorAll('[data-slider]').forEach((tombol) => {
             tombol.setAttribute('aria-label', teks[tombol.dataset.slider]);
         });
@@ -155,7 +134,7 @@ class SliderHero {
 
     /* ===== FUNGSI: MENYESUAIKAN TOMBOL JEDA DAN PENGUMUMAN PEMBACA LAYAR ===== */
     perbaruiTampilanJeda() {
-        const teks = TEKS_SLIDER[this.bahasa()];
+        const teks = TEKS_SLIDER;
         if (this.tombolJeda) {
             this.tombolJeda.dataset.berjalan = String(!this.jedaManual);
             this.tombolJeda.setAttribute('aria-label', this.jedaManual ? teks.putar : teks.jeda);

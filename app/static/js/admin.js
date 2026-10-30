@@ -89,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const st = make('td'); st.append(statusTag(order.status)); row.append(st);
             const act = make('td');
             const opsi = NEXT[order.status] || [];
-            if (!opsi.length) act.append(make('span', 'table-footnote', 'Final'));
+            if (!opsi.length) act.append(make('span', 'table-footnote', 'Selesai'));
             else {
                 const select = make('select', 'form-control');
                 select.setAttribute('aria-label', `Status pesanan ${order.orderNumber}`);
@@ -113,22 +113,81 @@ document.addEventListener('DOMContentLoaded', () => {
     async function pembayaran() {
         const body = element('adminPaymentsBody'); if (!body) return;
         const payments = await api('/admin/api/pembayaran');
-        if (!payments.length) { barisKosong(body, 6, 'Belum ada pembayaran yang tercatat.'); return; }
+        if (!payments.length) { barisKosong(body, 7, 'Belum ada pembayaran yang tercatat.'); return; }
         body.replaceChildren();
         payments.forEach(p => {
             const row = make('tr');
             row.append(make('td', '', `#${p.order_number}`), make('td', '', p.customer));
             row.append(make('td', '', p.gateway_payment_type || p.method || 'Midtrans'), make('td', '', money(p.total)));
-            const st = make('td'); st.append(statusTag(p.status));
-            const detailStatus = p.gateway_status ? `Status gateway: ${p.gateway_status}` : (p.catatan || 'Status diperbarui otomatis oleh Midtrans.');
-            st.append(make('small', 'table-footnote', ` — ${detailStatus}`)); row.append(st);
-            const act = make('td', '', p.status === 'Disetujui' ? 'Terkonfirmasi otomatis' : (p.status === 'Menunggu pembayaran' ? 'Menunggu pembayaran pelanggan' : 'Tidak ada tindakan'));
+            const st = make('td'); st.append(statusTag(p.status)); row.append(st);
+            const detailStatus = p.gateway_status
+                ? `Status gerbang pembayaran: ${p.gateway_status}`
+                : (p.catatan || (p.method === 'Midtrans' ? 'Diperbarui otomatis oleh Midtrans.' : 'Tidak ada catatan.'));
+            row.append(make('td', '', detailStatus));
+
+            const act = make('td', 'table-actions');
+            if (p.bukti_url && p.status === 'Menunggu persetujuan') {
+                const proof = make('a', 'button button-secondary button-small', 'Lihat bukti');
+                proof.href = p.bukti_url; proof.target = '_blank'; proof.rel = 'noopener noreferrer';
+                act.append(proof,
+                    tombol('Setujui', 'button button-primary button-small', () => tinjau(p, 'approve', '')),
+                    tombol('Tolak', 'button button-secondary button-small', () => {
+                        const note = (window.prompt('Alasan penolakan bukti pembayaran:') || '').trim();
+                        if (note.length < 3) { toast('Alasan penolakan minimal 3 karakter.', 'alert'); return; }
+                        tinjau(p, 'reject', note);
+                    }),
+                );
+            } else if (p.status === 'Disetujui') {
+                act.textContent = p.method === 'Midtrans' ? 'Terkonfirmasi otomatis' : 'Bukti telah disetujui';
+            } else if (p.status === 'Menunggu pembayaran') {
+                act.textContent = 'Menunggu pembayaran pelanggan';
+            } else {
+                act.textContent = p.status === 'Ditolak' ? 'Menunggu bukti pembayaran ulang' : 'Tidak ada tindakan';
+            }
             row.append(act); body.append(row);
         });
     }
     async function tinjau(p, aksi, catatan) {
-        try { await kirim(`/admin/api/pembayaran/${p.id}/tinjau`, 'POST', { aksi, catatan }); toast('Keputusan pembayaran disimpan.'); await pembayaran(); }
-        catch (error) { toast(error.message, 'alert'); }
+        try {
+            await kirim(`/admin/api/pembayaran/${p.id}/tinjau`, 'POST', { aksi, catatan });
+            toast(aksi === 'approve' ? 'Bukti pembayaran disetujui.' : 'Bukti pembayaran ditolak.');
+            await Promise.all([pembayaran(), muatOrders()]);
+        } catch (error) { toast(error.message, 'alert'); }
+    }
+
+    /* ---------------- PESANAN & PEMBAYARAN ---------------- */
+    async function transaksi() {
+        const tabs = [...document.querySelectorAll('[data-admin-tab]')];
+        const panels = [...document.querySelectorAll('[data-admin-panel]')];
+        const aktifkanTab = (key, updateHash = true) => {
+            tabs.forEach(tab => {
+                const active = tab.dataset.adminTab === key;
+                tab.classList.toggle('is-active', active);
+                tab.setAttribute('aria-selected', String(active));
+                tab.tabIndex = active ? 0 : -1;
+            });
+            panels.forEach(panel => { panel.hidden = panel.dataset.adminPanel !== key; });
+            if (updateHash) history.replaceState(null, '', `${location.pathname}${location.search}#${key}`);
+        };
+
+        tabs.forEach((tab, index) => {
+            tab.addEventListener('click', () => aktifkanTab(tab.dataset.adminTab));
+            tab.addEventListener('keydown', event => {
+                let tujuan = null;
+                if (event.key === 'ArrowRight') tujuan = tabs[(index + 1) % tabs.length];
+                if (event.key === 'ArrowLeft') tujuan = tabs[(index - 1 + tabs.length) % tabs.length];
+                if (event.key === 'Home') tujuan = tabs[0];
+                if (event.key === 'End') tujuan = tabs[tabs.length - 1];
+                if (tujuan) {
+                    event.preventDefault();
+                    aktifkanTab(tujuan.dataset.adminTab);
+                    tujuan.focus();
+                }
+            });
+        });
+        const tabAwal = location.hash === '#pembayaran' ? 'pembayaran' : 'pesanan';
+        aktifkanTab(tabAwal, false);
+        await Promise.all([muatOrders(), pembayaran()]);
     }
 
     /* ---------------- LAPORAN ---------------- */
@@ -253,7 +312,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const body = element('userRows'); const box = element('userDetail');
         const q = element('userSearch')?.value.trim() || '';
         const list = await api(`/admin/api/pengguna?q=${encodeURIComponent(q)}`);
-        put('userCount', `${list.length} customer ditemukan.`);
+        put('userCount', `${list.length} pelanggan ditemukan.`);
         if (!list.length) { barisKosong(body, 7, 'Tidak ada customer.'); return; }
         body.replaceChildren();
         const aksi = async (path, method, data, ok) => {
@@ -311,6 +370,6 @@ document.addEventListener('DOMContentLoaded', () => {
     element('userSearch')?.addEventListener('input', () => { window.clearTimeout(window._userT); window._userT = window.setTimeout(() => pengguna().catch(() => {}), 250); });
 
     element('adminOrderSearch')?.addEventListener('input', renderOrders);
-    const jalan = { dashboard, orders: muatOrders, payments: pembayaran, reports: laporan, reviews: ulasan, categories: kategori, users: pengguna }[view];
+    const jalan = { dashboard, orders: muatOrders, payments: pembayaran, 'orders-payments': transaksi, reports: laporan, reviews: ulasan, categories: kategori, users: pengguna }[view];
     if (jalan) jalan().catch(error => toast(`Data tidak dapat dimuat: ${error.message}`, 'alert'));
 });

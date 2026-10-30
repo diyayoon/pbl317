@@ -11,7 +11,7 @@ from app.utils.uploads import simpan_gambar_upload
 from . import admin_bp
 from app.utils.decorators import admin_required
 
-PRODUCT_MAX_BYTES = 2 * 1024 * 1024  # batas foto produk (2 MB)
+PRODUCT_MAX_BYTES = 2 * 1024 * 1024
 
 
 def _hapus_file_produk(url: str | None) -> None:
@@ -27,21 +27,41 @@ def _hapus_file_produk(url: str | None) -> None:
             current_app.logger.warning("Gagal menghapus file gambar produk %s", target.name)
 
 
-def _baca_payload_produk():
-    """Ambil data produk dari multipart/form-data (utama) atau JSON (kompatibel).
+def _hapus_upload_sementara(path: Path | None) -> None:
+    if path and path.is_file():
+        try:
+            path.unlink()
+        except OSError:
+            current_app.logger.warning("Gagal membersihkan unggahan produk %s", path.name)
 
-    Mengembalikan (payload, path_file_baru). Untuk multipart, foto dikirim sebagai berkas
-    pada field ``gambar`` dan disimpan sebagai file di server (bukan base64 di body JSON).
-    """
+
+def _hapus_upload_sementara(path: Path | None) -> None:
+    if path and path.is_file():
+        try:
+            path.unlink()
+        except OSError:
+            current_app.logger.warning("Gagal membersihkan unggahan produk %s", path.name)
+
+
+def _baca_payload_produk():
+    """Baca data produk; foto hanya diterima sebagai berkas multipart."""
     if request.mimetype != "multipart/form-data":
-        return request.get_json(silent=True), None
+        payload = request.get_json(silent=True)
+        if isinstance(payload, dict):
+            payload = dict(payload)
+            if payload.get("gambar"):
+                raise ValueError("Foto produk harus diunggah sebagai berkas, bukan melalui JSON.")
+            payload.pop("gambar", None)
+        return payload, None
+
     payload = request.form.to_dict()
-    payload.pop("gambar", None)  # URL/path gambar tidak boleh ditentukan lewat field teks
+    payload.pop("gambar", None)
     foto = request.files.get("gambar")
     if foto is None or not foto.filename:
         return payload, None
-    path = simpan_gambar_upload(foto, current_app.config["PRODUCT_UPLOAD_FOLDER"], PRODUCT_MAX_BYTES)
-    payload["gambar"] = f"/media/products/{path.name}"
+
+    batas = current_app.config.get("PRODUCT_MAX_BYTES", PRODUCT_MAX_BYTES)
+    path = simpan_gambar_upload(foto, current_app.config["PRODUCT_UPLOAD_FOLDER"], batas)
     return payload, path
 
 
@@ -73,11 +93,17 @@ def api_tambah_produk():
         payload, path_baru = _baca_payload_produk()
     except ValueError as exc:
         return jsonify(error=str(exc), errors={"gambar": str(exc)}), 422
-    product, errors = CatalogService.create_product(payload)
+
+    image_url = f"/media/products/{path_baru.name}" if path_baru else ""
+    try:
+        product, errors = CatalogService.create_product(payload, image_url=image_url)
+    except Exception:
+        _hapus_upload_sementara(path_baru)
+        raise
     if errors:
-        if path_baru:
-            path_baru.unlink(missing_ok=True)
+        _hapus_upload_sementara(path_baru)
         return jsonify(error="Periksa kembali data produk.", errors=errors), 422
+
     audit.catat("produk_dibuat", "product", product.id, product.name, commit=True)
     return jsonify(message="Produk berhasil disimpan.", product=product.to_dict(), products=CatalogService.list_products(active_only=False)), 201
 
@@ -88,19 +114,26 @@ def api_ubah_produk(produk_id: int):
     existing = CatalogService.get_product(produk_id, active_only=False)
     if existing is None:
         return jsonify(error="Produk tidak ditemukan."), 404
+
     harga_lama = existing.harga
     gambar_lama = existing.gambar
     try:
         payload, path_baru = _baca_payload_produk()
     except ValueError as exc:
         return jsonify(error=str(exc), errors={"gambar": str(exc)}), 422
-    product, errors = CatalogService.update_product(existing, payload)
+
+    image_url = f"/media/products/{path_baru.name}" if path_baru else ""
+    try:
+        product, errors = CatalogService.update_product(existing, payload, image_url=image_url)
+    except Exception:
+        _hapus_upload_sementara(path_baru)
+        raise
     if errors:
-        if path_baru:
-            path_baru.unlink(missing_ok=True)
+        _hapus_upload_sementara(path_baru)
         return jsonify(error="Periksa kembali data produk.", errors=errors), 422
+
     if path_baru and gambar_lama != product.gambar:
-        _hapus_file_produk(gambar_lama)  # foto lama sudah tergantikan
+        _hapus_file_produk(gambar_lama)
     audit.catat("produk_diubah", "product", product.id, f"{product.name}; harga {harga_lama}->{product.harga}", commit=True)
     return jsonify(message="Perubahan produk tersimpan.", product=product.to_dict(), products=CatalogService.list_products(active_only=False))
 

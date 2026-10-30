@@ -3,7 +3,7 @@
         <span aria-hidden="true">♕</span>
         <div>
             <strong>ALBIS ADMIN</strong>
-            <small>Workspace</small>
+            <small>Ruang kerja admin</small>
         </div>
     </div>
 
@@ -15,7 +15,7 @@
             class="{% if request.endpoint == 'admin.dashboard' %}active{% endif %}"
             href="{{ url_for('admin.dashboard') }}"
         >
-            <span aria-hidden="true">▦</span> Dashboard
+            <span aria-hidden="true">▦</span> Ringkasan
         </a>
         <a
             class="{% if request.endpoint == 'admin.produk' %}active{% endif %}"
@@ -36,16 +36,10 @@
             <span aria-hidden="true">♙</span> Pengguna
         </a>
         <a
-            class="{% if request.endpoint == 'admin.pesanan' %}active{% endif %}"
+            class="{% if request.endpoint in ['admin.pesanan', 'admin.pembayaran'] %}active{% endif %}"
             href="{{ url_for('admin.pesanan') }}"
         >
-            <span aria-hidden="true">▤</span> Pesanan
-        </a>
-        <a
-            class="{% if request.endpoint == 'admin.pembayaran' %}active{% endif %}"
-            href="{{ url_for('admin.pembayaran') }}"
-        >
-            <span aria-hidden="true">◇</span> Pembayaran
+            <span aria-hidden="true">▤</span> Pesanan &amp; Pembayaran
         </a>
         <a
             class="{% if request.endpoint == 'admin.ulasan' %}active{% endif %}"

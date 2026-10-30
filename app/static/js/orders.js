@@ -118,7 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const card = tag('article', 'order-card'); card.dataset.orderStatus = order.status;
             const top = tag('div', 'order-card-top');
             const meta = tag('div');
-            meta.append(tag('span', 'order-number', `ORDER ${order.orderNumber}`),
+            meta.append(tag('span', 'order-number', `PESANAN ${order.orderNumber}`),
                 tag('span', 'order-date', new Date(order.date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })));
             top.append(meta, tag('span', `order-status ${order.status === 'Selesai' ? 'is-complete' : 'is-processing'}`, order.status));
 

@@ -161,6 +161,7 @@ class Review(db.Model):
             "id": self.id, "produk_id": self.product_id, "rating": self.rating,
             "komentar": self.comment, "tanggal": self.created_at.isoformat(),
             "nama": self.user.nama if self.user else "Pelanggan",
+            "foto": self.user.avatar_data if self.user else None,
             "gambar_url": f"/media/reviews/{self.id}" if self.image_path else "",
         }
         if admin:

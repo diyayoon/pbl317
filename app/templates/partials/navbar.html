@@ -1,6 +1,5 @@
 <header class="site-header">
     <nav class="navbar container" aria-label="Navigasi utama">
-        <!-- ===== BRAND / LOGO ===== -->
         <a class="brand" href="{{ url_for('main.beranda') }}" aria-label="Albis Antique - Beranda">
             <span class="brand-crest" aria-hidden="true">
                 <img
@@ -12,24 +11,18 @@
             </span>
             <span class="brand-copy">
                 <strong>Albis Antique</strong>
-                <small>Maison of Timeless Pieces</small>
+                <small>Rumah bagi Koleksi Bernilai Sejarah</small>
             </span>
         </a>
 
-        <!-- ===== MENU DESKTOP / MOBILE ===== -->
         <div class="nav-links" id="navLinks">
-            <a href="{{ url_for('main.beranda') }}" data-i18n="nav_home">Beranda</a>
-            <a href="{{ url_for('main.katalog') }}" data-i18n="nav_shop">Katalog</a>
-            <a href="{{ url_for('main.beranda') }}#categories" data-i18n="nav_categories">Kategori</a>
-            <a href="{{ url_for('main.beranda') }}#about" data-i18n="nav_about">Tentang</a>
+            <a href="{{ url_for('main.beranda') }}">Beranda</a>
+            <a href="{{ url_for('main.katalog') }}">Katalog</a>
+            <a href="{{ url_for('main.beranda') }}#categories">Kategori</a>
+            <a href="{{ url_for('main.beranda') }}#about">Tentang</a>
         </div>
 
-        <!-- ===== AKSI NAVIGASI ===== -->
         <div class="nav-actions">
-            <button class="language-toggle" id="languageToggle" type="button" aria-label="Ganti bahasa" aria-pressed="false" title="Ganti bahasa / Switch language">
-                <span class="language-code language-code-id">ID</span>
-                <span class="language-switch-track" aria-hidden="true"><span></span></span>
-            </button>
             {% if not current_user.is_authenticated or current_user.role == 'customer' %}
             <a class="icon-button" href="{{ url_for('customer.keranjang') }}" data-auth-action="cart" aria-label="Keranjang" title="Keranjang belanja">
                 <span aria-hidden="true">🛍</span>
@@ -39,7 +32,7 @@
             {% if current_user.is_authenticated %}
                 {% if current_user.role == 'admin' %}
                 <a class="icon-button nav-account-icon" href="{{ url_for('admin.dashboard') }}" aria-label="Buka panel admin" title="Panel Admin">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/><path d="M17 5.5h3m-1.5-1.5v3"/></svg>
+                    <span class="nav-symbol nav-admin-symbol" aria-hidden="true">♙<small>+</small></span>
                 </a>
                 {% else %}
                 <a
@@ -52,7 +45,7 @@
                     <span class="nav-profile-avatar" aria-hidden="true">
                         <img id="navProfileImage" alt="" hidden>
                         <span class="nav-profile-fallback" id="navProfileFallback">
-                            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>
+                            <span class="nav-symbol" aria-hidden="true">♙</span>
                         </span>
                     </span>
                     <span class="nav-profile-name" id="navProfileName">{{ current_user.nama }}</span>
@@ -61,12 +54,12 @@
                 <form class="nav-logout-form" action="{{ url_for('auth.logout') }}" method="post">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button class="icon-button nav-logout-icon" type="submit" aria-label="Keluar dari akun" title="Keluar">
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 4H5.5A1.5 1.5 0 0 0 4 5.5v13A1.5 1.5 0 0 0 5.5 20H10"/><path d="M14 16l4-4-4-4"/><path d="M18 12H9"/></svg>
+                        <span class="nav-symbol" aria-hidden="true">↪</span>
                     </button>
                 </form>
             {% else %}
                 <a class="icon-button nav-login-icon" href="{{ url_for('auth.login') }}" aria-label="Masuk ke akun" title="Masuk">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h4.5A1.5 1.5 0 0 1 20 5.5v13a1.5 1.5 0 0 1-1.5 1.5H14"/><path d="M10 16l4-4-4-4"/><path d="M14 12H4"/></svg>
+                    <span class="nav-symbol" aria-hidden="true">↗</span>
                 </a>
             {% endif %}
             <button

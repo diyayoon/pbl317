@@ -15,7 +15,7 @@ class EfekKetik {
         this.kurangGerak = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     }
 
-    /* ===== FUNGSI: MENGAMBIL TEKS PENUH (SETELAH BAHASA DITERAPKAN) ===== */
+    /* ===== FUNGSI: MENGAMBIL TEKS PENUH ELEMEN ===== */
     ambilTeks() {
         const hantu = this.elemen.querySelector('.ketik-hantu');
         return (hantu ? hantu.textContent : this.elemen.textContent).trim();

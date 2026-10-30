@@ -1388,7 +1388,6 @@
 
 
 /* Upload foto kategori di dashboard admin */
-.category-admin-form { align-items: end; }
 .category-admin-preview { display: block; width: 72px; height: 72px; object-fit: cover; border: 1px solid var(--warna-garis); border-radius: 14px; box-shadow: 0 5px 16px rgba(57,127,168,.12); }
 .category-admin-preview[hidden] { display: none; }
 .category-admin-submit { align-self: end; }

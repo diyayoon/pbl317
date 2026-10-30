@@ -1,6 +1,6 @@
 """Admin: pesanan, pembayaran, moderasi ulasan. (pemilik: Intan)"""
 from __future__ import annotations
-from flask import jsonify, render_template, request
+from flask import jsonify, redirect, render_template, request, url_for
 from flask_login import current_user
 from app.extensions import db
 from app.models import Order, Payment
@@ -21,7 +21,7 @@ def pesanan():
 @admin_bp.get("/pembayaran")
 @admin_required
 def pembayaran():
-    return render_template("admin/payments.html")
+    return redirect(url_for("admin.pesanan") + "#pembayaran")
 
 
 @admin_bp.get("/ulasan")

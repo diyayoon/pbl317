@@ -6,21 +6,21 @@
    ==================================================================== */
 
 :root {
-    --warna-primer: #E3F4FA;
-    --warna-biru-muda: #F0F9FC;
-    --warna-biru-sekunder: #BEDFEC;
-    --warna-aksen: #6FAFD0;
-    --warna-biru-dalam: #4A86A8;
-    --warna-teks: #25404D;
-    --warna-latar: #F6FAFC;
-    --warna-emas: #CDB47C;
-    --warna-emas-muda: #F6EEDA;
-    --warna-garis: rgba(111, 175, 208, 0.24);
-    --warna-muted: #6B8390;
-    --garis-halus: 1px solid rgba(111, 175, 208, 0.22);
-    --bayangan-lembut: 0 18px 48px rgba(74, 134, 168, 0.12);
-    --bayangan-card: 0 1px 2px rgba(37, 64, 77, 0.04), 0 10px 30px rgba(74, 134, 168, 0.10);
-    --bayangan-angkat: 0 2px 4px rgba(37, 64, 77, 0.05), 0 18px 42px rgba(74, 134, 168, 0.18);
+    --warna-primer: #D9F1FC;
+    --warna-biru-muda: #EAF8FF;
+    --warna-biru-sekunder: #A9D8ED;
+    --warna-aksen: #58A8D2;
+    --warna-biru-dalam: #347FA7;
+    --warna-teks: #1F3D4C;
+    --warna-latar: #F3FAFE;
+    --warna-emas: #C9A968;
+    --warna-emas-muda: #F7F0DE;
+    --warna-garis: rgba(76, 155, 195, 0.30);
+    --warna-muted: #607F90;
+    --garis-halus: 1px solid rgba(76, 155, 195, 0.28);
+    --bayangan-lembut: 0 20px 54px rgba(52, 127, 167, 0.17);
+    --bayangan-card: 0 2px 4px rgba(31, 61, 76, 0.04), 0 12px 32px rgba(52, 127, 167, 0.13);
+    --bayangan-angkat: 0 3px 6px rgba(31, 61, 76, 0.06), 0 20px 46px rgba(52, 127, 167, 0.22);
     --radius-kecil: 14px;
     --radius-sedang: 20px;
     --radius-besar: 30px;
@@ -29,10 +29,10 @@
 
 body {
     background:
-        radial-gradient(circle at 10% 4%, rgba(227, 244, 250, 0.95), transparent 30rem),
-        radial-gradient(circle at 90% 18%, rgba(190, 223, 236, 0.34), transparent 32rem),
-        radial-gradient(circle at 50% 100%, rgba(246, 238, 218, 0.45), transparent 34rem),
-        var(--warna-latar);
+        radial-gradient(circle at 8% 4%, rgba(177, 224, 245, 0.68), transparent 31rem),
+        radial-gradient(circle at 92% 16%, rgba(133, 198, 228, 0.30), transparent 34rem),
+        radial-gradient(circle at 54% 100%, rgba(247, 240, 222, 0.52), transparent 36rem),
+        linear-gradient(145deg, #F8FCFF 0%, var(--warna-latar) 52%, #EDF7FC 100%);
 }
 
 /* ---------- Header & navigasi ---------- */
@@ -41,7 +41,7 @@ body {
     -webkit-backdrop-filter: saturate(160%) blur(14px);
     backdrop-filter: saturate(160%) blur(14px);
     border-bottom: var(--garis-halus);
-    box-shadow: 0 6px 24px rgba(74, 134, 168, 0.06);
+    box-shadow: 0 8px 28px rgba(52, 127, 167, 0.10);
 }
 
 /* ---------- Tombol bergaya tautan (mis. "Lupa kata sandi?") ---------- */
@@ -60,11 +60,11 @@ button.text-link:hover { color: var(--warna-aksen); text-decoration: underline; 
 }
 .button:hover { transform: translateY(-1px); }
 .button-primary {
-    background: linear-gradient(135deg, #7DBBDB 0%, #5A9CC2 100%);
-    border: 1px solid rgba(255, 255, 255, 0.45);
-    box-shadow: 0 8px 20px rgba(90, 156, 194, 0.28);
+    background: linear-gradient(135deg, #79C3E7 0%, #438FB9 100%);
+    border: 1px solid rgba(255, 255, 255, 0.58);
+    box-shadow: 0 9px 24px rgba(67, 143, 185, 0.34), inset 0 1px 0 rgba(255,255,255,.3);
 }
-.button-primary:hover { box-shadow: 0 12px 26px rgba(90, 156, 194, 0.36); }
+.button-primary:hover { box-shadow: 0 14px 30px rgba(67, 143, 185, 0.42); }
 .button-secondary {
     background: rgba(255, 255, 255, 0.78);
     border: var(--garis-halus);
@@ -181,7 +181,7 @@ button.text-link:hover { color: var(--warna-aksen); text-decoration: underline; 
 .order-review-form { display: grid; gap: 8px; margin-top: 8px; max-width: 460px; }
 
 .admin-inline-form { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); align-items: end; }
-.admin-password-form { max-width: 520px; grid-template-columns: 1fr; }
+.admin-password-form { max-width: 440px; grid-template-columns: 1fr; }
 
 /* ---------- Fokus aksesibel yang tetap lembut ---------- */
 :focus-visible { outline: 3px solid rgba(111, 175, 208, 0.55); outline-offset: 2px; border-radius: 10px; }
@@ -189,4 +189,77 @@ button.text-link:hover { color: var(--warna-aksen); text-decoration: underline; 
 @media (prefers-reduced-motion: reduce) {
     .button:hover, .product-card:hover, .dashboard-sidebar a:hover { transform: none; }
     * { transition-duration: .01ms !important; }
+}
+
+
+/* Komponen tambahan untuk profil, transaksi, dan formulir admin. */
+.profile-completion-notice {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 0 0 24px;
+    padding: 18px 20px;
+    border: 1px solid rgba(79, 158, 196, .34);
+    border-radius: 20px;
+    background: linear-gradient(115deg, rgba(215, 241, 252, .96), rgba(244, 251, 255, .98) 68%, rgba(250, 247, 236, .92));
+    box-shadow: 0 12px 30px rgba(52, 127, 167, .13), inset 0 1px 0 rgba(255,255,255,.85);
+}
+.profile-completion-notice[hidden] { display: none !important; }
+.profile-completion-mark {
+    display: grid;
+    place-items: center;
+    flex: 0 0 46px;
+    width: 46px;
+    height: 46px;
+    border: 1px solid rgba(201, 169, 104, .48);
+    border-radius: 15px;
+    background: linear-gradient(145deg, #fff, #F7F0DE);
+    color: #9A7C42;
+    font-size: 1.6rem;
+    box-shadow: 0 5px 15px rgba(201, 169, 104, .16);
+}
+.profile-completion-notice > div:nth-child(2) { min-width: 0; flex: 1; }
+.profile-completion-notice h2 { margin: 0 0 4px; color: #244C62; font: 700 1.12rem var(--font-heading, Georgia, serif); }
+.profile-completion-notice p { margin: 0; color: #567789; font-size: .88rem; line-height: 1.55; }
+
+.review-author { display: flex; align-items: center; gap: 9px; min-width: 0; margin-right: auto; }
+.review-avatar {
+    display: block;
+    width: 35px;
+    height: 35px;
+    flex: 0 0 35px;
+    overflow: hidden;
+    border: 1px solid rgba(76, 155, 195, .38);
+    border-radius: 50%;
+    object-fit: cover;
+    background: #EAF8FF;
+    box-shadow: 0 3px 10px rgba(52, 127, 167, .14);
+}
+.review-avatar-fallback { display: grid; place-items: center; color: #347FA7; font-weight: 800; }
+
+.admin-workspace-tabs { display: flex; gap: 8px; margin: 0 0 18px; padding: 6px; border: 1px solid rgba(76,155,195,.23); border-radius: 16px; background: rgba(224,243,252,.60); width: fit-content; max-width: 100%; }
+.admin-workspace-tab { appearance: none; border: 1px solid transparent; border-radius: 12px; padding: 10px 18px; color: #567789; background: transparent; font: 700 .88rem var(--font-body, sans-serif); cursor: pointer; transition: background var(--transisi), box-shadow var(--transisi), color var(--transisi); }
+.admin-workspace-tab:hover { color: #285E7A; background: rgba(255,255,255,.68); }
+.admin-workspace-tab.is-active { color: #fff; background: linear-gradient(135deg, #67B5DA, #3C86B0); box-shadow: 0 6px 16px rgba(52,127,167,.24); }
+.admin-workspace-tab-panel[hidden] { display: none !important; }
+.category-admin-form { grid-template-columns: minmax(180px, 1fr) minmax(260px, 1.35fr) 72px auto; align-items: end; }
+.category-admin-form > .form-field { min-width: 0; }
+.category-admin-form .form-control { min-width: 0; }
+.category-admin-preview { align-self: end; grid-column: 3; }
+.category-admin-submit { grid-column: 4; }
+
+@media (max-width: 900px) {
+    .category-admin-form { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); }
+    .category-admin-preview { grid-column: 1; }
+    .category-admin-submit { grid-column: 2; }
+}
+@media (max-width: 560px) {
+    .profile-completion-notice { align-items: flex-start; flex-wrap: wrap; padding: 16px; }
+    .profile-completion-notice > div:nth-child(2) { flex-basis: calc(100% - 64px); }
+    .profile-completion-notice > a { width: 100%; justify-content: center; }
+    .admin-workspace-tabs { width: 100%; }
+    .admin-workspace-tab { flex: 1; padding-inline: 10px; }
+    .category-admin-form { grid-template-columns: minmax(0, 1fr); }
+    .category-admin-preview, .category-admin-submit { grid-column: 1; }
+    .category-admin-submit .button { width: 100%; justify-content: center; }
 }

@@ -1,3 +1,5 @@
+{% set label_era = {'1800s': '1800-an'}.get(produk.era, produk.era) %}
+{% set label_kondisi = {'Excellent': 'Sangat baik', 'Good': 'Baik', 'Fair': 'Cukup', 'Needs restoration': 'Perlu restorasi'}.get(produk.kondisi, produk.kondisi) %}
 {% set kata_kunci_produk = (
     produk.nama ~ ' ' ~ produk.kategori ~ ' ' ~ produk.era ~ ' '
     ~ produk.asal ~ ' ' ~ produk.kondisi ~ ' ' ~ produk.material ~ ' '
@@ -23,8 +25,8 @@
         class="product-visual"
         href="{{ url_for('main.detail_produk', produk_id=produk.id) }}"
     >
-        <span class="product-badge">{{ produk.era }}</span>
-        <span class="product-status">{{ produk.kondisi }}</span>
+        <span class="product-badge">{{ label_era }}</span>
+        <span class="product-status">{{ label_kondisi }}</span>
         <img
             class="product-image"
             src="{{ produk.gambar }}"

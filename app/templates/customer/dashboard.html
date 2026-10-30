@@ -12,7 +12,7 @@
 {% block content %}
 <section class="customer-dashboard-content" id="customerDashboard">
     <div class="customer-eyebrow">
-        <span aria-hidden="true">✦</span> YOUR PRIVATE COLLECTION
+        <span aria-hidden="true">✦</span> KOLEKSI PRIBADIMU
     </div>
 
     <header class="customer-welcome">
@@ -25,6 +25,15 @@
             <small>ALBIS<br>ANTIQUE</small>
         </div>
     </header>
+
+    <section class="profile-completion-notice" id="completeProfileNotice" hidden aria-labelledby="completeProfileTitle">
+        <div class="profile-completion-mark" aria-hidden="true">✧</div>
+        <div>
+            <h2 id="completeProfileTitle">Yuk, lengkapi profilmu!</h2>
+            <p>Simpan alamat pengiriman agar proses pemesanan koleksi berikutnya lebih mudah.</p>
+        </div>
+        <a class="button button-primary button-small" href="{{ url_for('customer.profil') }}#alamat">Lengkapi alamat</a>
+    </section>
 
     <div class="customer-stat-grid" aria-label="Ringkasan akun">
         <article class="customer-stat-card">
@@ -50,7 +59,7 @@
     <section class="customer-orders-panel">
         <div class="customer-panel-heading">
             <div>
-                <span class="customer-section-kicker">YOUR JOURNEY</span>
+                <span class="customer-section-kicker">PERJALANAN KOLEKSI</span>
                 <h2>Pesanan terbaru</h2>
                 <p>Ikuti perjalanan benda pilihanmu hingga tiba di rumah.</p>
             </div>
@@ -61,7 +70,7 @@
 
         <div class="customer-order-list" id="customerRecentOrders" aria-live="polite">
             <div class="account-empty-state">
-                <p>Pesananmu akan tampil di sini setelah checkout.</p>
+                <p>Pesananmu akan tampil di sini setelah melakukan pemesanan.</p>
                 <a href="{{ url_for('main.katalog') }}">Jelajahi katalog →</a>
             </div>
         </div>

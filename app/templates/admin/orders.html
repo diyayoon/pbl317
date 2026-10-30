@@ -23,15 +23,21 @@
     <div class="dashboard-layout">
         {% include 'partials/admin_sidebar.html' %}
 
-        <div class="dashboard-content" data-admin-view="orders">
+        <div class="dashboard-content" data-admin-view="orders-payments">
             <header class="admin-page-heading">
                 <div>
-                    <span class="eyebrow">ORDER MANAGEMENT</span>
-                    <h1>Pesanan</h1>
+                    <span class="eyebrow">TRANSAKSI TOKO</span>
+                    <h1>Pesanan &amp; Pembayaran</h1>
+                    <p>Pantau pesanan dan status pembayaran dari satu ruang kerja.</p>
                 </div>
             </header>
 
-            <section class="panel">
+            <div class="admin-workspace-tabs" role="tablist" aria-label="Bagian transaksi">
+                <button class="admin-workspace-tab is-active" id="adminOrdersTab" type="button" role="tab" aria-selected="true" aria-controls="adminOrdersPanel" data-admin-tab="pesanan">Pesanan</button>
+                <button class="admin-workspace-tab" id="adminPaymentsTab" type="button" role="tab" aria-selected="false" aria-controls="adminPaymentsPanel" data-admin-tab="pembayaran">Pembayaran</button>
+            </div>
+
+            <section class="panel admin-workspace-tab-panel" id="adminOrdersPanel" role="tabpanel" aria-labelledby="adminOrdersTab" data-admin-panel="pesanan">
                 <div class="admin-panel-heading">
                     <div>
                         <h2>Daftar pesanan</h2>
@@ -64,6 +70,33 @@
                             <tr>
                                 <td colspan="6" class="table-empty">Memuat pesanan...</td>
                             </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="panel admin-workspace-tab-panel" id="adminPaymentsPanel" role="tabpanel" aria-labelledby="adminPaymentsTab" data-admin-panel="pembayaran" hidden>
+                <div class="admin-panel-heading">
+                    <div>
+                        <h2>Riwayat pembayaran</h2>
+                        <p>Daftar transaksi beserta metode dan status pembayarannya.</p>
+                    </div>
+                </div>
+                <div class="table-wrap">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">ID Pesanan</th>
+                                <th scope="col">Pelanggan</th>
+                                <th scope="col">Metode</th>
+                                <th scope="col">Total</th>
+                                <th scope="col">Status</th>
+                                <th scope="col">Keterangan</th>
+                                <th scope="col">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminPaymentsBody">
+                            <tr><td colspan="7" class="table-empty">Memuat pembayaran...</td></tr>
                         </tbody>
                     </table>
                 </div>

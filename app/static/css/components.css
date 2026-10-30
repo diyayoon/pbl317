@@ -146,16 +146,6 @@
     box-shadow: 0 8px 18px rgba(57,127,168,.11);
 }
 
-/* Tombol ganti bahasa ID/EN */
-.language-toggle {
-    width: 48px;
-    border-radius: 999px;
-    font-size: .74rem;
-    font-weight: 800;
-    letter-spacing: .05em;
-}
-
-/* Angka jumlah item keranjang */
 .cart-badge {
     position: absolute;
     top: -5px;
@@ -681,24 +671,35 @@ body.lightbox-terbuka { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) { .albis-lightbox { animation: none; } }
 
 
-/* Navbar account/logout icon actions */
+/* Ikon akun, masuk, dan keluar pada navbar menggunakan karakter teks. */
 .nav-account-icon,
-.nav-logout-icon {
+.nav-logout-icon,
+.nav-login-icon {
     flex: 0 0 42px;
     color: var(--warna-teks);
     text-decoration: none;
 }
-.nav-account-icon svg,
-.nav-logout-icon svg {
+.nav-symbol {
+    display: inline-grid;
+    place-items: center;
     width: 19px;
     height: 19px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.7;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+    color: currentColor;
+    font-family: "Segoe UI Symbol", "Noto Sans Symbols 2", sans-serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    line-height: 1;
 }
-.nav-account-icon:hover {
+.nav-admin-symbol { position: relative; }
+.nav-admin-symbol small {
+    position: absolute;
+    top: -4px;
+    right: -5px;
+    font-size: .62rem;
+    line-height: 1;
+}
+.nav-account-icon:hover,
+.nav-login-icon:hover {
     color: var(--warna-biru-dalam);
     background: #eaf8fd;
 }
@@ -708,36 +709,11 @@ body.lightbox-terbuka { overflow: hidden; }
     border-color: #efd2d4;
 }
 .nav-account-icon:focus-visible,
-.nav-logout-icon:focus-visible {
-    outline: 3px solid rgba(97,168,214,.45);
-    outline-offset: 3px;
-}
-
-
-/* Login icon: same quiet, circular treatment as the cart */
-.nav-login-icon {
-    flex: 0 0 42px;
-    color: var(--warna-teks);
-    text-decoration: none;
-}
-.nav-login-icon svg {
-    width: 19px;
-    height: 19px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.7;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-}
-.nav-login-icon:hover {
-    color: var(--warna-biru-dalam);
-    background: #eaf8fd;
-}
+.nav-logout-icon:focus-visible,
 .nav-login-icon:focus-visible {
     outline: 3px solid rgba(97,168,214,.45);
     outline-offset: 3px;
 }
-
 
 /* ===== POLISH: link "Lihat semua" konsisten dan tidak membungkus panah ===== */
 .text-link {
@@ -907,27 +883,13 @@ body.lightbox-terbuka { overflow: hidden; }
     padding: 0;
     line-height: 1;
 }
-.nav-actions > form.nav-logout-form > button.icon-button > svg {
-    display: block;
-    width: 19px;
-    height: 19px;
+.nav-actions > form.nav-logout-form > button.icon-button > .nav-symbol {
+    display: inline-grid;
     flex: 0 0 19px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.8;
-    stroke-linecap: round;
-    stroke-linejoin: round;
 }
-.nav-actions > a.icon-button > svg {
-    display: block;
-    width: 19px;
-    height: 19px;
+.nav-actions > a.icon-button > .nav-symbol {
+    display: inline-grid;
     flex: 0 0 19px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.8;
-    stroke-linecap: round;
-    stroke-linejoin: round;
 }
 .nav-actions > a.icon-button > span:first-child {
     display: inline-grid;
@@ -1070,15 +1032,10 @@ body.lightbox-terbuka { overflow: hidden; }
     height: 100%;
     color: var(--warna-biru-dalam);
 }
-.nav-profile-fallback svg {
-    display: block;
+.nav-profile-fallback .nav-symbol {
     width: 18px;
     height: 18px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.7;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+    font-size: 1.1rem;
 }
 .nav-profile-name {
     display: block;

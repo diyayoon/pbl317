@@ -26,7 +26,7 @@
         <div class="dashboard-content" data-admin-view="products">
             <header class="admin-page-heading">
                 <div>
-                    <span class="eyebrow">ROYAL INVENTORY</span>
+                    <span class="eyebrow">INVENTARIS KOLEKSI</span>
                     <h1>Kelola Produk</h1>
                     <p>Periksa nama, harga, stok, dan informasi setiap koleksi.</p>
                 </div>
@@ -45,7 +45,7 @@
             <section class="panel admin-product-form-panel" id="productFormPanel" hidden>
                 <div class="admin-panel-heading">
                     <div>
-                        <span class="eyebrow">PRODUCT DETAILS</span>
+                        <span class="eyebrow">DETAIL PRODUK</span>
                         <h2 id="productFormTitle">Tambah produk antik</h2>
                         <p>Isi informasi utama katalog.</p>
                     </div>
@@ -85,10 +85,10 @@
                         <div class="form-field admin-form-span-3">
                             <label for="productEra">Era</label>
                             <select class="form-control" id="productEra" required>
-                                <option>1800s</option>
-                                <option>1900–1949</option>
-                                <option>1950–1999</option>
-                                <option>2000–sekarang</option>
+                                <option value="1800s">1800-an</option>
+                                <option value="1900–1949">1900–1949</option>
+                                <option value="1950–1999">1950–1999</option>
+                                <option value="2000–sekarang">2000–sekarang</option>
                             </select>
                         </div>
 
@@ -101,10 +101,10 @@
                         <div class="form-field admin-form-span-3">
                             <label for="productCondition">Kondisi</label>
                             <select class="form-control" id="productCondition" required>
-                                <option>Excellent</option>
-                                <option>Good</option>
-                                <option>Fair</option>
-                                <option>Needs restoration</option>
+                                <option value="Excellent">Sangat baik</option>
+                                <option value="Good">Baik</option>
+                                <option value="Fair">Cukup</option>
+                                <option value="Needs restoration">Perlu restorasi</option>
                             </select>
                         </div>
 
@@ -117,10 +117,10 @@
                         <div class="form-field admin-form-span-4">
                             <label for="productAuthenticity">Status autentikasi</label>
                             <select class="form-control" id="productAuthenticity" required>
-                                <option>Verified</option>
-                                <option>Documented</option>
-                                <option>Inspected</option>
-                                <option>Not verified</option>
+                                <option value="Verified">Terverifikasi</option>
+                                <option value="Documented">Memiliki dokumentasi</option>
+                                <option value="Inspected">Telah diperiksa</option>
+                                <option value="Not verified">Belum terverifikasi</option>
                             </select>
                         </div>
 
@@ -172,9 +172,6 @@
                                 type="file"
                                 accept="image/jpeg,image/png,image/webp"
                             >
-                            <small class="field-hint">
-                                Foto dikirim sebagai berkas (multipart/form-data), disimpan di server, dan hanya path-nya yang masuk database.
-                            </small>
                             <div class="admin-image-preview" id="productImagePreview" hidden></div>
                         </div>
                     </div>
@@ -206,7 +203,7 @@
             >
                 <div class="admin-panel-heading">
                     <div>
-                        <span class="eyebrow">CATALOG INVENTORY</span>
+                        <span class="eyebrow">DAFTAR INVENTARIS</span>
                         <h2>Daftar produk</h2>
                         <p><strong id="adminProductsCount">{{ produk_list|length }}</strong> produk terdaftar (aktif maupun nonaktif).</p>
                     </div>

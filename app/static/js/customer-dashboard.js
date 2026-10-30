@@ -30,7 +30,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         const orders = Array.isArray(data.orders) ? data.orders : [];
         set('customerOrderCount', Number(data.order_count ?? orders.length));
         set('customerCartCount', (data.cart || []).reduce((sum, item) => sum + Number(item.jumlah || 1), 0));
-        set('customerAddressCount', (data.addresses || []).length);
+        const addresses = Array.isArray(data.addresses) ? data.addresses : [];
+        set('customerAddressCount', addresses.length);
+        const completionNotice = document.getElementById('completeProfileNotice');
+        if (completionNotice) completionNotice.hidden = addresses.length > 0;
         if (!list) return;
         if (!orders.length) { kosong('Belum ada pesanan pada akun ini.'); return; }
         list.replaceChildren();
@@ -42,7 +45,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const date = new Date(order.date);
             const qty = (order.items || []).reduce((sum, item) => sum + Number(item.jumlah || 1), 0);
             info.append(
-                make('span', 'customer-order-number', `ORDER ${order.orderNumber || order.id}`),
+                make('span', 'customer-order-number', `PESANAN ${order.orderNumber || order.id}`),
                 make('h3', '', names || 'Koleksi Albis Antique'),
                 make('p', '', `${Number.isNaN(date.getTime()) ? '' : date.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })} · ${qty} item`),
             );

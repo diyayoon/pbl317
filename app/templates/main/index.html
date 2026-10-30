@@ -1,43 +1,39 @@
 {% extends 'base.html' %}
 
-{% block title %}Albis Antique — Timeless Pieces in a Frosted World{% endblock %}
+{% block title %}Albis Antique — Koleksi Antik dalam Nuansa Es{% endblock %}
 
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/home.css') }}">
 {% endblock %}
 
 {% block content %}
-<!-- ===== HERO BERANDA ===== -->
 <section class="hero">
     <div class="container hero-grid">
         <div class="hero-copy">
-            <span class="eyebrow" data-i18n="hero_eyebrow">Kurasi Barang Antik Pilihan</span>
-            <h1 data-i18n="hero_title" data-ketik>Kisah dari masa lalu, hadir kembali dalam koleksi yang anggun.</h1>
-            <p data-i18n="hero_desc">Jelajahi jam antik, kamera vintage, porselen, buku lama, perhiasan, dan benda koleksi yang dipilih dengan cermat dalam suasana frost yang elegan.</p>
+            <span class="eyebrow">Kurasi Barang Antik Pilihan</span>
+            <h1 data-ketik>Kisah dari masa lalu, hadir kembali dalam koleksi yang anggun.</h1>
+            <p>Jelajahi jam antik, kamera vintage, porselen, buku lama, perhiasan, dan benda koleksi yang dipilih dengan cermat dalam suasana frost yang elegan.</p>
 
-            <!-- ===== CTA HERO ===== -->
             <div class="hero-actions">
                 <a
                     class="button button-primary"
                     href="{{ url_for('main.katalog') }}"
-                    data-i18n="shop_now"
+                   
                 >Belanja Sekarang</a>
                 <a
                     class="button button-secondary"
                     href="#categories"
-                    data-i18n="explore_collection"
+                   
                 >Jelajahi Koleksi</a>
             </div>
 
-            <!-- ===== METRIK RINGKAS ===== -->
             <div class="hero-trust" aria-label="Ringkasan katalog">
-                <div><strong>120+</strong><span data-i18n="metric_piece">koleksi</span></div>
-                <div><strong>8</strong><span data-i18n="metric_category">kategori</span></div>
-                <div><strong>1×</strong><span data-i18n="metric_unique">stok unik</span></div>
+                <div><strong>120+</strong><span>koleksi</span></div>
+                <div><strong>8</strong><span>kategori</span></div>
+                <div><strong>1×</strong><span>stok unik</span></div>
             </div>
         </div>
 
-        <!-- ===== VISUAL HERO: SLIDER PRODUK UNGGULAN ===== -->
         <div class="hero-showcase royal-frame">
             <span class="sparkle one">✦</span>
             <span class="sparkle two">❄</span>
@@ -53,7 +49,6 @@
             >
                 <span class="crest" aria-hidden="true">♔</span>
 
-                <!-- ===== SLIDE ===== -->
                 <div class="slider-area">
                     <div class="slider-viewport" id="sliderViewport">
                         {% for item in produk_slide %}
@@ -82,12 +77,10 @@
                         {% endfor %}
                     </div>
 
-                    <!-- ===== PANAH (DISEMBUNYIKAN DI HP, GESER SUDAH CUKUP) ===== -->
                     <button class="slider-panah slider-panah-kiri" type="button" data-slider="sebelumnya" aria-label="Slide sebelumnya">‹</button>
                     <button class="slider-panah slider-panah-kanan" type="button" data-slider="berikutnya" aria-label="Slide berikutnya">›</button>
                 </div>
 
-                <!-- ===== TITIK NAVIGASI + JEDA ===== -->
                 <div class="slider-bawah">
                     <div class="slider-dots" role="group" aria-label="Pilih slide"></div>
 
@@ -97,14 +90,13 @@
     </div>
 </section>
 
-<!-- ===== KATEGORI UNGGULAN ===== -->
 <section id="categories" class="section-shell section-soft">
     <div class="container">
         <div class="section-heading" data-muncul>
             <div>
-                <span class="eyebrow" data-i18n="category_eyebrow">Kategori Pilihan</span>
-                <h2 data-i18n="category_title">Temukan koleksi berdasarkan karakter dan era</h2>
-                <p data-i18n="category_desc">Setiap kategori dirancang untuk memudahkan penelusuran tanpa menghilangkan kesan galeri antik.</p>
+                <span class="eyebrow">Kategori Pilihan</span>
+                <h2>Temukan koleksi berdasarkan karakter dan era</h2>
+                <p>Setiap kategori dirancang untuk memudahkan penelusuran tanpa menghilangkan kesan galeri antik.</p>
             </div>
 
         </div>
@@ -116,7 +108,6 @@
                 href="{{ url_for('main.katalog') }}?kategori={{ kategori.slug }}"
                 data-kategori="{{ kategori.slug }}"
             >
-                <!-- ===== FOTO WATERMARK (SUDUT KANAN BAWAH) ===== -->
                 <img
                     class="category-watermark"
                     src="{{ kategori.gambar }}"
@@ -127,7 +118,6 @@
                     data-img-fallback="remove"
                 >
 
-                <!-- ===== BARIS ATAS: FOTO KECIL + NOMOR URUT ===== -->
                 <span class="category-top">
                     <span class="category-icon" aria-hidden="true">
                         <img
@@ -141,7 +131,6 @@
                     <span class="category-number" aria-hidden="true">{{ '%02d' % loop.index }}</span>
                 </span>
 
-                <!-- ===== BARIS BAWAH: NAMA + JUMLAH + PANAH ===== -->
                 <span class="category-body">
                     <strong>{{ kategori.nama }}</strong>
                     <span class="category-meta">
@@ -155,15 +144,14 @@
     </div>
 </section>
 
-<!-- ===== PRODUK TERPOPULER ===== -->
 <section class="section-shell">
     <div class="container">
         <div class="section-heading" data-muncul>
             <div>
-                <span class="eyebrow" data-i18n="popular_eyebrow">Koleksi Terpopuler</span>
-                <h2 data-i18n="popular_title">Benda yang paling banyak menarik perhatian</h2>
+                <span class="eyebrow">Koleksi Terpopuler</span>
+                <h2>Benda yang paling banyak menarik perhatian</h2>
             </div>
-            <a class="text-link" href="{{ url_for('main.katalog') }}" data-i18n="view_all">Lihat semua →</a>
+            <a class="text-link" href="{{ url_for('main.katalog') }}">Lihat semua →</a>
         </div>
 
         <div class="product-grid" data-muncul="berurutan">
@@ -174,31 +162,29 @@
     </div>
 </section>
 
-<!-- ===== PROMOTIONAL BANNER ===== -->
 <section class="section-shell">
     <div class="container">
         <div class="promo-banner" data-muncul>
             <div>
-                <span class="eyebrow" data-i18n="promo_eyebrow">Kurasi Musim Dingin</span>
-                <h2 data-i18n="promo_title">Potongan sejarah yang pantas menjadi pusat perhatian.</h2>
-                <p data-i18n="promo_desc">Tampilan bernuansa es, aksen monarki, dan informasi produk yang jelas menyatu dalam pengalaman belanja modern.</p>
+                <span class="eyebrow">Kurasi Musim Dingin</span>
+                <h2>Potongan sejarah yang pantas menjadi pusat perhatian.</h2>
+                <p>Tampilan bernuansa es, aksen monarki, dan informasi produk yang jelas menyatu dalam pengalaman belanja modern.</p>
             </div>
             <a
                 class="button button-gold"
                 href="{{ url_for('main.katalog') }}"
-                data-i18n="promo_cta"
+               
             >Lihat Katalog</a>
         </div>
     </div>
 </section>
 
-<!-- ===== KOLEKSI TERBARU ===== -->
 <section class="section-shell section-soft">
     <div class="container">
         <div class="section-heading" data-muncul>
             <div>
-                <span class="eyebrow" data-i18n="new_eyebrow">Koleksi Terbaru</span>
-                <h2 data-i18n="new_title">Temuan baru dari berbagai era</h2>
+                <span class="eyebrow">Koleksi Terbaru</span>
+                <h2>Temuan baru dari berbagai era</h2>
             </div>
         </div>
         <div class="product-grid" data-muncul="berurutan">
@@ -209,30 +195,29 @@
     </div>
 </section>
 
-<!-- ===== HIGHLIGHT TOKO / TENTANG ===== -->
 <section id="about" class="section-shell">
     <div class="container">
         <div class="section-heading" data-muncul>
             <div>
-                <span class="eyebrow" data-i18n="recommended_eyebrow">Rekomendasi Kurator</span>
-                <h2 data-i18n="recommended_title">Pilihan untuk kolektor yang menyukai detail</h2>
+                <span class="eyebrow">Rekomendasi Kurator</span>
+                <h2>Pilihan untuk kolektor yang menyukai detail</h2>
             </div>
         </div>
         <div class="highlight-grid" data-muncul="berurutan">
             <article class="highlight-card">
                 <span aria-hidden="true">⌘</span>
-                <h3 data-i18n="highlight_1_title">Detail dan Asal-usul Terang</h3>
-                <p data-i18n="highlight_1_desc">Informasi era, asal, material, kondisi, dan status autentikasi ditampilkan dengan jelas.</p>
+                <h3>Detail dan Asal-usul Terang</h3>
+                <p>Informasi era, asal, material, kondisi, dan status autentikasi ditampilkan dengan jelas.</p>
             </article>
             <article class="highlight-card">
                 <span aria-hidden="true">♔</span>
-                <h3 data-i18n="highlight_2_title">Koleksi Unik dan Terbatas</h3>
-                <p data-i18n="highlight_2_desc">Sebagian besar barang antik bersifat unik sehingga stok dapat dibatasi secara realistis.</p>
+                <h3>Koleksi Unik dan Terbatas</h3>
+                <p>Sebagian besar barang antik bersifat unik sehingga stok dapat dibatasi secara realistis.</p>
             </article>
             <article class="highlight-card">
                 <span aria-hidden="true">◫</span>
-                <h3 data-i18n="highlight_3_title">Kondisi Barang Transparan</h3>
-                <p data-i18n="highlight_3_desc">Foto dan catatan kondisi membantu kolektor menilai setiap benda sebelum memutuskan membeli.</p>
+                <h3>Kondisi Barang Transparan</h3>
+                <p>Foto dan catatan kondisi membantu kolektor menilai setiap benda sebelum memutuskan membeli.</p>
             </article>
         </div>
     </div>

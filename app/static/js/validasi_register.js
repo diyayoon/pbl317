@@ -1,8 +1,7 @@
 'use strict';
 
-/* ===== KAMUS PESAN ERROR (ID / EN) ===== */
+/* ===== KAMUS PESAN VALIDASI ===== */
 const PESAN_REGISTER = {
-    id: {
         email_wajib: 'Email tidak boleh kosong.',
         email_format: 'Format email tidak valid.',
         password_wajib: 'Kata sandi tidak boleh kosong.',
@@ -18,32 +17,10 @@ const PESAN_REGISTER = {
         alamat_panjang: 'Alamat maksimal 255 karakter.',
         telepon_wajib: 'Nomor telepon tidak boleh kosong.',
         telepon_format: 'Nomor telepon harus diawali 62 dan berisi 10–15 angka.',
-    },
-    en: {
-        email_wajib: 'Email is required.',
-        email_format: 'Email format is invalid.',
-        password_wajib: 'Password is required.',
-        password_pendek: 'Password must contain at least 16 characters.',
-        password_panjang: 'Password must contain at most 128 characters.',
-        konfirmasi_wajib: 'Please confirm your password.',
-        konfirmasi_tidak_cocok: 'Password confirmation does not match.',
-        nama_wajib: 'Full name is required.',
-        nama_pendek: 'Full name must contain at least 3 characters.',
-        nama_format: 'Name may only contain letters, spaces, dots, apostrophes, and hyphens.',
-        alamat_wajib: 'Address is required.',
-        alamat_pendek: 'Address is too short; enter at least 10 characters.',
-        alamat_panjang: 'Address must contain at most 255 characters.',
-        telepon_wajib: 'Phone number is required.',
-        telepon_format: 'Phone number must start with 62 and contain 10–15 digits.',
-    },
 };
 
 const MINIMAL_PASSWORD = 16;
 
-const TEKS_TOMBOL_MATA = {
-    id: 'Tahan untuk melihat kata sandi',
-    en: 'Hold to show password',
-};
 
 /* ===== KELAS VALIDASI FORM REGISTER ===== */
 /* Validasi di browser hanya untuk kenyamanan pengguna.
@@ -67,16 +44,8 @@ class ValidasiRegister {
         });
     }
 
-    /* ===== FUNGSI: BAHASA AKTIF ('id' ATAU 'en') ===== */
-    bahasa() {
-        const lang = document.documentElement.lang;
-        if (lang === 'en' || lang === 'id') return lang;
-        return localStorage.getItem('albis_antique_bahasa') === 'en' ? 'en' : 'id';
-    }
-
-    /* ===== FUNGSI: MENGAMBIL TEKS PESAN DARI KODE ===== */
     pesan(kode) {
-        return PESAN_REGISTER[this.bahasa()][kode] || kode;
+        return PESAN_REGISTER[kode] || kode;
     }
 
     /* ===== ATURAN: EMAIL ===== */
@@ -182,63 +151,6 @@ class ValidasiRegister {
         }
     }
 
-    /* ===== FUNGSI: MENAMPILKAN ULANG PESAN ERROR SETELAH GANTI BAHASA ===== */
-    perbaruiBahasa() {
-        Object.keys(this.aturan).forEach((id) => {
-            const pesanError = document.getElementById(this.aturan[id].error);
-            if (pesanError && pesanError.dataset.kode) {
-                pesanError.textContent = this.pesan(pesanError.dataset.kode);
-            }
-        });
-        this.perbaruiLabelTombolMata();
-    }
-
-    /* ===== FUNGSI: LABEL (aria-label + tooltip) TOMBOL MATA SESUAI BAHASA ===== */
-    perbaruiLabelTombolMata() {
-        const tombol = document.getElementById('togglePassword');
-        if (!tombol) return;
-        const teks = TEKS_TOMBOL_MATA[this.bahasa()];
-        tombol.setAttribute('aria-label', teks);
-        tombol.setAttribute('title', teks);
-    }
-
-    /* ===== FUNGSI: TOMBOL MATA, TAHAN UNTUK MELIHAT, LEPAS UNTUK MENYEMBUNYIKAN ===== */
-    pasangTombolPassword() {
-        const tombol = document.getElementById('togglePassword');
-        if (!tombol) return;
-
-        const tampilkan = () => {
-            this.kolom.password.type = 'text';
-            tombol.setAttribute('aria-pressed', 'true');
-        };
-        const sembunyikan = () => {
-            this.kolom.password.type = 'password';
-            tombol.setAttribute('aria-pressed', 'false');
-        };
-
-        /* mouse / sentuh / pena */
-        tombol.addEventListener('mousedown', (event) => event.preventDefault()); /* fokus tetap di kolom */
-        tombol.addEventListener('pointerdown', tampilkan);
-        tombol.addEventListener('pointerup', sembunyikan);
-        tombol.addEventListener('pointerleave', sembunyikan);
-        tombol.addEventListener('pointercancel', sembunyikan);
-        tombol.addEventListener('contextmenu', (event) => event.preventDefault()); /* tahan lama di HP */
-
-        /* keyboard: tahan Spasi atau Enter */
-        tombol.addEventListener('keydown', (event) => {
-            if (event.key === ' ' || event.key === 'Enter') {
-                event.preventDefault();
-                tampilkan();
-            }
-        });
-        tombol.addEventListener('keyup', sembunyikan);
-
-        /* pengaman: pindah fokus / ganti tab / kirim form -> selalu tersembunyi lagi */
-        tombol.addEventListener('blur', sembunyikan);
-        window.addEventListener('blur', sembunyikan);
-        this.form.addEventListener('submit', sembunyikan);
-    }
-
     /* ===== FUNGSI: MEMASANG SEMUA EVENT FORM ===== */
     pasang() {
         /* pengaman: jangan pasang event dua kali jika init terpanggil ganda */
@@ -281,15 +193,8 @@ class ValidasiRegister {
             if (tombolKirim) tombolKirim.disabled = true; /* cegah kirim ganda */
         });
 
-        this.pasangTombolPassword();
-        this.perbaruiLabelTombolMata();
         this.perbaruiKekuatan();
 
-        /* ganti bahasa -> pesan error ikut berganti */
-        new MutationObserver(() => this.perbaruiBahasa()).observe(document.documentElement, {
-            attributes: true,
-            attributeFilter: ['lang'],
-        });
     }
 }
 
