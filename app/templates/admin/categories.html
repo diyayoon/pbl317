@@ -20,23 +20,24 @@
                 <div>
                     <span class="eyebrow">STRUKTUR KATALOG</span>
                     <h1>Kategori</h1>
-                    <p>Atur kategori yang dipakai pada katalog dan filter pelanggan.</p>
+
                 </div>
             </header>
 
             <section class="panel">
-                <div class="admin-panel-heading"><div><h2>Tambah / ubah kategori</h2><p>Setiap kategori memiliki foto sendiri. Jika masih dipakai produk, kategori yang dihapus akan dinonaktifkan agar riwayat tetap aman.</p></div></div>
+                <div class="admin-panel-heading"><div><h2>Tambah kategori</h2></div></div>
                 <form id="categoryForm" class="admin-inline-form category-admin-form" novalidate>
                     <div class="form-field">
                         <label for="categoryName">Nama kategori</label>
                         <input class="form-control" id="categoryName" maxlength="80" required>
                     </div>
-                    <div class="form-field">
-                        <label for="categoryImageInput">Foto kategori (JPG, PNG, WEBP)</label>
-                        <input class="form-control" id="categoryImageInput" type="file" accept="image/jpeg,image/png,image/webp" required>
-                        <small class="field-hint">Maksimal 3 MB. Saat mengubah kategori, kosongkan jika foto tidak ingin diganti.</small>
+                    <div class="form-field category-upload-field">
+                        <label for="categoryImageInput">Foto kategori</label>
+                        <div class="category-upload-control">
+                            <input class="form-control file-input" id="categoryImageInput" type="file" accept="image/jpeg,image/png,image/webp" required>
+                            <img id="categoryImagePreview" class="category-admin-preview" alt="Pratinjau foto kategori" hidden>
+                        </div>
                     </div>
-                    <img id="categoryImagePreview" class="category-admin-preview" alt="Pratinjau foto kategori" hidden>
                     <div class="category-admin-submit"><button class="button button-primary" id="categorySubmit" type="submit">Tambah kategori</button></div>
                 </form>
             </section>
@@ -53,6 +54,18 @@
         </div>
     </div>
 </section>
+
+<div class="admin-dialog-backdrop" id="categoryDeleteDialog" hidden>
+    <section class="admin-dialog" role="alertdialog" aria-modal="true" aria-labelledby="categoryDeleteTitle" aria-describedby="categoryDeleteMessage">
+        <span class="eyebrow">KONFIRMASI KATEGORI</span>
+        <h2 id="categoryDeleteTitle">Hapus kategori?</h2>
+        <p id="categoryDeleteMessage"></p>
+        <div class="admin-dialog-actions">
+            <button class="button button-secondary" id="categoryDeleteCancel" type="button">Batal</button>
+            <button class="button button-danger" id="categoryDeleteConfirm" type="button">Hapus kategori</button>
+        </div>
+    </section>
+</div>
 {% endblock %}
 
 {% block scripts %}

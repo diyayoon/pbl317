@@ -20,12 +20,12 @@
                 <div>
                     <span class="eyebrow">AKUN ADMIN</span>
                     <h1>Akun & keamanan</h1>
-                    <p>Ganti kata sandi akun admin Anda.</p>
+
                 </div>
             </header>
 
-            <section class="panel">
-                <div class="admin-panel-heading"><div><h2>Ganti kata sandi</h2><p>Masuk sebagai {{ current_user.email }}. Setelah diganti, sesi di perangkat lain otomatis keluar.</p></div></div>
+            <section class="panel admin-account-panel">
+                <div class="admin-panel-heading"><div><h2>Ganti kata sandi</h2></div></div>
                 <form method="post" class="admin-inline-form admin-password-form" autocomplete="off">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="form-field"><label for="pwLama">Kata sandi saat ini</label><input class="form-control" id="pwLama" name="password_lama" type="password" autocomplete="current-password" maxlength="200" required></div>

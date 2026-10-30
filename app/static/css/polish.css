@@ -242,15 +242,17 @@ button.text-link:hover { color: var(--warna-aksen); text-decoration: underline; 
 .admin-workspace-tab:hover { color: #285E7A; background: rgba(255,255,255,.68); }
 .admin-workspace-tab.is-active { color: #fff; background: linear-gradient(135deg, #67B5DA, #3C86B0); box-shadow: 0 6px 16px rgba(52,127,167,.24); }
 .admin-workspace-tab-panel[hidden] { display: none !important; }
-.category-admin-form { grid-template-columns: minmax(180px, 1fr) minmax(260px, 1.35fr) 72px auto; align-items: end; }
+.category-admin-form { grid-template-columns: minmax(190px, .9fr) minmax(280px, 1.5fr) auto; align-items: end; }
 .category-admin-form > .form-field { min-width: 0; }
 .category-admin-form .form-control { min-width: 0; }
-.category-admin-preview { align-self: end; grid-column: 3; }
-.category-admin-submit { grid-column: 4; }
+.category-upload-control { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.category-upload-control .file-input { flex: 1 1 240px; min-width: 0; }
+.category-admin-preview { flex: 0 0 76px; width: 76px; height: 76px; object-fit: cover; border-radius: 13px; }
+.category-admin-preview[hidden] { display: none !important; }
+.category-admin-submit { align-self: end; }
 
 @media (max-width: 900px) {
-    .category-admin-form { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); }
-    .category-admin-preview { grid-column: 1; }
+    .category-admin-form { grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); }
     .category-admin-submit { grid-column: 2; }
 }
 @media (max-width: 560px) {
@@ -260,6 +262,6 @@ button.text-link:hover { color: var(--warna-aksen); text-decoration: underline; 
     .admin-workspace-tabs { width: 100%; }
     .admin-workspace-tab { flex: 1; padding-inline: 10px; }
     .category-admin-form { grid-template-columns: minmax(0, 1fr); }
-    .category-admin-preview, .category-admin-submit { grid-column: 1; }
+    .category-admin-submit { grid-column: 1; }
     .category-admin-submit .button { width: 100%; justify-content: center; }
 }

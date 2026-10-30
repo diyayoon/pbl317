@@ -1406,3 +1406,244 @@
 
 .order-product-visual img { display: block; width: 100%; height: 100%; object-fit: contain; border-radius: inherit; }
 .order-product-visual { overflow: hidden; }
+
+/* Dashboard penjualan admin */
+.admin-sales-kpis .kpi-card-primary {
+    border-color: rgba(74, 154, 194, .42);
+    background: linear-gradient(135deg, #e9f8ff, #ffffff 76%);
+}
+.admin-sales-kpis .kpi-card-primary strong { color: #245c79; }
+.admin-sales-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.65fr) minmax(280px, 1fr);
+    gap: 20px;
+    align-items: stretch;
+}
+.admin-sales-grid > .panel { min-width: 0; margin-top: 22px; }
+.admin-sales-chart-panel, .admin-top-products-panel { min-height: 330px; }
+.admin-sales-total { color: var(--warna-biru-dalam); font-size: .95rem; white-space: nowrap; }
+.admin-sales-chart {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: clamp(7px, 1.4vw, 18px);
+    align-items: end;
+    min-height: 230px;
+    padding: 18px 4px 0;
+}
+.admin-sales-month {
+    display: grid;
+    grid-template-rows: auto 174px auto;
+    align-items: end;
+    gap: 8px;
+    min-width: 0;
+    text-align: center;
+}
+.admin-sales-month-value {
+    display: block;
+    overflow: hidden;
+    color: var(--warna-muted);
+    font-size: clamp(.55rem, .72vw, .72rem);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.admin-sales-bar-track {
+    display: flex;
+    align-items: end;
+    width: 100%;
+    height: 174px;
+    overflow: hidden;
+    border-radius: 12px 12px 5px 5px;
+    background: linear-gradient(180deg, #f5fbfe, #e8f5fb);
+}
+.admin-sales-bar {
+    display: block;
+    width: 100%;
+    min-height: 0;
+    border-radius: 11px 11px 4px 4px;
+    background: linear-gradient(180deg, #9bd5ed 0%, #4d9ec5 100%);
+    box-shadow: 0 5px 14px rgba(69, 145, 183, .18);
+    transition: height .25s ease;
+}
+.admin-sales-month-label { color: var(--warna-muted); font-size: .72rem; white-space: nowrap; }
+.admin-top-products { display: grid; gap: 0; }
+.admin-top-product-row {
+    display: grid;
+    grid-template-columns: 30px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    min-height: 54px;
+    border-bottom: 1px solid var(--warna-garis);
+}
+.admin-top-product-row:last-child { border-bottom: 0; }
+.admin-top-product-rank {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 9px;
+    background: #eaf7fd;
+    color: #397fa7;
+    font-weight: 800;
+    font-size: .76rem;
+}
+.admin-top-product-name { overflow-wrap: anywhere; font-size: .82rem; }
+.admin-top-product-count { color: var(--warna-muted); font-size: .72rem; white-space: nowrap; }
+.admin-sales-status-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
+.admin-sales-status-item {
+    display: grid;
+    gap: 8px;
+    padding: 13px 14px;
+    border: 1px solid var(--warna-garis);
+    border-radius: 13px;
+    background: linear-gradient(145deg, #fff, #f5fbfe);
+}
+.admin-sales-status-item span { color: var(--warna-muted); font-size: .7rem; line-height: 1.4; }
+.admin-sales-status-item strong { color: var(--warna-teks); font: 700 1.35rem var(--font-heading); }
+.admin-sales-status-panel { margin-top: 20px; }
+
+/* Pratinjau unggahan admin */
+.admin-image-preview {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: min(100%, 280px);
+    min-height: 110px;
+    margin-top: 12px;
+    padding: 8px;
+    border: 1px solid var(--warna-garis);
+    border-radius: 14px;
+    background: linear-gradient(145deg, #fbfeff, #edf8fd);
+    overflow: hidden;
+}
+.admin-image-preview[hidden] { display: none !important; }
+.admin-image-preview img { display: block; width: 100%; max-height: 190px; object-fit: contain; border-radius: 8px; }
+.admin-image-preview.has-error { display: none; }
+
+/* Form kategori dan foto */
+.category-admin-form {
+    grid-template-columns: minmax(190px, .9fr) minmax(280px, 1.5fr) auto;
+    align-items: end;
+    gap: 16px;
+}
+.category-upload-control { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.category-upload-control .file-input { flex: 1 1 240px; min-width: 0; }
+.category-admin-preview {
+    display: block;
+    flex: 0 0 76px;
+    width: 76px;
+    height: 76px;
+    object-fit: cover;
+    border: 1px solid var(--warna-garis);
+    border-radius: 13px;
+    background: #f5fbfe;
+    box-shadow: 0 5px 16px rgba(57,127,168,.12);
+}
+.category-admin-preview[hidden] { display: none !important; }
+.category-admin-submit { align-self: end; }
+.category-admin-submit .button { min-height: 46px; white-space: nowrap; }
+
+/* Daftar pengguna dan menu tindakan ringkas */
+.admin-user-filters { display: flex; align-items: center; gap: 10px; width: min(520px, 100%); }
+.admin-user-filters .form-control { min-width: 0; }
+.admin-user-filters input { flex: 1 1 260px; }
+.admin-user-filters select { flex: 0 0 160px; }
+.admin-user-email { overflow-wrap: anywhere; }
+.admin-user-verification { display: block; margin-top: 5px; color: var(--warna-muted); font-size: .68rem; }
+.admin-user-actions-cell { width: 76px; }
+.admin-user-actions { position: relative; display: grid; justify-items: center; gap: 8px; }
+.admin-user-actions-trigger {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 36px;
+    border: 1px solid var(--warna-garis);
+    border-radius: 11px;
+    background: #fff;
+    color: var(--warna-biru-dalam);
+    font-size: 1.35rem;
+    line-height: 1;
+    cursor: pointer;
+}
+.admin-user-actions-trigger:hover, .admin-user-actions.is-open .admin-user-actions-trigger { background: #eaf7fd; border-color: #a8d7eb; }
+.admin-user-actions-menu { display: none; width: 170px; padding: 6px; border: 1px solid var(--warna-garis); border-radius: 13px; background: #fff; box-shadow: 0 9px 24px rgba(41, 91, 116, .13); }
+.admin-user-actions.is-open .admin-user-actions-menu { display: grid; gap: 3px; }
+.admin-user-action-item { width: 100%; padding: 9px 10px; border: 0; border-radius: 8px; background: transparent; color: var(--warna-teks); text-align: left; font: 650 .76rem var(--font-body); cursor: pointer; }
+.admin-user-action-item:hover { background: #eff8fc; }
+.admin-user-action-item.is-danger { color: #a33d48; }
+.admin-user-action-item.is-danger:hover { background: #fff1f2; }
+
+/* Kartu keamanan admin */
+.admin-account-panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: min(100%, 660px);
+    min-height: 480px;
+    margin: 26px auto;
+    padding: clamp(24px, 4vw, 42px);
+}
+.admin-account-panel .admin-panel-heading { width: min(100%, 430px); margin: 0 auto 20px; }
+.admin-account-panel .admin-panel-heading h2 { margin-bottom: 0; }
+.admin-password-form {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 17px;
+    width: min(100%, 430px);
+    max-width: 430px;
+    margin: 0 auto;
+}
+.admin-password-form .form-field { min-width: 0; }
+.admin-password-form .button { width: 100%; margin-top: 3px; }
+
+/* Dialog konfirmasi kategori */
+.admin-dialog-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 12000;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    background: rgba(15, 38, 53, .42);
+    backdrop-filter: blur(5px);
+}
+.admin-dialog-backdrop[hidden] { display: none !important; }
+body.admin-dialog-open { overflow: hidden; }
+.admin-dialog {
+    width: min(100%, 470px);
+    padding: clamp(22px, 4vw, 32px);
+    border: 1px solid rgba(255,255,255,.88);
+    border-radius: 22px;
+    background: linear-gradient(145deg, #ffffff 0%, #f2faff 100%);
+    box-shadow: 0 24px 80px rgba(20, 66, 90, .28), inset 0 1px 0 #fff;
+}
+.admin-dialog h2 { margin: 8px 0 10px; color: var(--warna-teks); font: 700 1.55rem var(--font-heading); }
+.admin-dialog p { margin: 0; color: var(--warna-muted); font-size: .9rem; line-height: 1.65; }
+.admin-dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+
+@media (max-width: 1100px) {
+    .admin-sales-grid { grid-template-columns: minmax(0, 1fr); }
+    .admin-sales-chart-panel, .admin-top-products-panel { min-height: 0; }
+    .admin-sales-status-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 900px) {
+    .category-admin-form { grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); }
+    .category-admin-submit { grid-column: 2; }
+    .admin-user-filters { width: 100%; }
+}
+@media (max-width: 640px) {
+    .admin-sales-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .admin-sales-status-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .admin-sales-chart { gap: 6px; padding-inline: 0; }
+    .admin-sales-month { grid-template-rows: auto 130px auto; }
+    .admin-sales-bar-track { height: 130px; }
+    .admin-sales-month-value { font-size: .55rem; }
+    .admin-sales-month-label { font-size: .65rem; }
+    .category-admin-form { grid-template-columns: minmax(0, 1fr); }
+    .category-admin-submit { grid-column: 1; }
+    .category-admin-submit .button { width: 100%; }
+    .admin-user-filters { display: grid; grid-template-columns: minmax(0, 1fr); }
+    .admin-user-filters select { width: 100%; }
+    .admin-account-panel { min-height: 0; margin: 20px auto; }
+    .admin-dialog-actions { flex-direction: column-reverse; }
+    .admin-dialog-actions .button { width: 100%; }
+}

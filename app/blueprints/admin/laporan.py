@@ -1,6 +1,8 @@
-"""Admin: dashboard dan laporan."""
+"""Dashboard penjualan admin dan API laporan penjualan."""
 from __future__ import annotations
-from flask import jsonify, render_template
+
+from flask import jsonify, redirect, render_template, url_for
+
 from app.services.report_service import LayananLaporan
 from . import admin_bp
 from app.utils.decorators import admin_required
@@ -15,7 +17,7 @@ def dashboard():
 @admin_bp.get("/laporan")
 @admin_required
 def laporan():
-    return render_template("admin/reports.html")
+    return redirect(url_for("admin.dashboard"), code=302)
 
 
 @admin_bp.get("/api/laporan")

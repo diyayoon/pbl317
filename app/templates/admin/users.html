@@ -28,17 +28,25 @@
                 <div>
                     <span class="eyebrow">DAFTAR PENGGUNA</span>
                     <h1>Pengguna</h1>
-                    <p>Kelola akun customer: status, detail audit, dan penghapusan.</p>
+
                 </div>
             </header>
 
             <section class="panel">
                 <div class="admin-panel-heading">
                     <div>
-                        <h2>Daftar customer</h2>
-                        <p id="userCount">{{ pengguna_list|length }} customer terdaftar.</p>
+                        <h2>Daftar pengguna</h2>
+                        <p id="userCount">{{ pengguna_list|length }} pengguna</p>
                     </div>
-                    <input id="userSearch" type="search" placeholder="Cari nama atau email" maxlength="100" aria-label="Cari customer">
+                    <div class="admin-user-filters">
+                        <input class="form-control" id="userSearch" type="search" placeholder="Cari nama atau email" maxlength="100" aria-label="Cari pengguna">
+                        <select class="form-control" id="userStatusFilter" aria-label="Filter status pengguna">
+                            <option value="">Semua status</option>
+                            <option value="Aktif">Aktif</option>
+                            <option value="Nonaktif">Nonaktif</option>
+                            <option value="Dihapus">Dihapus</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="table-wrap">

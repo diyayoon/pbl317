@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const apiItemBase = String(app.dataset.apiItemUrl || '').replace(/\/0$/, '');
     const csrfToken = document.getElementById('csrfToken')?.value || '';
     const money = value => `Rp${Number(value || 0).toLocaleString('id-ID')}`;
+    const formatRupiah = value => Number(value || 0).toLocaleString('id-ID');
     const make = (tag, className = '', text = undefined) => {
         const node = document.createElement(tag);
         if (className) node.className = className;
@@ -146,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (product) {
             Object.entries(fieldIds).forEach(([key, id]) => {
                 const input = document.getElementById(id);
-                if (input) input.value = product[key] ?? '';
+                if (input) input.value = key === 'harga' ? formatRupiah(product[key]) : (product[key] ?? '');
             });
             document.getElementById('productId').value = String(product.id);
             document.getElementById('productFormTitle').textContent = 'Edit produk antik';
@@ -170,8 +171,32 @@ document.addEventListener('DOMContentLoaded', () => {
         const image = make('img');
         image.src = source;
         image.alt = `Pratinjau foto ${name}`;
-        image.loading = 'lazy';
+        image.decoding = 'async';
+        image.addEventListener('error', () => {
+            preview.classList.add('has-error');
+        }, { once: true });
+        image.addEventListener('load', () => preview.classList.remove('has-error'), { once: true });
         preview.append(image);
+    }
+
+    function formatPriceInput() {
+        const input = document.getElementById('productPrice');
+        if (!input) return;
+        const original = input.value;
+        const cursor = input.selectionStart ?? original.length;
+        const digitBeforeCursor = original.slice(0, cursor).replace(/\D/g, '').length;
+        const digits = original.replace(/\D/g, '');
+        const formatted = digits ? Number(digits).toLocaleString('id-ID') : '';
+        input.value = formatted;
+
+        let nextCursor = 0;
+        let digitsSeen = 0;
+        while (nextCursor < formatted.length && digitsSeen < digitBeforeCursor) {
+            if (/\d/.test(formatted[nextCursor])) digitsSeen += 1;
+            nextCursor += 1;
+        }
+        if (digitBeforeCursor === 0) nextCursor = 0;
+        input.setSelectionRange(nextCursor, nextCursor);
     }
 
     function render() {
@@ -293,7 +318,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function buildImageFile(file) {
         if (typeof createImageBitmap !== 'function') return file;
-        const bitmap = await createImageBitmap(file);
+        let bitmap;
+        try {
+            bitmap = await createImageBitmap(file);
+        } catch {
+            return file;
+        }
         const maximumDimension = 1000;
         const scale = Math.min(1, maximumDimension / Math.max(bitmap.width, bitmap.height));
         const canvas = document.createElement('canvas');
@@ -303,7 +333,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const context = canvas.getContext('2d');
         if (!context) {
             bitmap.close();
-            throw new Error('Browser tidak dapat memproses foto ini.');
+            return file;
         }
         context.fillStyle = '#ffffff';
         context.fillRect(0, 0, canvas.width, canvas.height);
@@ -311,7 +341,7 @@ document.addEventListener('DOMContentLoaded', () => {
         bitmap.close();
 
         const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.78));
-        if (!blob) throw new Error('Foto belum bisa diproses.');
+        if (!blob) return file;
         const baseName = (file.name || 'foto').replace(/\.[^.]+$/, '') || 'foto';
         return new File([blob], `${baseName}.jpg`, { type: 'image/jpeg' });
     }
@@ -325,7 +355,7 @@ document.addEventListener('DOMContentLoaded', () => {
             kondisi: document.getElementById('productCondition').value,
             material: document.getElementById('productMaterial').value.trim(),
             autentikasi: document.getElementById('productAuthenticity').value,
-            harga: Number(document.getElementById('productPrice').value),
+            harga: Number(document.getElementById('productPrice').value.replace(/\D/g, '')),
             stok: document.getElementById('productStock').value === ''
                 ? null
                 : Number(document.getElementById('productStock').value),
@@ -376,6 +406,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     search?.addEventListener('input', render);
 
+    document.getElementById('productPrice')?.addEventListener('input', formatPriceInput);
+
     document.getElementById('productImage')?.addEventListener('change', async event => {
         const input = event.currentTarget;
         const file = input.files?.[0];
@@ -387,31 +419,35 @@ document.addEventListener('DOMContentLoaded', () => {
         const saveButton = document.getElementById('saveProductButton');
 
         newImageFile = null;
+        imageProcessing = false;
+        saveButton.disabled = !apiReady;
         clearPreviewUrl();
-        showImagePreview(oldProduct?.gambar || '', oldProduct?.nama || 'produk');
-        if (!file) return;
+        if (!file) {
+            showImagePreview(oldProduct?.gambar || '', oldProduct?.nama || 'produk');
+            return;
+        }
 
-        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-        if (!allowedTypes.includes(file.type) || file.size > 2 * 1024 * 1024) {
+        const extension = file.name.split('.').pop()?.toLowerCase();
+        const accepted = ['image/jpeg', 'image/png', 'image/webp'].includes(file.type)
+            || (!file.type && ['jpg', 'jpeg', 'png', 'webp'].includes(extension));
+        if (!accepted || file.size > 2 * 1024 * 1024) {
             input.value = '';
+            showImagePreview(oldProduct?.gambar || '', oldProduct?.nama || 'produk');
             showToast('Pilih JPG, PNG, atau WEBP dengan ukuran maksimal 2 MB.', 'alert');
             return;
         }
 
+        previewUrl = URL.createObjectURL(file);
+        showImagePreview(previewUrl, file.name);
         imageProcessing = true;
         saveButton.disabled = true;
         try {
-            const processedFile = await buildImageFile(file);
+            newImageFile = await buildImageFile(file);
             if (version !== imageSelectionVersion) return;
-            newImageFile = processedFile;
-            previewUrl = URL.createObjectURL(newImageFile);
-            showImagePreview(previewUrl, file.name);
         } catch (error) {
             if (version !== imageSelectionVersion) return;
-            input.value = '';
-            newImageFile = null;
-            showImagePreview(oldProduct?.gambar || '', oldProduct?.nama || 'produk');
-            showToast(error.message || 'Foto belum bisa dibaca.', 'alert');
+            newImageFile = file;
+            showToast('Foto akan diunggah tanpa kompresi tambahan.', 'status');
         } finally {
             if (version === imageSelectionVersion) {
                 imageProcessing = false;

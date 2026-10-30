@@ -1,6 +1,6 @@
 'use strict';
 
-/* Panel admin: pesanan, pembayaran, laporan, ulasan, kategori, dan pengguna. Semua data dari API PostgreSQL. */
+/* Interaksi halaman admin: dashboard, transaksi, ulasan, kategori, dan pengguna. */
 document.addEventListener('DOMContentLoaded', () => {
     const view = document.querySelector('[data-admin-view]')?.dataset.adminView || '';
     if (!view || view === 'products') return;
@@ -60,16 +60,90 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     const waktu = iso => { const d = new Date(iso); return Number.isNaN(d.getTime()) ? '' : d.toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }); };
 
-    /* ---------------- DASHBOARD ---------------- */
+    /* ---------------- DASHBOARD PENJUALAN ---------------- */
     async function dashboard() {
-        const body = element('adminRecentOrders'); if (!body) return;
-        const orders = await api('/admin/api/pesanan');
-        if (!orders.length) { barisKosong(body, 4, 'Belum ada pesanan.'); return; }
+        const body = element('adminRecentOrders');
+        if (!body) return;
+        const [orders, report] = await Promise.all([
+            api('/admin/api/pesanan'),
+            api('/admin/api/laporan'),
+        ]);
+
+        put('adminRevenue', money(report.pendapatan));
+        put('adminCompletedOrders', report.selesai || 0);
+        put('adminItemsSold', report.produk_terjual || 0);
+        put('adminUserCount', report.pelanggan_aktif || 0);
+        put('adminSalesPeriodTotal', money((report.bulanan || []).reduce((sum, item) => sum + Number(item.pendapatan || 0), 0)));
+
+        const chart = element('adminSalesChart');
+        if (chart) {
+            chart.replaceChildren();
+            const months = report.bulanan || [];
+            const highest = Math.max(1, ...months.map(item => Number(item.pendapatan || 0)));
+            if (!months.length) {
+                chart.append(make('p', 'table-empty', 'Belum ada data penjualan.'));
+            } else {
+                months.forEach(item => {
+                    const column = make('div', 'admin-sales-month');
+                    const value = make('strong', 'admin-sales-month-value', money(item.pendapatan));
+                    const track = make('div', 'admin-sales-bar-track');
+                    const bar = make('span', 'admin-sales-bar');
+                    const revenue = Number(item.pendapatan || 0);
+                    bar.style.height = `${revenue ? Math.max(4, (revenue / highest) * 100) : 0}%`;
+                    bar.title = `${item.bulan}: ${money(revenue)} (${item.pesanan || 0} pesanan selesai)`;
+                    track.append(bar);
+                    const label = make('span', 'admin-sales-month-label', item.bulan);
+                    column.append(value, track, label);
+                    chart.append(column);
+                });
+            }
+        }
+
+        const top = element('adminTopProducts');
+        if (top) {
+            top.replaceChildren();
+            const products = report.terlaris || [];
+            if (!products.length) top.append(make('p', 'table-empty', 'Belum ada produk terjual.'));
+            products.forEach((product, index) => {
+                const row = make('div', 'admin-top-product-row');
+                row.append(
+                    make('span', 'admin-top-product-rank', String(index + 1)),
+                    make('strong', 'admin-top-product-name', product.nama),
+                    make('span', 'admin-top-product-count', `${product.terjual} terjual`),
+                );
+                top.append(row);
+            });
+        }
+
+        const statuses = element('adminSalesStatuses');
+        if (statuses) {
+            statuses.replaceChildren();
+            const statusItems = [
+                ['Menunggu pembayaran', report.menunggu_pembayaran],
+                ['Menunggu persetujuan', report.menunggu_persetujuan],
+                ['Diproses', report.diproses],
+                ['Dikirim', report.dikirim],
+                ['Selesai', report.selesai],
+                ['Dibatalkan', report.dibatalkan],
+            ];
+            statusItems.forEach(([label, value]) => {
+                const item = make('div', 'admin-sales-status-item');
+                item.append(make('span', '', label), make('strong', '', String(value || 0)));
+                statuses.append(item);
+            });
+        }
+
+        if (!orders.length) {
+            barisKosong(body, 4, 'Belum ada pesanan.');
+            return;
+        }
         body.replaceChildren();
         orders.slice(0, 5).forEach(order => {
             const row = make('tr');
             row.append(make('td', '', `#${order.orderNumber}`), make('td', '', order.nama), make('td', '', money(order.total)));
-            const st = make('td'); st.append(statusTag(order.status)); row.append(st);
+            const status = make('td');
+            status.append(statusTag(order.status));
+            row.append(status);
             body.append(row);
         });
     }
@@ -190,25 +264,6 @@ document.addEventListener('DOMContentLoaded', () => {
         await Promise.all([muatOrders(), pembayaran()]);
     }
 
-    /* ---------------- LAPORAN ---------------- */
-    async function laporan() {
-        const r = await api('/admin/api/laporan');
-        put('reportOrderCount', r.pesanan); put('reportPendingCount', r.menunggu_pembayaran);
-        put('reportCompletedCount', r.selesai); put('reportCompletedValue', money(r.pendapatan));
-        const summary = element('reportStatusSummary');
-        if (summary) {
-            summary.replaceChildren();
-            if (!r.pesanan) summary.append(make('p', 'table-footnote', 'Belum ada transaksi.'));
-            STATUS.forEach(s => { const row = make('div', 'admin-report-status-row'); row.append(make('span', '', s), make('strong', '', String((r.status || {})[s] || 0))); summary.append(row); });
-        }
-        const top = element('reportTopProducts');
-        if (top) {
-            top.replaceChildren();
-            if (!(r.terlaris || []).length) top.append(make('p', 'table-footnote', 'Belum ada penjualan yang dibayar.'));
-            (r.terlaris || []).forEach(t => { const row = make('div', 'admin-report-status-row'); row.append(make('span', '', t.nama), make('strong', '', `${t.terjual} terjual`)); top.append(row); });
-        }
-    }
-
     /* ---------------- ULASAN ---------------- */
     async function ulasan() {
         const body = element('adminReviewsBody'); if (!body) return;
@@ -238,21 +293,47 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /* ---------------- KATEGORI ---------------- */
     let editId = null;
+    let categoryPreviewUrl = '';
+    let kategoriAkanDihapus = null;
     const categoryForm = element('categoryForm');
     const categoryImage = element('categoryImageInput');
     const categoryPreview = element('categoryImagePreview');
+    const categoryDialog = element('categoryDeleteDialog');
+    const categoryDialogTitle = element('categoryDeleteTitle');
+    const categoryDialogMessage = element('categoryDeleteMessage');
+    const categoryDialogConfirm = element('categoryDeleteConfirm');
+
+    function clearCategoryPreviewUrl() {
+        if (categoryPreviewUrl) URL.revokeObjectURL(categoryPreviewUrl);
+        categoryPreviewUrl = '';
+    }
+
+    function showCategoryPreview(source) {
+        if (!categoryPreview) return;
+        categoryPreview.src = source || '';
+        categoryPreview.hidden = !source;
+    }
+
     categoryImage?.addEventListener('change', () => {
         const file = categoryImage.files?.[0];
         if (!file) return;
-        if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 3 * 1024 * 1024) {
+        const extension = file.name.split('.').pop()?.toLowerCase();
+        const accepted = ['image/jpeg', 'image/png', 'image/webp'].includes(file.type)
+            || (!file.type && ['jpg', 'jpeg', 'png', 'webp'].includes(extension));
+        if (!accepted || file.size > 3 * 1024 * 1024) {
             categoryImage.value = '';
+            showCategoryPreview(categoryPreview?.dataset.originalSrc || '');
             toast('Pilih foto JPG, PNG, atau WEBP maksimal 3 MB.', 'alert');
             return;
         }
-        if (categoryPreview) { categoryPreview.src = URL.createObjectURL(file); categoryPreview.hidden = false; }
+        clearCategoryPreviewUrl();
+        categoryPreviewUrl = URL.createObjectURL(file);
+        showCategoryPreview(categoryPreviewUrl);
     });
+
     async function kategori() {
-        const body = element('adminCategoriesBody'); if (!body) return;
+        const body = element('adminCategoriesBody');
+        if (!body) return;
         const data = await api('/admin/api/kategori');
         if (!data.length) { barisKosong(body, 5, 'Belum ada kategori.'); return; }
         body.replaceChildren();
@@ -260,98 +341,212 @@ document.addEventListener('DOMContentLoaded', () => {
             const row = make('tr');
             const photoCell = make('td');
             if (k.gambar) {
-                const img = make('img', 'category-admin-table-photo'); img.src = k.gambar; img.alt = `Foto kategori ${k.nama}`; img.loading = 'lazy'; photoCell.append(img);
+                const img = make('img', 'category-admin-table-photo');
+                img.src = k.gambar;
+                img.alt = `Foto kategori ${k.nama}`;
+                img.loading = 'lazy';
+                photoCell.append(img);
             } else photoCell.textContent = 'Belum ada foto';
             row.append(photoCell, make('td', '', k.nama), make('td', '', String(k.jumlah_produk)));
-            const st = make('td'); st.append(make('span', `admin-status ${k.aktif ? 'is-paid' : 'is-pending'}`, k.aktif ? 'Aktif' : 'Nonaktif')); row.append(st);
-            const act = make('td', 'table-actions');
-            act.append(
+            const status = make('td');
+            status.append(make('span', `admin-status ${k.aktif ? 'is-paid' : 'is-pending'}`, k.aktif ? 'Aktif' : 'Nonaktif'));
+            row.append(status);
+            const actions = make('td', 'table-actions');
+            actions.append(
                 tombol('Ubah', 'button button-secondary button-small', () => {
-                    editId = k.id; element('categoryName').value = k.nama;
+                    editId = k.id;
+                    element('categoryName').value = k.nama;
                     if (categoryImage) { categoryImage.value = ''; categoryImage.required = false; }
-                    if (categoryPreview) { categoryPreview.src = k.gambar || ''; categoryPreview.hidden = !k.gambar; }
-                    element('categorySubmit').textContent = 'Simpan perubahan'; element('categoryName').focus();
+                    clearCategoryPreviewUrl();
+                    if (categoryPreview) categoryPreview.dataset.originalSrc = k.gambar || '';
+                    showCategoryPreview(k.gambar || '');
+                    element('categorySubmit').textContent = 'Simpan perubahan';
                     categoryForm?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    element('categoryName').focus({ preventScroll: true });
                 }),
-                tombol('Hapus', 'button button-secondary button-small', async () => {
-                    const pesan = k.jumlah_produk > 0
-                        ? `Kategori "${k.nama}" masih dipakai ${k.jumlah_produk} produk. Kategori akan dinonaktifkan agar produk dan riwayat tetap utuh. Lanjutkan?`
-                        : `Hapus kategori "${k.nama}"?`;
-                    if (!window.confirm(pesan)) return;
-                    try { const res = await kirim(`/admin/api/kategori/${k.id}`, 'DELETE'); toast(res.message); if (editId === k.id) resetFormKategori(); await kategori(); }
-                    catch (error) { toast(error.message, 'alert'); }
-                }),
+                tombol('Hapus', 'button button-secondary button-small', () => bukaDialogHapusKategori(k)),
             );
-            row.append(act); body.append(row);
+            row.append(actions);
+            body.append(row);
         });
     }
+
+    function bukaDialogHapusKategori(kategori) {
+        if (!categoryDialog) return;
+        kategoriAkanDihapus = kategori;
+        const dipakai = Number(kategori.jumlah_produk || 0) > 0;
+        categoryDialogTitle.textContent = dipakai ? 'Nonaktifkan kategori?' : 'Hapus kategori?';
+        categoryDialogMessage.textContent = dipakai
+            ? `Kategori ${kategori.nama} masih digunakan ${kategori.jumlah_produk} produk. Kategori akan dinonaktifkan; produk dan riwayat pesanan tetap tersimpan.`
+            : `Kategori ${kategori.nama} akan dihapus dari katalog.`;
+        categoryDialogConfirm.textContent = dipakai ? 'Nonaktifkan kategori' : 'Hapus kategori';
+        categoryDialog.hidden = false;
+        document.body.classList.add('admin-dialog-open');
+        categoryDialogConfirm.focus();
+    }
+
+    function tutupDialogHapusKategori() {
+        if (!categoryDialog) return;
+        categoryDialog.hidden = true;
+        document.body.classList.remove('admin-dialog-open');
+        kategoriAkanDihapus = null;
+    }
+
+    element('categoryDeleteCancel')?.addEventListener('click', tutupDialogHapusKategori);
+    categoryDialog?.addEventListener('click', event => {
+        if (event.target === categoryDialog) tutupDialogHapusKategori();
+    });
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && categoryDialog && !categoryDialog.hidden) tutupDialogHapusKategori();
+    });
+    categoryDialogConfirm?.addEventListener('click', async () => {
+        if (!kategoriAkanDihapus) return;
+        const kategori = kategoriAkanDihapus;
+        categoryDialogConfirm.disabled = true;
+        try {
+            const result = await kirim(`/admin/api/kategori/${kategori.id}`, 'DELETE');
+            tutupDialogHapusKategori();
+            toast(result.message || 'Kategori diperbarui.');
+            if (editId === kategori.id) resetFormKategori();
+            await kategori();
+        } catch (error) {
+            toast(error.message, 'alert');
+        } finally {
+            categoryDialogConfirm.disabled = false;
+        }
+    });
+
     function resetFormKategori() {
-        editId = null; categoryForm?.reset();
+        editId = null;
+        categoryForm?.reset();
         if (categoryImage) categoryImage.required = true;
-        if (categoryPreview) { categoryPreview.removeAttribute('src'); categoryPreview.hidden = true; }
+        clearCategoryPreviewUrl();
+        showCategoryPreview('');
+        if (categoryPreview) delete categoryPreview.dataset.originalSrc;
         if (element('categorySubmit')) element('categorySubmit').textContent = 'Tambah kategori';
     }
+
     categoryForm?.addEventListener('submit', async event => {
         event.preventDefault();
         const nama = element('categoryName').value.trim();
         const file = categoryImage?.files?.[0];
+        if (!nama) { toast('Nama kategori wajib diisi.', 'alert'); element('categoryName').focus(); return; }
         if (!editId && !file) { toast('Foto kategori wajib dipilih.', 'alert'); categoryImage?.focus(); return; }
-        const data = new FormData(); data.append('nama', nama); data.append('aktif', 'true');
+        const data = new FormData();
+        data.append('nama', nama);
+        data.append('aktif', 'true');
         if (file) data.append('gambar', file);
         const url = editId ? `/admin/api/kategori/${editId}` : '/admin/api/kategori';
+        const submit = element('categorySubmit');
+        submit.disabled = true;
         try {
-            const response = await fetch(url, { method: editId ? 'PUT' : 'POST', credentials: 'same-origin', headers: { Accept: 'application/json', 'X-CSRFToken': csrfToken }, body: data });
+            const response = await fetch(url, {
+                method: editId ? 'PUT' : 'POST', credentials: 'same-origin',
+                headers: { Accept: 'application/json', 'X-CSRFToken': csrfToken }, body: data,
+            });
             const result = await response.json().catch(() => ({}));
             if (!response.ok) throw new Error(result.error || `Permintaan gagal (${response.status}).`);
-            toast(result.message || 'Kategori tersimpan.'); resetFormKategori(); await kategori();
-        } catch (error) { toast(error.message, 'alert'); }
+            toast(result.message || 'Kategori tersimpan.');
+            resetFormKategori();
+            await kategori();
+        } catch (error) {
+            toast(error.message, 'alert');
+        } finally {
+            submit.disabled = false;
+        }
     });
 
     /* ---------------- PENGGUNA ---------------- */
     async function pengguna() {
-        const body = element('userRows'); const box = element('userDetail');
+        const body = element('userRows');
+        const box = element('userDetail');
+        if (!body) return;
         const q = element('userSearch')?.value.trim() || '';
-        const list = await api(`/admin/api/pengguna?q=${encodeURIComponent(q)}`);
-        put('userCount', `${list.length} pelanggan ditemukan.`);
-        if (!list.length) { barisKosong(body, 7, 'Tidak ada customer.'); return; }
+        const status = element('userStatusFilter')?.value || '';
+        const list = await api(`/admin/api/pengguna?q=${encodeURIComponent(q)}&status=${encodeURIComponent(status)}`);
+        put('userCount', `${list.length} pengguna`);
+        if (!list.length) {
+            barisKosong(body, 7, 'Tidak ada pengguna yang cocok.');
+            if (box) box.hidden = true;
+            return;
+        }
         body.replaceChildren();
-        const aksi = async (path, method, data, ok) => {
-            try { await kirim(path, method, data); toast(ok); box.hidden = true; await pengguna(); }
-            catch (error) { toast(error.message, 'alert'); }
+
+        const aksi = async (path, method, data, pesan) => {
+            try {
+                await kirim(path, method, data);
+                toast(pesan);
+                if (box) box.hidden = true;
+                await pengguna();
+            } catch (error) {
+                toast(error.message, 'alert');
+            }
         };
+
         list.forEach(u => {
             const row = make('tr');
-            const nama = make('td'); nama.append(make('strong', '', u.nama));
-            const st = make('td'); st.append(statusTag(u.status === 'Aktif' ? 'Selesai' : u.status)); st.append(make('div', 'table-footnote', u.terverifikasi ? 'Email terverifikasi' : 'Email belum terverifikasi'));
-            row.append(nama, make('td', '', u.email), make('td', '', u.telepon || '—'), make('td', '', String(u.jumlahPesanan)),
-                make('td', '', waktu(u.bergabung)), st);
-            const act = make('td', 'table-actions');
-            act.append(tombol('Detail', 'btn btn-secondary btn-small', async () => {
-                try { renderDetail(box, await api(`/admin/api/pengguna/${u.id}`)); } catch (error) { toast(error.message, 'alert'); }
-            }));
+            const nameCell = make('td');
+            nameCell.append(make('strong', '', u.nama));
+            const emailCell = make('td', 'admin-user-email', u.email);
+            const statusCell = make('td');
+            statusCell.append(make('span', `admin-status ${u.status === 'Aktif' ? 'is-paid' : 'is-pending'}`, u.status));
+            statusCell.append(make('small', 'admin-user-verification', u.terverifikasi ? 'Terverifikasi' : 'Belum verifikasi'));
+            row.append(nameCell, emailCell, make('td', '', u.telepon || '—'), make('td', '', String(u.jumlahPesanan)),
+                make('td', '', waktu(u.bergabung)), statusCell);
+
+            const actionCell = make('td', 'admin-user-actions-cell');
+            const menu = make('div', 'admin-user-actions');
+            const trigger = tombol('⋯', 'admin-user-actions-trigger', () => {
+                const open = !menu.classList.contains('is-open');
+                document.querySelectorAll('.admin-user-actions.is-open').forEach(item => {
+                    item.classList.remove('is-open');
+                    item.querySelector('.admin-user-actions-trigger')?.setAttribute('aria-expanded', 'false');
+                });
+                menu.classList.toggle('is-open', open);
+                trigger.setAttribute('aria-expanded', String(open));
+            });
+            trigger.setAttribute('aria-label', `Aksi untuk ${u.nama}`);
+            trigger.setAttribute('aria-expanded', 'false');
+            const listMenu = make('div', 'admin-user-actions-menu');
+            const pilih = (label, callback, danger = false) => {
+                const button = tombol(label, `admin-user-action-item${danger ? ' is-danger' : ''}`, () => {
+                    menu.classList.remove('is-open');
+                    trigger.setAttribute('aria-expanded', 'false');
+                    callback();
+                });
+                listMenu.append(button);
+            };
+
+            pilih('Lihat detail', async () => {
+                try { renderDetail(box, await api(`/admin/api/pengguna/${u.id}`)); }
+                catch (error) { toast(error.message, 'alert'); }
+            });
+
             if (u.status === 'Aktif') {
-                act.append(tombol('Nonaktifkan', 'btn btn-secondary btn-small', () => {
-                    const alasan = window.prompt(`Alasan menonaktifkan ${u.email}:`); if (alasan === null) return;
+                pilih('Nonaktifkan', () => {
+                    const alasan = (window.prompt(`Alasan menonaktifkan ${u.email}:`) || '').trim();
+                    if (alasan.length < 5) { toast('Alasan minimal 5 karakter.', 'alert'); return; }
                     aksi(`/admin/api/pengguna/${u.id}/status`, 'POST', { aksi: 'nonaktifkan', alasan }, 'Akun dinonaktifkan.');
-                }));
-                act.append(tombol('Blokir', 'btn btn-secondary btn-small', () => {
-                    const alasan = window.prompt(`Alasan memblokir ${u.email}:`); if (alasan === null) return;
-                    aksi(`/admin/api/pengguna/${u.id}/status`, 'POST', { aksi: 'blokir', alasan }, 'Akun diblokir.');
-                }));
+                });
             } else if (u.status === 'Nonaktif') {
-                act.append(tombol('Aktifkan', 'btn btn-primary btn-small', () =>
-                    aksi(`/admin/api/pengguna/${u.id}/status`, 'POST', { aksi: 'aktifkan' }, 'Akun diaktifkan kembali.')));
+                pilih('Aktifkan', () => aksi(`/admin/api/pengguna/${u.id}/status`, 'POST', { aksi: 'aktifkan' }, 'Akun diaktifkan.'));
             }
+
             if (u.status !== 'Dihapus') {
-                act.append(tombol('Hapus', 'btn btn-secondary btn-small', () => {
-                    const konfirmasi = window.prompt(`Hapus akun (data pribadi dianonimkan, riwayat pesanan tetap). Ketik email ${u.email} untuk konfirmasi:`);
-                    if (konfirmasi === null) return;
+                pilih('Hapus pengguna', () => {
+                    const konfirmasi = (window.prompt(`Ketik email ${u.email} untuk mengonfirmasi penghapusan akun.`) || '').trim();
+                    if (!konfirmasi) return;
                     aksi(`/admin/api/pengguna/${u.id}`, 'DELETE', { konfirmasi_email: konfirmasi, alasan: 'dihapus oleh admin' }, 'Akun dihapus.');
-                }));
+                }, true);
             }
-            row.append(act); body.append(row);
+
+            menu.append(trigger, listMenu);
+            actionCell.append(menu);
+            row.append(actionCell);
+            body.append(row);
         });
     }
+
     function renderDetail(box, d) {
         box.replaceChildren(); box.hidden = false;
         box.append(make('h3', '', `Detail: ${d.nama}`));
@@ -367,9 +562,18 @@ document.addEventListener('DOMContentLoaded', () => {
             box.append(r);
         });
     }
-    element('userSearch')?.addEventListener('input', () => { window.clearTimeout(window._userT); window._userT = window.setTimeout(() => pengguna().catch(() => {}), 250); });
+    const jadwalkanPencarianPengguna = () => { window.clearTimeout(window._userT); window._userT = window.setTimeout(() => pengguna().catch(error => toast(error.message, 'alert')), 250); };
+    element('userSearch')?.addEventListener('input', jadwalkanPencarianPengguna);
+    element('userStatusFilter')?.addEventListener('change', () => pengguna().catch(error => toast(error.message, 'alert')));
+    document.addEventListener('click', event => {
+        if (event.target.closest('.admin-user-actions')) return;
+        document.querySelectorAll('.admin-user-actions.is-open').forEach(menu => {
+            menu.classList.remove('is-open');
+            menu.querySelector('.admin-user-actions-trigger')?.setAttribute('aria-expanded', 'false');
+        });
+    });
 
     element('adminOrderSearch')?.addEventListener('input', renderOrders);
-    const jalan = { dashboard, orders: muatOrders, payments: pembayaran, 'orders-payments': transaksi, reports: laporan, reviews: ulasan, categories: kategori, users: pengguna }[view];
+    const jalan = { dashboard, orders: muatOrders, payments: pembayaran, 'orders-payments': transaksi, reviews: ulasan, categories: kategori, users: pengguna }[view];
     if (jalan) jalan().catch(error => toast(`Data tidak dapat dimuat: ${error.message}`, 'alert'));
 });

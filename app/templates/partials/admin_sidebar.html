@@ -15,7 +15,7 @@
             class="{% if request.endpoint == 'admin.dashboard' %}active{% endif %}"
             href="{{ url_for('admin.dashboard') }}"
         >
-            <span aria-hidden="true">▦</span> Ringkasan
+            <span aria-hidden="true">▦</span> Dashboard
         </a>
         <a
             class="{% if request.endpoint == 'admin.produk' %}active{% endif %}"
@@ -46,12 +46,6 @@
             href="{{ url_for('admin.ulasan') }}"
         >
             <span aria-hidden="true">★</span> Ulasan
-        </a>
-        <a
-            class="{% if request.endpoint == 'admin.laporan' %}active{% endif %}"
-            href="{{ url_for('admin.laporan') }}"
-        >
-            <span aria-hidden="true">▥</span> Laporan
         </a>
         <a
             class="{% if request.endpoint == 'admin.audit_log' %}active{% endif %}"
