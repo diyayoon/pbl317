@@ -23,7 +23,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let products = [];
     let apiReady = false;
-    let newImageData = '';
+    let newImageFile = null;
+    let previewUrl = '';
 
 
     const fieldIds = {
@@ -46,7 +47,8 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         const method = String(options.method || 'GET').toUpperCase();
-        if (options.body !== undefined) {
+        // FormData (multipart): biarkan browser mengisi Content-Type + boundary sendiri.
+        if (options.body !== undefined && !(options.body instanceof FormData)) {
             headers['Content-Type'] = 'application/json';
         }
         if (!['GET', 'HEAD', 'OPTIONS', 'TRACE'].includes(method)) {
@@ -129,7 +131,8 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('saveProductButton').disabled = !apiReady;
         document.getElementById('productImagePreview').replaceChildren();
         document.getElementById('productImagePreview').hidden = true;
-        newImageData = '';
+        newImageFile = null;
+        clearPreviewUrl();
         clearErrors();
     }
 
@@ -146,6 +149,11 @@ document.addEventListener('DOMContentLoaded', () => {
             showImagePreview(product.gambar || '', product.nama || 'produk');
         }
         showPanel(true);
+    }
+
+    function clearPreviewUrl() {
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
+        previewUrl = '';
     }
 
     function showImagePreview(source, name) {
@@ -278,39 +286,33 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    async function buildImageData(file) {
-        if (typeof createImageBitmap === 'function') {
-            const bitmap = await createImageBitmap(file);
-            const maximumDimension = 1000;
-            const scale = Math.min(
-                1,
-                maximumDimension / Math.max(bitmap.width, bitmap.height),
-            );
-            const canvas = document.createElement('canvas');
-            canvas.width = Math.max(1, Math.round(bitmap.width * scale));
-            canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+    // Perkecil foto (maks. 1000px) lalu kembalikan sebagai Blob JPEG untuk dikirim via multipart.
+    async function buildImageFile(file) {
+        if (typeof createImageBitmap !== 'function') return file;
+        const bitmap = await createImageBitmap(file);
+        const maximumDimension = 1000;
+        const scale = Math.min(1, maximumDimension / Math.max(bitmap.width, bitmap.height));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+        canvas.height = Math.max(1, Math.round(bitmap.height * scale));
 
-            const context = canvas.getContext('2d');
-            if (!context) {
-                bitmap.close();
-                throw new Error('Browser tidak dapat memproses foto ini.');
-            }
-            context.fillStyle = '#ffffff';
-            context.fillRect(0, 0, canvas.width, canvas.height);
-            context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+        const context = canvas.getContext('2d');
+        if (!context) {
             bitmap.close();
-            return canvas.toDataURL('image/jpeg', 0.78);
+            throw new Error('Browser tidak dapat memproses foto ini.');
         }
+        context.fillStyle = '#ffffff';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+        bitmap.close();
 
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(String(reader.result || ''));
-            reader.onerror = () => reject(new Error('Tidak dapat membaca foto.'));
-            reader.readAsDataURL(file);
-        });
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.78));
+        if (!blob) throw new Error('Foto belum bisa diproses.');
+        const baseName = (file.name || 'foto').replace(/\.[^.]+$/, '') || 'foto';
+        return new File([blob], `${baseName}.jpg`, { type: 'image/jpeg' });
     }
 
-    function collectFormData(oldProduct = null) {
+    function collectFormData() {
         return {
             nama: document.getElementById('productName').value.trim(),
             kategori: document.getElementById('productCategory').value,
@@ -324,11 +326,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 ? null
                 : Number(document.getElementById('productStock').value),
             deskripsi: document.getElementById('productDescription').value.trim(),
-            gambar: newImageData || oldProduct?.gambar || '',
-            sumber_gambar: oldProduct?.sumber_gambar || '',
-            rating: oldProduct?.rating || 0,
-            ulasan: oldProduct?.ulasan || 0,
         };
+    }
+
+    // Susun multipart/form-data: field teks + (opsional) berkas foto pada field "gambar".
+    function buildMultipart(payload, oldProduct = null) {
+        const data = new FormData();
+        Object.entries(payload).forEach(([key, value]) => {
+            data.append(key, value === null || value === undefined ? '' : String(value));
+        });
+        if (oldProduct?.sumber_gambar) data.append('sumber_gambar', oldProduct.sumber_gambar);
+        if (newImageFile) data.append('gambar', newImageFile, newImageFile.name);
+        return data;
     }
 
     function validateForm(payload) {
@@ -367,7 +376,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('productImage')?.addEventListener('change', async event => {
         const input = event.currentTarget;
         const file = input.files?.[0];
-        newImageData = '';
+        newImageFile = null;
+        clearPreviewUrl();
         showImagePreview('', 'produk');
         if (!file) return;
 
@@ -379,11 +389,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            newImageData = await buildImageData(file);
-            showImagePreview(newImageData, file.name);
+            newImageFile = await buildImageFile(file);
+            previewUrl = URL.createObjectURL(newImageFile);
+            showImagePreview(previewUrl, file.name);
         } catch (error) {
             input.value = '';
-            newImageData = '';
+            newImageFile = null;
             showToast(error.message || 'Foto belum bisa dibaca.', 'alert');
         }
     });
@@ -402,7 +413,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const oldProduct = rawId
             ? products.find(product => Number(product.id) === Number(rawId))
             : null;
-        const payload = collectFormData(oldProduct);
+        const payload = collectFormData();
         const clientErrors = validateForm(payload);
         clearErrors();
         if (Object.keys(clientErrors).length) {
@@ -417,7 +428,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 oldProduct ? `${apiItemBase}/${oldProduct.id}` : apiUrl,
                 {
                     method: oldProduct ? 'PUT' : 'POST',
-                    body: JSON.stringify(payload),
+                    body: buildMultipart(payload, oldProduct),
                 },
             );
             products = response.products || [];

@@ -1,5 +1,6 @@
 """Admin: produk dan kategori. (pemilik: Fiony)"""
 from __future__ import annotations
+from pathlib import Path
 from flask import current_app, jsonify, render_template, request
 from app.extensions import db
 from app.models import Category
@@ -9,6 +10,39 @@ from app.utils import audit
 from app.utils.uploads import simpan_gambar_upload
 from . import admin_bp
 from app.utils.decorators import admin_required
+
+PRODUCT_MAX_BYTES = 2 * 1024 * 1024  # batas foto produk (2 MB)
+
+
+def _hapus_file_produk(url: str | None) -> None:
+    """Hapus file foto produk lokal (hanya yang berada di folder upload produk)."""
+    if not url or not url.startswith("/media/products/"):
+        return
+    base = Path(current_app.config["PRODUCT_UPLOAD_FOLDER"]).resolve()
+    target = (base / url.rsplit("/", 1)[-1]).resolve()
+    if base in target.parents and target.is_file():
+        try:
+            target.unlink()
+        except OSError:
+            current_app.logger.warning("Gagal menghapus file gambar produk %s", target.name)
+
+
+def _baca_payload_produk():
+    """Ambil data produk dari multipart/form-data (utama) atau JSON (kompatibel).
+
+    Mengembalikan (payload, path_file_baru). Untuk multipart, foto dikirim sebagai berkas
+    pada field ``gambar`` dan disimpan sebagai file di server (bukan base64 di body JSON).
+    """
+    if request.mimetype != "multipart/form-data":
+        return request.get_json(silent=True), None
+    payload = request.form.to_dict()
+    payload.pop("gambar", None)  # URL/path gambar tidak boleh ditentukan lewat field teks
+    foto = request.files.get("gambar")
+    if foto is None or not foto.filename:
+        return payload, None
+    path = simpan_gambar_upload(foto, current_app.config["PRODUCT_UPLOAD_FOLDER"], PRODUCT_MAX_BYTES)
+    payload["gambar"] = f"/media/products/{path.name}"
+    return payload, path
 
 
 @admin_bp.get("/produk")
@@ -35,8 +69,14 @@ def api_produk():
 @admin_bp.post("/api/produk")
 @admin_required
 def api_tambah_produk():
-    product, errors = CatalogService.create_product(request.get_json(silent=True))
+    try:
+        payload, path_baru = _baca_payload_produk()
+    except ValueError as exc:
+        return jsonify(error=str(exc), errors={"gambar": str(exc)}), 422
+    product, errors = CatalogService.create_product(payload)
     if errors:
+        if path_baru:
+            path_baru.unlink(missing_ok=True)
         return jsonify(error="Periksa kembali data produk.", errors=errors), 422
     audit.catat("produk_dibuat", "product", product.id, product.name, commit=True)
     return jsonify(message="Produk berhasil disimpan.", product=product.to_dict(), products=CatalogService.list_products(active_only=False)), 201
@@ -49,9 +89,18 @@ def api_ubah_produk(produk_id: int):
     if existing is None:
         return jsonify(error="Produk tidak ditemukan."), 404
     harga_lama = existing.harga
-    product, errors = CatalogService.update_product(existing, request.get_json(silent=True))
+    gambar_lama = existing.gambar
+    try:
+        payload, path_baru = _baca_payload_produk()
+    except ValueError as exc:
+        return jsonify(error=str(exc), errors={"gambar": str(exc)}), 422
+    product, errors = CatalogService.update_product(existing, payload)
     if errors:
+        if path_baru:
+            path_baru.unlink(missing_ok=True)
         return jsonify(error="Periksa kembali data produk.", errors=errors), 422
+    if path_baru and gambar_lama != product.gambar:
+        _hapus_file_produk(gambar_lama)  # foto lama sudah tergantikan
     audit.catat("produk_diubah", "product", product.id, f"{product.name}; harga {harga_lama}->{product.harga}", commit=True)
     return jsonify(message="Perubahan produk tersimpan.", product=product.to_dict(), products=CatalogService.list_products(active_only=False))
 

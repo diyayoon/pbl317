@@ -126,3 +126,27 @@ def test_perubahan_admin_langsung_tercermin_di_hasil(app, toko):
     assert "Fonograf" not in pub.get("/katalog/hasil?q=alpen").get_data(as_text=True)                     # dinonaktifkan
     assert adm.delete(f"/admin/api/produk/{pid}").status_code == 200
     assert "Fonograf" not in pub.get("/katalog?q=alpen").get_data(as_text=True)                           # dihapus
+
+
+def test_upload_produk_multipart(app, toko):
+    import io
+    png = b"\x89PNG\r\n\x1a\n" + b"0" * 64
+    adm = app.test_client()
+    login_admin(adm)
+    data = {"nama": "Lampu Minyak Antik", "kategori": "Furnitur", "era": "1900–1949", "asal": "Eropa", "kondisi": "Good",
+            "material": "Kuningan", "autentikasi": "Verified", "deskripsi": "Lampu kerja.", "harga": "1500000", "stok": "2",
+            "gambar": (io.BytesIO(png), "lampu.png")}
+    r = adm.post("/admin/api/produk", data=data, content_type="multipart/form-data")
+    assert r.status_code == 201, r.get_json()
+    produk = r.get_json()["product"]
+    assert produk["gambar"].startswith("/media/products/")
+    assert adm.get(produk["gambar"]).status_code == 200
+    # isi bukan gambar ditolak
+    data["gambar"] = (io.BytesIO(b"bukan gambar"), "palsu.png")
+    r = adm.post("/admin/api/produk", data=data, content_type="multipart/form-data")
+    assert r.status_code == 422 and "gambar" in r.get_json()["errors"]
+    # edit tanpa file baru: foto lama tetap
+    data.pop("gambar")
+    r = adm.put(f"/admin/api/produk/{produk['id']}", data=data, content_type="multipart/form-data")
+    assert r.status_code == 200, r.get_json()
+    assert r.get_json()["product"]["gambar"] == produk["gambar"]
