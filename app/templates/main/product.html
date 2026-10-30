@@ -28,7 +28,7 @@
                 {% if not current_user.is_authenticated or current_user.role == 'customer' %}
                 <div class="detail-purchase-actions">
                     <button class="detail-cart-icon-button" id="detailOpenCart" type="button" aria-controls="detailCartPanel" aria-expanded="false" aria-label="Pilih jumlah dan tambahkan ke keranjang" {% if item.stok < 1 %}disabled{% endif %}>
-                        <span class="detail-cart-glyph" aria-hidden="true">🛍</span>
+                        <img class="ui-icon detail-cart-glyph" src="{{ url_for('static', filename='images/icons/cart.svg') }}" alt="" aria-hidden="true">
                     </button>
                     <button class="button button-gold detail-buy-button" type="button" id="detailBuyNow" {% if item.stok < 1 %}disabled{% endif %} data-buy-now
                         data-product-id="{{ item.id }}" data-product-name="{{ item.nama }}" data-product-price="{{ item.harga }}"
@@ -55,7 +55,9 @@
                         data-product-name="{{ item.nama }}" data-product-price="{{ item.harga }}"
                         data-product-image="{{ item.gambar }}" data-product-category="{{ item.kategori }}"
                         data-product-origin="{{ item.asal }}" data-product-stock="{{ item.stok }}"
-                        data-product-url="{{ url_for('main.detail_produk', produk_id=item.id) }}">Tambah ke Keranjang</button>
+                        data-product-url="{{ url_for('main.detail_produk', produk_id=item.id) }}">
+                        <img class="ui-icon button-leading-icon" src="{{ url_for('static', filename='images/icons/cart.svg') }}" alt="" aria-hidden="true">
+                        Tambah ke Keranjang</button>
                     <small class="field-hint">Stok tersedia: {{ item.stok }} item</small>
                 </div>
                 {% endif %}

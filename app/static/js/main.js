@@ -48,7 +48,7 @@ function tampilkanPromptLogin() {
             <p id="albisAuthDescription">Masuk ke akun customer Albis Antique agar keranjang tersimpan khusus untuk akunmu.</p>
             <div class="albis-auth-actions">
                 <button class="albis-auth-later" type="button">Nanti saja</button>
-                <a class="albis-auth-login" href="${albisBody.dataset.loginUrl || '/auth/login'}">Masuk</a>
+                <a class="albis-auth-login" href="${albisBody.dataset.loginUrl || '/auth/login'}"><img class="ui-icon button-leading-icon" src="${albisBody.dataset.loginIconUrl || '/static/images/icons/login.svg'}" alt="" aria-hidden="true">Masuk</a>
             </div>
         </section>`;
     document.body.append(overlay);

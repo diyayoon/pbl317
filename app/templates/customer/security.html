@@ -38,45 +38,63 @@
 
                 <div class="form-field">
                     <label for="passwordLama">Kata sandi saat ini</label>
-                    <input
-                        class="form-control"
-                        id="passwordLama"
-                        name="password_lama"
-                        type="password"
-                        autocomplete="current-password"
-                        required
-                    >
+                    <div class="password-wrap">
+                        <input
+                            class="form-control"
+                            id="passwordLama"
+                            name="password_lama"
+                            type="password"
+                            autocomplete="current-password"
+                            required
+                        >
+                        <button class="password-toggle" type="button" aria-controls="passwordLama" aria-pressed="false" aria-label="Tampilkan kata sandi" title="Tampilkan kata sandi">
+                            <img class="password-toggle-icon password-icon-close" src="{{ url_for('static', filename='images/icons/eye-close.svg') }}" alt="" aria-hidden="true">
+                            <img class="password-toggle-icon password-icon-open" src="{{ url_for('static', filename='images/icons/eye-open.svg') }}" alt="" aria-hidden="true">
+                        </button>
+                    </div>
                     <small class="field-error" id="passwordLamaError" hidden></small>
                 </div>
 
                 <div class="form-field">
                     <label for="passwordBaru">Kata sandi baru</label>
-                    <input
-                        class="form-control"
-                        id="passwordBaru"
-                        name="password_baru"
-                        type="password"
-                        autocomplete="new-password"
-                        minlength="16"
-                        maxlength="128"
-                        required
-                    >
+                    <div class="password-wrap">
+                        <input
+                            class="form-control"
+                            id="passwordBaru"
+                            name="password_baru"
+                            type="password"
+                            autocomplete="new-password"
+                            minlength="16"
+                            maxlength="128"
+                            required
+                        >
+                        <button class="password-toggle" type="button" aria-controls="passwordBaru" aria-pressed="false" aria-label="Tampilkan kata sandi" title="Tampilkan kata sandi">
+                            <img class="password-toggle-icon password-icon-close" src="{{ url_for('static', filename='images/icons/eye-close.svg') }}" alt="" aria-hidden="true">
+                            <img class="password-toggle-icon password-icon-open" src="{{ url_for('static', filename='images/icons/eye-open.svg') }}" alt="" aria-hidden="true">
+                        </button>
+                    </div>
                     <small class="field-hint">Gunakan frasa sandi minimal 16 karakter.</small>
                     <small class="field-error" id="passwordBaruError" hidden></small>
                 </div>
 
                 <div class="form-field">
                     <label for="konfirmasiPasswordBaru">Konfirmasi kata sandi baru</label>
-                    <input
-                        class="form-control"
-                        id="konfirmasiPasswordBaru"
-                        name="konfirmasi_password"
-                        type="password"
-                        autocomplete="new-password"
-                        minlength="16"
-                        maxlength="128"
-                        required
-                    >
+                    <div class="password-wrap">
+                        <input
+                            class="form-control"
+                            id="konfirmasiPasswordBaru"
+                            name="konfirmasi_password"
+                            type="password"
+                            autocomplete="new-password"
+                            minlength="16"
+                            maxlength="128"
+                            required
+                        >
+                        <button class="password-toggle" type="button" aria-controls="konfirmasiPasswordBaru" aria-pressed="false" aria-label="Tampilkan kata sandi" title="Tampilkan kata sandi">
+                            <img class="password-toggle-icon password-icon-close" src="{{ url_for('static', filename='images/icons/eye-close.svg') }}" alt="" aria-hidden="true">
+                            <img class="password-toggle-icon password-icon-open" src="{{ url_for('static', filename='images/icons/eye-open.svg') }}" alt="" aria-hidden="true">
+                        </button>
+                    </div>
                     <small class="field-error" id="konfirmasiPasswordBaruError" hidden></small>
                 </div>
 

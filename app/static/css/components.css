@@ -885,19 +885,17 @@ body.lightbox-terbuka { overflow: hidden; }
     padding: 0;
     line-height: 1;
 }
-.nav-actions > form.nav-logout-form > button.icon-button > .nav-symbol {
-    display: inline-grid;
-    flex: 0 0 19px;
+.nav-actions > form.nav-logout-form > button.icon-button > .nav-ui-icon {
+    display: block;
+    flex: 0 0 21px;
 }
 .nav-actions > a.icon-button > .nav-symbol {
     display: inline-grid;
     flex: 0 0 19px;
 }
-.nav-actions > a.icon-button > span:first-child {
-    display: inline-grid;
-    place-items: center;
-    line-height: 1;
-    font-size: 1rem;
+.nav-actions > a.icon-button > .nav-ui-icon {
+    display: block;
+    flex: 0 0 21px;
 }
 .nav-actions .cart-badge { line-height: 1; }
 
@@ -1053,3 +1051,21 @@ body.lightbox-terbuka { overflow: hidden; }
     border-color: var(--warna-biru-sekunder);
     background: #eaf8fd;
 }
+
+
+/* Ikon SVG antarmuka pilihan Albis Antique. */
+.ui-icon {
+    display: block;
+    width: 20px;
+    height: 20px;
+    flex: 0 0 auto;
+    object-fit: contain;
+}
+.nav-ui-icon { width: 21px; height: 21px; }
+.button-leading-icon { width: 18px; height: 18px; }
+.nav-actions .nav-ui-icon { transition: transform .2s ease, opacity .2s ease; }
+.nav-actions .icon-button:hover .nav-ui-icon { transform: translateY(-1px); opacity: .86; }
+.product-actions-float button .product-cart-icon { width: 21px; height: 21px; }
+.albis-auth-login .button-leading-icon,
+.auth-card .button-primary .button-leading-icon,
+.button-primary .button-leading-icon { filter: brightness(0) invert(1); }

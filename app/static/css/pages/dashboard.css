@@ -1647,3 +1647,16 @@ body.admin-dialog-open { overflow: hidden; }
     .admin-dialog-actions { flex-direction: column-reverse; }
     .admin-dialog-actions .button { width: 100%; }
 }
+
+
+.workspace-action-icon {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+    flex: 0 0 18px;
+}
+.customer-sidebar a > .workspace-action-icon {
+    width: 19px;
+    height: 19px;
+}
+.workspace-logout-link:hover .workspace-action-icon { opacity: .8; }

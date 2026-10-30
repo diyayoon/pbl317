@@ -28,9 +28,36 @@
                 <div class="admin-panel-heading"><div><h2>Ganti kata sandi</h2></div></div>
                 <form method="post" class="admin-inline-form admin-password-form" autocomplete="off">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <div class="form-field"><label for="pwLama">Kata sandi saat ini</label><input class="form-control" id="pwLama" name="password_lama" type="password" autocomplete="current-password" maxlength="200" required></div>
-                    <div class="form-field"><label for="pwBaru">Kata sandi baru (16–128 karakter)</label><input class="form-control" id="pwBaru" name="password_baru" type="password" autocomplete="new-password" minlength="16" maxlength="128" required></div>
-                    <div class="form-field"><label for="pwKonfirmasi">Ulangi kata sandi baru</label><input class="form-control" id="pwKonfirmasi" name="konfirmasi_password" type="password" autocomplete="new-password" minlength="16" maxlength="128" required></div>
+                    <div class="form-field">
+                        <label for="pwLama">Kata sandi saat ini</label>
+                        <div class="password-wrap">
+                            <input class="form-control" id="pwLama" name="password_lama" type="password" autocomplete="current-password" maxlength="200" required>
+                            <button class="password-toggle" type="button" aria-controls="pwLama" aria-pressed="false" aria-label="Tampilkan kata sandi" title="Tampilkan kata sandi">
+                                <img class="password-toggle-icon password-icon-close" src="{{ url_for('static', filename='images/icons/eye-close.svg') }}" alt="" aria-hidden="true">
+                                <img class="password-toggle-icon password-icon-open" src="{{ url_for('static', filename='images/icons/eye-open.svg') }}" alt="" aria-hidden="true">
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-field">
+                        <label for="pwBaru">Kata sandi baru (16–128 karakter)</label>
+                        <div class="password-wrap">
+                            <input class="form-control" id="pwBaru" name="password_baru" type="password" autocomplete="new-password" minlength="16" maxlength="128" required>
+                            <button class="password-toggle" type="button" aria-controls="pwBaru" aria-pressed="false" aria-label="Tampilkan kata sandi" title="Tampilkan kata sandi">
+                                <img class="password-toggle-icon password-icon-close" src="{{ url_for('static', filename='images/icons/eye-close.svg') }}" alt="" aria-hidden="true">
+                                <img class="password-toggle-icon password-icon-open" src="{{ url_for('static', filename='images/icons/eye-open.svg') }}" alt="" aria-hidden="true">
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-field">
+                        <label for="pwKonfirmasi">Ulangi kata sandi baru</label>
+                        <div class="password-wrap">
+                            <input class="form-control" id="pwKonfirmasi" name="konfirmasi_password" type="password" autocomplete="new-password" minlength="16" maxlength="128" required>
+                            <button class="password-toggle" type="button" aria-controls="pwKonfirmasi" aria-pressed="false" aria-label="Tampilkan kata sandi" title="Tampilkan kata sandi">
+                                <img class="password-toggle-icon password-icon-close" src="{{ url_for('static', filename='images/icons/eye-close.svg') }}" alt="" aria-hidden="true">
+                                <img class="password-toggle-icon password-icon-open" src="{{ url_for('static', filename='images/icons/eye-open.svg') }}" alt="" aria-hidden="true">
+                            </button>
+                        </div>
+                    </div>
                     <button class="button button-primary" type="submit">Simpan kata sandi</button>
                 </form>
             </section>

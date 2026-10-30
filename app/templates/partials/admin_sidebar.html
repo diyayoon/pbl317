@@ -63,7 +63,7 @@
         <form class="workspace-logout-form" action="{{ url_for('auth.logout') }}" method="post">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button class="workspace-logout-link" type="submit">
-                <span aria-hidden="true">↪</span> Keluar dari akun
+                <img class="ui-icon workspace-action-icon" src="{{ url_for('static', filename='images/icons/logout.svg') }}" alt="" aria-hidden="true"> Keluar dari akun
             </button>
         </form>
     </nav>

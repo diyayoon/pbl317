@@ -54,6 +54,7 @@
     data-user-phone="{{ current_user.telepon if current_user.is_authenticated else '' }}"
     data-user-address="{{ current_user.alamat if current_user.is_authenticated and current_user.alamat else '' }}"
     data-login-url="{{ url_for('auth.login') }}"
+    data-login-icon-url="{{ url_for('static', filename='images/icons/login.svg') }}"
 >
     <div id="snowfall" class="snowfall" aria-hidden="true"></div>
 
@@ -92,6 +93,7 @@
         {% include 'partials/footer.html' %}
     {% endif %}
 
+    <script src="{{ url_for('static', filename='js/tombol_mata.js') }}" defer></script>
     <script src="{{ url_for('static', filename='js/snowfall.js') }}" defer></script>
     <script src="{{ url_for('static', filename='js/catalog.js') }}" defer></script>
     <script src="{{ url_for('static', filename='js/efek.js') }}" defer></script>

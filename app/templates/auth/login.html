@@ -60,8 +60,8 @@
                             aria-label="Tampilkan kata sandi"
                             title="Tampilkan kata sandi"
                         >
-                            <span class="ikon-mata-coret" aria-hidden="true"></span>
-                                <span class="ikon-mata" aria-hidden="true"></span>
+                            <img class="password-toggle-icon password-icon-close" src="{{ url_for('static', filename='images/icons/eye-close.svg') }}" alt="" aria-hidden="true">
+                            <img class="password-toggle-icon password-icon-open" src="{{ url_for('static', filename='images/icons/eye-open.svg') }}" alt="" aria-hidden="true">
                         </button>
                     </div>
                 </div>
@@ -84,6 +84,7 @@
                     type="submit"
                    
                 >
+                    <img class="ui-icon button-leading-icon" src="{{ url_for('static', filename='images/icons/login.svg') }}" alt="" aria-hidden="true">
                     Masuk
                 </button>
             </form>
@@ -105,6 +106,4 @@
 </section>
 {% endblock %}
 
-{% block scripts %}
-<script src="{{ url_for('static', filename='js/tombol_mata.js') }}" defer></script>
-{% endblock %}
+{% block scripts %}{% endblock %}

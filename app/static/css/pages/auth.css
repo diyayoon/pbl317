@@ -281,38 +281,15 @@ body.auth-page .auth-card-daftar {
 }
 .password-toggle:hover { background: rgba(97,168,214,.14); }
 .password-toggle[aria-pressed="true"] { background: rgba(97,168,214,.22); }
-.ikon-mata,
-.ikon-mata-coret {
-    position: relative;
+.password-toggle-icon {
     display: block;
-    width: 22px;
-    height: 16px;
+    width: 21px;
+    height: 21px;
+    object-fit: contain;
 }
-.ikon-mata::before,
-.ikon-mata-coret::before {
-    content: "";
-    position: absolute;
-    inset: 2px 1px;
-    border: 1.7px solid currentColor;
-    border-radius: 75% 25% / 50%;
-}
-.ikon-mata::after,
-.ikon-mata-coret::after {
-    content: "";
-    position: absolute;
-    top: 5px;
-    left: 8px;
-    width: 5px;
-    height: 5px;
-    border: 1.7px solid currentColor;
-    border-radius: 50%;
-}
-.ikon-mata-coret {
-    background: linear-gradient(45deg, transparent 46%, currentColor 48%, currentColor 53%, transparent 55%);
-}
-.password-toggle .ikon-mata { display: none; }
-.password-toggle[aria-pressed="true"] .ikon-mata { display: block; }
-.password-toggle[aria-pressed="true"] .ikon-mata-coret { display: none; }
+.password-icon-open { display: none; }
+.password-toggle[aria-pressed="true"] .password-icon-open { display: block; }
+.password-toggle[aria-pressed="true"] .password-icon-close { display: none; }
 
 /* Garis kemajuan panjang password: menempel di dasar kolom, tidak menambah tinggi form */
 .strength-meter {

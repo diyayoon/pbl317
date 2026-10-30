@@ -79,8 +79,8 @@
                                 aria-label="Tampilkan kata sandi"
                                 title="Tampilkan kata sandi"
                             >
-                                <span class="ikon-mata-coret" aria-hidden="true"></span>
-                                <span class="ikon-mata" aria-hidden="true"></span>
+                                <img class="password-toggle-icon password-icon-close" src="{{ url_for('static', filename='images/icons/eye-close.svg') }}" alt="" aria-hidden="true">
+                                <img class="password-toggle-icon password-icon-open" src="{{ url_for('static', filename='images/icons/eye-open.svg') }}" alt="" aria-hidden="true">
                             </button>
                             <div class="strength-meter" id="strengthMeter" data-level="0" aria-hidden="true">
                                 <span></span><span></span><span></span><span></span>
@@ -117,17 +117,23 @@
 
                     <div class="form-field">
                         <label for="konfirmasiPassword">Konfirmasi kata sandi</label>
-                        <input
-                            class="form-control{% if galat.konfirmasi_password %} is-invalid{% endif %}"
-                            id="konfirmasiPassword"
-                            name="konfirmasi_password"
-                            type="password"
-                            autocomplete="new-password"
-                            maxlength="128"
-                            aria-describedby="konfirmasiPasswordError"
-                            {% if galat.konfirmasi_password %}aria-invalid="true"{% endif %}
-                            required
-                        >
+                        <div class="password-wrap">
+                            <input
+                                class="form-control{% if galat.konfirmasi_password %} is-invalid{% endif %}"
+                                id="konfirmasiPassword"
+                                name="konfirmasi_password"
+                                type="password"
+                                autocomplete="new-password"
+                                maxlength="128"
+                                aria-describedby="konfirmasiPasswordError"
+                                {% if galat.konfirmasi_password %}aria-invalid="true"{% endif %}
+                                required
+                            >
+                            <button class="password-toggle" type="button" aria-controls="konfirmasiPassword" aria-pressed="false" aria-label="Tampilkan kata sandi" title="Tampilkan kata sandi">
+                                <img class="password-toggle-icon password-icon-close" src="{{ url_for('static', filename='images/icons/eye-close.svg') }}" alt="" aria-hidden="true">
+                                <img class="password-toggle-icon password-icon-open" src="{{ url_for('static', filename='images/icons/eye-open.svg') }}" alt="" aria-hidden="true">
+                            </button>
+                        </div>
                         <p class="field-error" id="konfirmasiPasswordError" role="alert" {% if not galat.konfirmasi_password %}hidden{% endif %}>
                             {{ galat.konfirmasi_password or '' }}
                         </p>
@@ -154,6 +160,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/tombol_mata.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/validasi_register.js') }}" defer></script>
 {% endblock %}
