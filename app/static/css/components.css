@@ -40,18 +40,22 @@
     flex: 0 0 auto;
 }
 
-/* Lingkaran logo */
+/* Logo kepingan salju yang sama dengan favicon */
 .brand-crest {
     width: 40px;
     height: 40px;
-    border-radius: 50%;
     display: grid;
     place-items: center;
-    border: 1px solid rgba(199, 169, 105, 0.72);
-    background: linear-gradient(145deg, #fff, #e8f7fc);
-    box-shadow: 0 7px 20px rgba(57, 127, 168, 0.13);
-    font-size: 1.05rem;
-    color: var(--warna-biru-dalam);
+    flex: 0 0 auto;
+    overflow: hidden;
+}
+
+.brand-crest img {
+    display: block;
+    width: 80px;
+    height: 80px;
+    max-width: none;
+    object-fit: contain;
 }
 
 /* Teks nama brand › teks tebal */

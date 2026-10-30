@@ -214,10 +214,15 @@
         display: none;
     }
 
-    /* Lingkaran logo */
+    /* Ukuran logo navbar pada layar kecil */
     .brand-crest {
         width: 35px;
         height: 35px;
+    }
+
+    .brand-crest img {
+        width: 70px;
+        height: 70px;
     }
 
     /* Tombol aksi di kanan navbar */
