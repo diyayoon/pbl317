@@ -40,21 +40,19 @@
     flex: 0 0 auto;
 }
 
-/* Logo kepingan salju yang sama dengan favicon */
+/* Logo navbar dan favicon menggunakan satu aset: icon-albis.png. */
 .brand-crest {
     width: 40px;
     height: 40px;
     display: grid;
     place-items: center;
     flex: 0 0 auto;
-    overflow: hidden;
 }
 
 .brand-crest img {
     display: block;
-    width: 80px;
-    height: 80px;
-    max-width: none;
+    width: 100%;
+    height: 100%;
     object-fit: contain;
 }
 
