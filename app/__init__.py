@@ -110,6 +110,29 @@ def buat_app(konfigurasi=None):
             abort(404)
         return send_from_directory(folder, nama_file, conditional=True)
 
+    @app.get("/media/avatars/<path:nama_file>")
+    def media_avatar(nama_file):
+        from .models import User
+
+        if Path(nama_file).name != nama_file:
+            abort(404)
+        referensi = f"/media/avatars/{nama_file}"
+        pengguna = User.query.filter_by(
+            avatar_data=referensi, is_active=True, deleted_at=None
+        ).first()
+        if pengguna is None:
+            abort(404)
+        if not current_user.is_authenticated or current_user.id != pengguna.id:
+            from .models import Review
+            if not Review.query.filter_by(user_id=pengguna.id, is_hidden=False).first():
+                abort(404)
+
+        folder = Path(app.config["AVATAR_UPLOAD_FOLDER"]).resolve()
+        target = (folder / nama_file).resolve()
+        if folder not in target.parents or not target.is_file():
+            abort(404)
+        return send_from_directory(folder, nama_file, conditional=True)
+
     @app.get("/media/reviews/<int:review_id>")
     def media_ulasan(review_id):
         """Foto ulasan publik hanya tersedia bila ulasan tidak disembunyikan admin."""

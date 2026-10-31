@@ -49,6 +49,7 @@ class Config:
     PRODUCT_MAX_BYTES = 2 * 1024 * 1024
     CATEGORY_UPLOAD_FOLDER = str(BASE_DIR / "instance" / "uploads" / "categories")
     REVIEW_UPLOAD_FOLDER = str(BASE_DIR / "instance" / "uploads" / "reviews")
+    AVATAR_UPLOAD_FOLDER = str(BASE_DIR / "instance" / "uploads" / "avatars")
     CATEGORY_MAX_BYTES = 3 * 1024 * 1024
     REVIEW_MAX_BYTES = 3 * 1024 * 1024
     PAYMENT_MAX_BYTES = 5 * 1024 * 1024
@@ -134,6 +135,7 @@ class TestingConfig(Config):
     PRODUCT_UPLOAD_FOLDER = "/tmp/albis_test_uploads/products"  # nosec B108
     CATEGORY_UPLOAD_FOLDER = "/tmp/albis_test_uploads/categories"  # nosec B108
     REVIEW_UPLOAD_FOLDER = "/tmp/albis_test_uploads/reviews"  # nosec B108
+    AVATAR_UPLOAD_FOLDER = "/tmp/albis_test_uploads/avatars"  # nosec B108
 
 
 class ProductionConfig(Config):

@@ -18,7 +18,8 @@ function inisialisasiProfilNavbar() {
         if (namaNode) namaNode.textContent = nama;
         tautan.setAttribute('aria-label', `Akun ${nama}`);
         tautan.title = `Akun ${nama}`;
-        const foto = typeof profil.foto === 'string' && profil.foto.startsWith('data:image/') ? profil.foto : '';
+        const fotoValid = typeof profil.foto === 'string' && (profil.foto.startsWith('data:image/') || profil.foto.startsWith('/media/avatars/'));
+        const foto = fotoValid ? profil.foto : '';
         if (fotoNode && foto) {
             fotoNode.src = foto; fotoNode.hidden = false;
             if (fallbackNode) fallbackNode.hidden = true;

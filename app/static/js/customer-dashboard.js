@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const response = await fetch('/customer/api/dashboard-summary', { credentials: 'same-origin', headers: { Accept: 'application/json' } });
         const data = await response.json().catch(() => ({}));
         if (response.status === 401) { window.location.href = data.login || '/auth/login'; return; }
-        if (!response.ok) throw new Error(data.error || 'Ringkasan akun gagal dimuat.');
+        if (!response.ok) throw new Error(data.error || 'Dashboard gagal dimuat.');
         const orders = Array.isArray(data.orders) ? data.orders : [];
         set('customerOrderCount', Number(data.order_count ?? orders.length));
         set('customerCartCount', (data.cart || []).reduce((sum, item) => sum + Number(item.jumlah || 1), 0));
@@ -39,7 +39,31 @@ document.addEventListener('DOMContentLoaded', async () => {
         list.replaceChildren();
         orders.forEach(order => {
             const card = make('article', 'customer-order-item');
-            const emblem = make('div', 'customer-order-emblem', '♜'); emblem.setAttribute('aria-hidden', 'true');
+            const emblem = make('div', 'customer-order-emblem');
+            const firstItem = (order.items || []).find(item => item && item.gambar);
+            if (firstItem) {
+                try {
+                    const imageUrl = new URL(firstItem.gambar, window.location.origin);
+                    if (imageUrl.protocol === 'https:' || imageUrl.origin === window.location.origin) {
+                        const image = make('img');
+                        image.src = imageUrl.href;
+                        image.alt = firstItem.nama ? `Foto ${firstItem.nama}` : 'Foto produk pesanan';
+                        image.loading = 'lazy';
+                        image.decoding = 'async';
+                        image.addEventListener('error', () => {
+                            image.remove();
+                            emblem.textContent = '✧';
+                        }, { once: true });
+                        emblem.append(image);
+                    }
+                } catch {
+                    emblem.textContent = '✧';
+                }
+            } else {
+                emblem.textContent = '✧';
+            }
+            if (!emblem.childElementCount && !emblem.textContent) emblem.textContent = '✧';
+            emblem.setAttribute('aria-hidden', 'true');
             const info = make('div', 'customer-order-info');
             const names = (order.items || []).map(item => item.nama).filter(Boolean).join(', ');
             const date = new Date(order.date);
@@ -58,6 +82,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             list.append(card);
         });
     } catch (error) {
-        if (list) kosong(error.message || 'Ringkasan akun gagal dimuat.');
+        if (list) kosong(error.message || 'Dashboard gagal dimuat.');
     }
 });

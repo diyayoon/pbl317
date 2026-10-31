@@ -1,8 +1,5 @@
 from __future__ import annotations
-import base64
-import binascii
 import re
-from flask import current_app
 from sqlalchemy import select
 from app.extensions import db
 from app.models import Address, Cart, CartItem, Product, User
@@ -150,50 +147,54 @@ class LayananPelanggan:
         return cls.daftar_alamat(user)
 
     @classmethod
-    def update_profile(cls, user: User, payload: dict):
+    def update_profile(
+        cls,
+        user: User,
+        payload: dict,
+        avatar_path: str | None = None,
+        remove_avatar: bool = False,
+    ):
         if not isinstance(payload, dict):
             raise ValueError("Data profil tidak valid.")
+        if "foto" in payload:
+            raise ValueError("Foto profil harus dikirim sebagai berkas, bukan data teks.")
+
         name = str(payload.get("nama") or "").strip()
         email = str(payload.get("email") or "").strip().lower()
         phone = str(payload.get("telepon") or "").strip()
-        avatar = payload.get("foto")
-        import re
+
         if len(name) < 3 or len(name) > 100 or not re.fullmatch(r"[^\W\d_][\w .'-]*", name, flags=re.UNICODE):
             raise ValueError("Nama harus terdiri dari 3–100 karakter yang valid.")
         if len(email) > 254 or not re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", email):
             raise ValueError("Format email tidak valid.")
         if email != user.email:
             raise ValueError("Email login tidak dapat diubah dari halaman profil.")
+
         digits = re.sub(r"[^\d+]", "", phone).replace("+", "")
         if digits.startswith("0"):
             digits = "62" + digits[1:]
         if phone and not re.fullmatch(r"62\d{8,13}", digits):
             raise ValueError("Nomor telepon harus diawali 62 dan berisi 10–15 angka.")
         if not phone:
-            digits = ""  # telepon opsional di profil (wajib hanya di alamat pengiriman)
-        if avatar is not None:
-            if not isinstance(avatar, str):
-                raise ValueError("Foto profil tidak valid.")
-            if avatar:
-                match = re.fullmatch(r"data:image/(jpeg|png|webp);base64,([A-Za-z0-9+/=]+)", avatar)
-                if not match:
-                    raise ValueError("Foto profil harus berupa JPG, PNG, atau WEBP yang valid.")
-                try:
-                    image_bytes = base64.b64decode(match.group(2), validate=True)
-                except (ValueError, binascii.Error) as exc:
-                    raise ValueError("Data foto profil tidak valid.") from exc
-                if not image_bytes or len(image_bytes) > current_app.config["AVATAR_MAX_BYTES"]:
-                    raise ValueError("Ukuran foto profil maksimal 1 MB.")
-                signature_ok = {
-                    "jpeg": image_bytes.startswith(b"\xff\xd8\xff"),
-                    "png": image_bytes.startswith(b"\x89PNG\r\n\x1a\n"),
-                    "webp": len(image_bytes) >= 12 and image_bytes[:4] == b"RIFF" and image_bytes[8:12] == b"WEBP",
-                }.get(match.group(1), False)
-                if not signature_ok:
-                    raise ValueError("Isi foto profil tidak cocok dengan format gambarnya.")
+            digits = ""
+
+        if avatar_path is not None and not re.fullmatch(
+            r"/media/avatars/[0-9a-f]{32}\.(?:jpg|jpeg|png|webp)", avatar_path
+        ):
+            raise ValueError("Lokasi foto profil tidak valid.")
+
         user.nama = name
         user.email = email
         user.telepon = digits
-        user.avatar_data = avatar or None
+        if avatar_path is not None:
+            user.avatar_data = avatar_path
+        elif remove_avatar:
+            user.avatar_data = None
+
         db.session.commit()
-        return {"nama": user.nama, "email": user.email, "telepon": user.telepon, "foto": user.avatar_data}
+        return {
+            "nama": user.nama,
+            "email": user.email,
+            "telepon": user.telepon,
+            "foto": user.avatar_data,
+        }

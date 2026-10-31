@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Ruang Koleksi Saya — Albis Antique{% endblock %}
+{% block title %}Dashboard Kolektor — Albis Antique{% endblock %}
 
 {% block styles %}
 <link
@@ -12,13 +12,13 @@
 {% block content %}
 <section class="customer-dashboard-content" id="customerDashboard">
     <div class="customer-eyebrow">
-        <span aria-hidden="true">✦</span> KOLEKSI PRIBADIMU
+        <span aria-hidden="true">✦</span> DASHBOARD KOLEKTOR
     </div>
 
     <header class="customer-welcome">
         <div>
             <h1>Selamat datang, <span id="customerGreetingName">{{ current_user.nama.split(' ')[0] }}</span>.</h1>
-            <p>Kelola profil, keranjang, dan perjalanan pesananmu dalam satu tempat.</p>
+            <p>Pantau pesanan, kelola keranjang, dan perbarui profilmu dari satu tempat.</p>
         </div>
         <div class="customer-welcome-seal" aria-hidden="true">
             <span>♕</span>
@@ -35,42 +35,42 @@
         <a class="button button-primary button-small" href="{{ url_for('customer.profil') }}#alamat">Lengkapi alamat</a>
     </section>
 
-    <div class="customer-stat-grid" aria-label="Ringkasan akun">
+    <div class="customer-stat-grid" aria-label="Statistik akun">
         <article class="customer-stat-card">
             <span class="customer-stat-icon" aria-hidden="true">♧</span>
             <span class="customer-stat-label">Total pesanan</span>
             <strong id="customerOrderCount">0</strong>
-            <small>Pesanan yang tercatat pada akun ini</small>
+            <small>Seluruh pesanan di akunmu</small>
         </article>
         <article class="customer-stat-card">
             <span class="customer-stat-icon" aria-hidden="true">🛍</span>
             <span class="customer-stat-label">Item keranjang</span>
             <strong id="customerCartCount">0</strong>
-            <small>Jumlah barang dalam keranjang</small>
+            <small>Barang yang siap dipesan</small>
         </article>
         <article class="customer-stat-card">
             <span class="customer-stat-icon" aria-hidden="true">♙</span>
             <span class="customer-stat-label">Alamat tersimpan</span>
             <strong id="customerAddressCount">0</strong>
-            <small>Alamat pengiriman di akun ini</small>
+            <small>Alamat untuk pengiriman koleksi</small>
         </article>
     </div>
 
     <section class="customer-orders-panel">
         <div class="customer-panel-heading">
             <div>
-                <span class="customer-section-kicker">PERJALANAN KOLEKSI</span>
+                <span class="customer-section-kicker">AKTIVITAS PESANAN</span>
                 <h2>Pesanan terbaru</h2>
-                <p>Ikuti perjalanan benda pilihanmu hingga tiba di rumah.</p>
+                <p>Pantau pesanan terbarumu hingga sampai di tujuan.</p>
             </div>
             <a class="customer-text-link" href="{{ url_for('customer.pesanan') }}">
-                Semua pesanan <span aria-hidden="true">→</span>
+                Lihat semua pesanan <span aria-hidden="true">→</span>
             </a>
         </div>
 
         <div class="customer-order-list" id="customerRecentOrders" aria-live="polite">
             <div class="account-empty-state">
-                <p>Pesananmu akan tampil di sini setelah melakukan pemesanan.</p>
+                <p>Belum ada pesanan. Koleksi pilihanmu akan tampil di sini setelah pemesanan.</p>
                 <a href="{{ url_for('main.katalog') }}">Jelajahi katalog →</a>
             </div>
         </div>

@@ -163,7 +163,7 @@ class EditorFoto {
         this.awalGeser = null;
     }
 
-    /* ===== FUNGSI: MEMBUKA EDITOR; MENGEMBALIKAN Promise<dataURL | null> ===== */
+    /* ===== FUNGSI: MEMBUKA EDITOR; MENGEMBALIKAN Promise<Blob | null> ===== */
     async buka(file) {
         if (!file || !TIPE_FOTO_BOLEH.includes(file.type)) throw new Error('Foto harus berformat PNG, JPG, atau WEBP.');
         if (file.size > UKURAN_FOTO_MAKS) throw new Error('Ukuran foto maksimal 5 MB.');
@@ -311,7 +311,7 @@ class EditorFoto {
         }
     }
 
-    /* ===== FUNGSI: MEMOTONG FOTO SESUAI PANGGUNG LALU MENGEMBALIKAN DATA URL JPEG ===== */
+    /* ===== FUNGSI: MEMOTONG FOTO DAN MENGEMBALIKAN BERKAS JPEG ===== */
     terapkan() {
         if (!this.gambar) return;
         const ukuran = this.ukuranKeluaran;
@@ -333,7 +333,7 @@ class EditorFoto {
         konteks.imageSmoothingEnabled = true;
         konteks.imageSmoothingQuality = 'high';
         konteks.drawImage(this.gambar, sumberX, sumberY, ukuranPotong, ukuranPotong, 0, 0, ukuran, ukuran);
-        this.tutup(kanvas.toDataURL('image/jpeg', this.kualitas));
+        kanvas.toBlob((hasil) => this.tutup(hasil), 'image/jpeg', this.kualitas);
     }
 
     /* ===== FUNGSI: MEMASANG SEMUA PERISTIWA EDITOR (SEKALI SAAT KELAS DIBUAT) ===== */
@@ -414,6 +414,8 @@ class EditorFoto {
 class HalamanProfil {
     constructor() {
         this.editorFoto = new EditorFoto();
+        this.fileFoto = null;
+        this.previewFotoUrl = '';
 
         this.tersimpan = { nama: '', email: '', telepon: '', foto: null };
         this.draf = { ...this.tersimpan };
@@ -444,8 +446,12 @@ class HalamanProfil {
         if (csrf) headers['X-CSRFToken'] = csrf;
         const options = { method, credentials: 'same-origin', headers };
         if (payload !== undefined) {
-            headers['Content-Type'] = 'application/json';
-            options.body = JSON.stringify(payload);
+            if (payload instanceof FormData) {
+                options.body = payload;
+            } else {
+                headers['Content-Type'] = 'application/json';
+                options.body = JSON.stringify(payload);
+            }
         }
         const response = await fetch(url, options);
         const result = await response.json().catch(() => ({}));
@@ -599,6 +605,11 @@ class HalamanProfil {
         this.aturGalat('teleponProfil', 'galatTeleponProfil', '');
     }
 
+    bersihkanPreviewFoto() {
+        if (this.previewFotoUrl) URL.revokeObjectURL(this.previewFotoUrl);
+        this.previewFotoUrl = '';
+    }
+
     /* ===== FUNGSI: MENAMPILKAN FOTO (ATAU IKON BAWAAN) DI LINGKARAN ===== */
     tampilkanFoto() {
         this.avatar.replaceChildren();
@@ -653,7 +664,10 @@ class HalamanProfil {
             try {
                 const hasil = await this.editorFoto.buka(file);
                 if (hasil) {
-                    this.draf.foto = hasil;
+                    this.bersihkanPreviewFoto();
+                    this.fileFoto = new File([hasil], 'foto-profil.jpg', { type: 'image/jpeg' });
+                    this.previewFotoUrl = URL.createObjectURL(this.fileFoto);
+                    this.draf.foto = this.previewFotoUrl;
                     this.tampilkanFoto();
                     this.perbaruiBar();
                 }
@@ -664,6 +678,8 @@ class HalamanProfil {
         });
 
         this.tombolHapusFoto.addEventListener('click', () => {
+            this.fileFoto = null;
+            this.bersihkanPreviewFoto();
             this.draf.foto = null;
             this.tampilkanFoto();
             this.perbaruiBar();
@@ -678,6 +694,8 @@ class HalamanProfil {
     /* ===== FUNGSI: MEMASANG TOMBOL RESET / SIMPAN PADA BAR PERUBAHAN ===== */
     pasangBar() {
         document.getElementById('resetProfil').addEventListener('click', () => {
+            this.fileFoto = null;
+            this.bersihkanPreviewFoto();
             this.draf = { ...this.tersimpan };
             this.isiFormProfil();
             this.tampilkanFoto();
@@ -697,11 +715,11 @@ class HalamanProfil {
         if (tujuan) this.pindahTab(tujuan);
     }
 
-    /* ===== FUNGSI: MEMERIKSA DAN MENYIMPAN PROFIL; MENGEMBALIKAN true JIKA BERHASIL ===== */
+    /* ===== FUNGSI: MEMERIKSA DAN MENYIMPAN PROFIL ===== */
     async simpanProfil() {
         const galatNama = ValidatorForm.nama(this.draf.nama, 'Nama lengkap');
         const galatEmail = ValidatorForm.email(this.draf.email);
-        const galatTelepon = (this.draf.telepon || '').trim() ? ValidatorForm.telepon(this.draf.telepon) : '';  // opsional di profil
+        const galatTelepon = (this.draf.telepon || '').trim() ? ValidatorForm.telepon(this.draf.telepon) : '';
         this.aturGalat('namaLengkap', 'galatNama', galatNama);
         this.aturGalat('emailProfil', 'galatEmail', galatEmail);
         this.aturGalat('teleponProfil', 'galatTeleponProfil', galatTelepon);
@@ -711,23 +729,37 @@ class HalamanProfil {
             return false;
         }
 
-        const bersih = {
-            nama: ValidatorForm.rapikan(this.draf.nama),
-            email: this.draf.email.trim(),
-            telepon: ValidatorForm.normalisasiTelepon(this.draf.telepon),
-            foto: this.draf.foto,
-        };
+        const data = new FormData();
+        data.append('nama', ValidatorForm.rapikan(this.draf.nama));
+        data.append('email', this.draf.email.trim());
+        data.append('telepon', ValidatorForm.normalisasiTelepon(this.draf.telepon));
+        if (this.fileFoto) {
+            data.append('foto', this.fileFoto, this.fileFoto.name);
+        } else if (!this.draf.foto && this.tersimpan.foto) {
+            data.append('hapus_foto', '1');
+        }
+
+        let result;
         try {
-            const result = await this.requestServer('/customer/api/profile', 'PUT', bersih);
-            Object.assign(bersih, result.profile || {});
+            result = await this.requestServer('/customer/api/profile', 'PUT', data);
         } catch (error) {
             this.tampilkanToast(error.message || 'Profil gagal disimpan.', true);
             return false;
         }
 
+        const profile = result.profile || {};
+        const bersih = {
+            nama: profile.nama ?? ValidatorForm.rapikan(this.draf.nama),
+            email: profile.email ?? this.draf.email.trim(),
+            telepon: profile.telepon ?? ValidatorForm.normalisasiTelepon(this.draf.telepon),
+            foto: profile.foto ?? null,
+        };
+        this.fileFoto = null;
+        this.bersihkanPreviewFoto();
         this.tersimpan = bersih;
         this.draf = { ...bersih };
         this.isiFormProfil();
+        this.tampilkanFoto();
         this.perbaruiBar();
         document.body.dataset.userName = bersih.nama;
         document.body.dataset.userEmail = bersih.email;
