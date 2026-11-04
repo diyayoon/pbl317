@@ -131,6 +131,18 @@ class TestingConfig(Config):
     ORDER_EXPIRE_INTERVAL_DETIK = 0   # test memicu kedaluwarsa secara eksplisit
     SECRET_KEY = "kunci-khusus-pengujian-otomatis-0123456789abcdef"
     LOGIN_MAX_PER_EMAIL = 5
+    # Isolasi total dari .env development/production: tes tidak boleh menghubungi layanan nyata.
+    MIDTRANS_SERVER_KEY = ""
+    MIDTRANS_IS_PRODUCTION = False
+    MAIL_SERVER = ""
+    MAIL_PORT = 587
+    MAIL_SECURITY = "starttls"
+    MAIL_USERNAME = ""
+    MAIL_PASSWORD = ""
+    MAIL_FROM = ""
+    APP_BASE_URL = "http://localhost:5000"
+    SHIPPING_COST_FLAT = 25000
+    SHIPPING_FREE_ABOVE = 0
     PAYMENT_UPLOAD_FOLDER = "/tmp/albis_test_uploads/payments"  # nosec B108 (hanya konfigurasi uji)
     PRODUCT_UPLOAD_FOLDER = "/tmp/albis_test_uploads/products"  # nosec B108
     CATEGORY_UPLOAD_FOLDER = "/tmp/albis_test_uploads/categories"  # nosec B108

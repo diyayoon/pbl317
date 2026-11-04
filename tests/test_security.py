@@ -93,3 +93,19 @@ def test_admin_login_dan_halaman(client):
     assert login_admin(client).status_code == 302
     for path in ("/admin/", "/admin/produk", "/admin/kategori", "/admin/pesanan", "/admin/pembayaran", "/admin/ulasan", "/admin/laporan", "/admin/audit", "/admin/akun"):
         assert client.get(path).status_code == 200, path
+
+
+def test_login_admin_dicatat_dengan_aksi_khusus(client, app):
+    assert login_admin(client).status_code == 302
+    with app.app_context():
+        assert AuditLog.query.filter_by(action="login_admin_berhasil", actor_email="admin@albis.local").count() == 1
+
+
+def test_pembuatan_admin_hanya_melalui_command_cli(app):
+    runner = app.test_cli_runner()
+    result = runner.invoke(args=["create-admin", "--email", "operator@test.local", "--nama", "Operator Uji"],
+                           input="PasswordAdminUjiPanjang123!\nPasswordAdminUjiPanjang123!\n")
+    assert result.exit_code == 0, result.output
+    with app.app_context():
+        user = User.query.filter_by(email="operator@test.local").one()
+        assert user.role == "admin" and user.is_verified is True

@@ -1674,3 +1674,20 @@ body.admin-dialog-open { overflow: hidden; }
     height: 19px;
 }
 .workspace-logout-link:hover .workspace-action-icon { opacity: .8; }
+
+/* Laporan penjualan dengan ringkasan responsif. */
+.admin-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    margin: 20px 0;
+}
+.admin-kpi-grid > .panel { min-width: 0; margin: 0; padding: 20px; }
+.admin-kpi-grid .eyebrow { display: block; color: var(--warna-muted); font-size: .7rem; letter-spacing: .1em; }
+.admin-kpi-grid h2 { margin: 10px 0 0; color: var(--warna-teks); font: 700 clamp(1.25rem, 2vw, 1.8rem) var(--font-heading); overflow-wrap: anywhere; }
+@media (max-width: 900px) { .admin-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 480px) { .admin-kpi-grid { grid-template-columns: minmax(0, 1fr); gap: 10px; } }
+.admin-kpi-grid .eyebrow { line-height: 1.4; }
+.admin-kpi-grid .panel { border: 1px solid rgba(104, 157, 183, .18); }
+.admin-user-filters label { display: grid; gap: 6px; color: var(--warna-muted); font-size: .82rem; font-weight: 700; }
+.admin-user-filters label .form-control { min-width: 150px; }

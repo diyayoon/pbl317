@@ -55,6 +55,20 @@ class LayananPelangganAdmin:
         stmt = stmt.group_by(User.id).order_by(User.created_at.desc())
         return [self._ringkas(u, n) for u, n in db.session.execute(stmt).all()]
 
+    def daftar_admin_readonly(self, q: str = "") -> list[dict]:
+        """Daftar admin hanya-baca; admin tidak dapat mengubah akun admin lain dari panel."""
+        stmt = select(User).where(User.role == "admin", User.deleted_at.is_(None))
+        q = " ".join((q or "").split())[:100]
+        if q:
+            pola = f"%{q.replace('%', chr(92) + '%').replace('_', chr(92) + '_')}%"
+            stmt = stmt.where(or_(User.nama.ilike(pola, escape="\\"), User.email.ilike(pola, escape="\\")))
+        rows = db.session.scalars(stmt.order_by(User.created_at.asc(), User.id.asc())).all()
+        return [{
+            "id": u.id, "nama": u.nama, "email": u.email,
+            "status": status_akun(u),
+            "bergabung": u.created_at.isoformat() if u.created_at else "",
+        } for u in rows]
+
     def detail(self, user_id: int) -> dict:
         u = self._ambil_customer(user_id)
         data = self._ringkas(u, Order.query.filter_by(user_id=u.id).count())

@@ -42,6 +42,18 @@
             <span aria-hidden="true">▤</span> Pesanan &amp; Pembayaran
         </a>
         <a
+            class="{% if request.endpoint == 'admin.refund' %}active{% endif %}"
+            href="{{ url_for('admin.refund') }}"
+        >
+            <span aria-hidden="true">↩</span> Pengembalian dana
+        </a>
+        <a
+            class="{% if request.endpoint == 'admin.laporan' %}active{% endif %}"
+            href="{{ url_for('admin.laporan') }}"
+        >
+            <span aria-hidden="true">▧</span> Laporan penjualan
+        </a>
+        <a
             class="{% if request.endpoint == 'admin.ulasan' %}active{% endif %}"
             href="{{ url_for('admin.ulasan') }}"
         >

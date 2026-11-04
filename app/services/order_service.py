@@ -3,17 +3,17 @@ from datetime import datetime, timedelta, timezone
 from flask import current_app
 from sqlalchemy import select
 from app.extensions import db
-from app.models import Order, Product, User
+from app.models import Order, Product, RefundRequest, User
 from app.utils import audit
 
-STATUS = ("Menunggu pembayaran", "Menunggu persetujuan", "Diproses", "Dikirim", "Selesai", "Dibatalkan")
+STATUS = ("Menunggu pembayaran", "Menunggu persetujuan", "Diproses", "Dikirim", "Selesai", "Dibatalkan", "Direfund")
 TRANSISI = {
     "Menunggu pembayaran": {"Dibatalkan"},
     "Menunggu persetujuan": {"Dibatalkan"},
     "Diproses": {"Dikirim"},
     "Dikirim": {"Selesai"},
     "Selesai": set(),
-    "Dibatalkan": set(),
+    "Dibatalkan": set(), "Direfund": set(),
 }
 TERBUKA = ("Menunggu pembayaran", "Menunggu persetujuan")
 
@@ -38,6 +38,13 @@ class LayananPesanan:
             raise ValueError(f"Transisi status {order.status} ke {status} tidak diizinkan.")
         if status in {"Dikirim", "Selesai"} and (not order.payment or order.payment.status != "Disetujui"):
             raise ValueError("Pesanan tidak dapat dikirim atau diselesaikan sebelum pembayaran disetujui.")
+        if order.status == "Diproses" and status == "Dikirim":
+            refund_aktif = db.session.scalar(select(RefundRequest.id).where(
+                RefundRequest.order_id == order.id,
+                RefundRequest.status.in_(("Menunggu persetujuan", "Diproses", "Gagal")),
+            ).limit(1))
+            if refund_aktif:
+                raise ValueError("Pesanan tidak dapat dikirim selama permintaan refund belum diselesaikan admin.")
         if status == "Dibatalkan":
             cls.kembalikan_stok(order)
             if order.payment:

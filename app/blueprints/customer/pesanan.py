@@ -2,7 +2,7 @@
 from flask import current_app, jsonify, render_template, request
 from flask_login import current_user, login_required
 from app.extensions import db
-from app.models import Order
+from app.models import Order, RefundRequest
 from app.services.midtrans_service import ErrorMidtrans, LayananMidtrans
 from app.services.order_service import LayananPesanan
 from app.services.payment_service import LayananPembayaran
@@ -39,6 +39,9 @@ def api_orders():
     hasil = []
     for order in orders:
         data = order.to_dict()
+        refund = RefundRequest.query.filter_by(order_id=order.id).order_by(RefundRequest.requested_at.desc(), RefundRequest.id.desc()).first()
+        data["refund"] = refund.to_dict() if refund else None
+        data["paymentType"] = order.payment.gateway_payment_type if order.payment else ""
         for item in data["items"]:
             item["ulasanSaya"] = ulasan.get(item["id"])
             item["bisaUlas"] = bool(
@@ -75,6 +78,24 @@ def api_batalkan_pesanan(order_id: int):
     if midtrans:
         LayananMidtrans.batalkan_di_midtrans(order)
     return jsonify(ok=True, status="Dibatalkan")
+
+
+@customer_bp.post("/api/orders/<int:order_id>/refund")
+@login_required
+@role_required("customer")
+@terverifikasi_required
+def api_ajukan_refund(order_id: int):
+    from app.services.refund_service import ErrorRefund, LayananRefund
+    payload = request.get_json(silent=True) or {}
+    try:
+        refund = LayananRefund.ajukan(order_id, current_user, str(payload.get("alasan", "")))
+        return jsonify(message="Permintaan refund berhasil dikirim dan menunggu peninjauan admin.", refund=refund.to_dict()), 201
+    except ErrorRefund as exc:
+        db.session.rollback()
+        return jsonify(error=exc.pesan), exc.kode
+    except ErrorMidtrans as exc:
+        db.session.rollback()
+        return jsonify(error=exc.pesan), exc.kode
 
 
 @customer_bp.post("/api/orders/<int:order_id>/bukti")

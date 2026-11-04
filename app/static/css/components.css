@@ -1069,3 +1069,66 @@ body.lightbox-terbuka { overflow: hidden; }
 .albis-auth-login .button-leading-icon,
 .auth-card .button-primary .button-leading-icon,
 .button-primary .button-leading-icon { filter: brightness(0) invert(1); }
+
+
+/* ===== TOGGLE VISIBILITAS PASSWORD ===== */
+/* Komponen ini dipakai pada login, register, keamanan customer, dan akun admin.
+   Atur secara global agar halaman non-auth tidak menampilkan SVG pada ukuran intrinsiknya. */
+.password-wrap {
+    position: relative;
+    width: 100%;
+}
+
+.password-wrap .form-control {
+    padding-right: 54px;
+}
+
+.password-toggle {
+    position: absolute;
+    top: 50%;
+    right: 7px;
+    width: 38px;
+    height: 38px;
+    transform: translateY(-50%);
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--warna-biru-dalam);
+    cursor: pointer;
+    touch-action: manipulation;
+    user-select: none;
+    z-index: 2;
+}
+
+.password-toggle:hover {
+    background: rgba(97, 168, 214, .14);
+}
+
+.password-toggle[aria-pressed="true"] {
+    background: rgba(97, 168, 214, .22);
+}
+
+.password-toggle-icon {
+    display: block;
+    width: 21px !important;
+    height: 21px !important;
+    max-width: 21px;
+    max-height: 21px;
+    object-fit: contain;
+    flex: 0 0 21px;
+}
+
+.password-icon-open {
+    display: none;
+}
+
+.password-toggle[aria-pressed="true"] .password-icon-open {
+    display: block;
+}
+
+.password-toggle[aria-pressed="true"] .password-icon-close {
+    display: none;
+}

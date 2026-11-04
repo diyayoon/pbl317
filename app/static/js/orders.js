@@ -153,6 +153,39 @@ document.addEventListener('DOMContentLoaded', () => {
                 card.append(batal);
             }
 
+            const metodeRefundDidukung = new Set(['credit_card', 'gopay', 'shopeepay', 'dana', 'ovo', 'qris', 'kredivo', 'akulaku'])
+                .has(String(order.paymentType || '').toLowerCase());
+            const dapatAjukanRefund = order.status === 'Diproses' && order.pembayaran === 'Midtrans'
+                && order.statusPembayaran === 'Disetujui' && metodeRefundDidukung
+                && (!order.refund || order.refund.status === 'Ditolak');
+            if (order.refund) {
+                const refundBox = tag('div', 'order-payment-info');
+                refundBox.append(tag('strong', '', `Status refund: ${order.refund.status}`));
+                refundBox.append(tag('p', '', order.refund.admin_note || order.refund.reason || 'Permintaan pengembalian dana sedang ditangani admin.'));
+                card.append(refundBox);
+            }
+            if (order.status === 'Diproses' && order.pembayaran === 'Midtrans'
+                && order.statusPembayaran === 'Disetujui' && !metodeRefundDidukung) {
+                card.append(tag('p', 'order-payment-info', 'Metode pembayaran ini belum mendukung refund otomatis melalui Midtrans. Hubungi admin untuk penanganan lebih lanjut.'));
+            }
+            if (dapatAjukanRefund) {
+                const refundBox = tag('div', 'order-payment-info');
+                refundBox.append(tag('p', '', 'Pesanan belum dikirim. Pengajuan akan ditinjau admin dan diproses melalui Midtrans jika metode pembayaran mendukung.'));
+                const refundButton = tag('button', 'button button-secondary button-small', order.refund ? 'Ajukan refund ulang' : 'Ajukan refund');
+                refundButton.type = 'button';
+                refundButton.addEventListener('click', async () => {
+                    const alasan = (window.prompt('Jelaskan alasan pengajuan refund (minimal 10 karakter):') || '').trim();
+                    if (alasan.length < 10) { window.alert('Alasan refund minimal 10 karakter.'); return; }
+                    refundButton.disabled = true;
+                    try {
+                        await request(`/customer/api/orders/${order.id}/refund`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ alasan }) });
+                        await muat();
+                    } catch (error) { window.alert(error.message); refundButton.disabled = false; }
+                });
+                refundBox.append(refundButton);
+                card.append(refundBox);
+            }
+
             const bukti = order.buktiBayar;
             if (bukti) {
                 const state = tag('span', 'order-proof-state', `Bukti bayar: ${bukti.status}`);

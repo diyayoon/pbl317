@@ -63,6 +63,8 @@ def login():
             session.permanent = True
             LayananSesi.mulai(user)
             audit.catat("login_berhasil", "user", user.id, actor=user, commit=True)
+            if user.role == "admin":
+                audit.catat("login_admin_berhasil", "user", user.id, actor=user, detail="Administrator masuk ke panel admin.", commit=True)
             return redirect(_next_aman(request.args.get("next", "")) or url_for(user.halaman_awal()))
 
         ratelimit.catat("login_email", email)

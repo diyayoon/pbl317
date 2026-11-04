@@ -10,8 +10,11 @@
     <meta name="theme-color" content="#F7FCFE">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{% block title %}Albis Antique{% endblock %}</title>
-    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/favicon/icon-albis.png') }}">
-    <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/favicon/icon-albis.png') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon/favicon.ico') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='images/favicon/favicon-16.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='images/favicon/favicon-32.png') }}">
+    <link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='images/favicon/favicon-192.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='images/favicon/apple-touch-icon.png') }}">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -34,7 +37,7 @@
 {% set admin_workspace_endpoints = [
     'admin.dashboard', 'admin.produk', 'admin.kategori', 'admin.pengguna',
     'admin.pesanan', 'admin.pembayaran', 'admin.ulasan',
-    'admin.audit_log', 'admin.akun'
+    'admin.audit_log', 'admin.akun', 'admin.laporan', 'admin.refund'
 ] %}
 {% set is_customer_workspace = request.endpoint in customer_workspace_endpoints %}
 {% set is_admin_workspace = request.endpoint in admin_workspace_endpoints %}

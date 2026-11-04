@@ -171,3 +171,47 @@ class Review(db.Model):
                 "alasan": self.hidden_reason or "",
             })
         return data
+
+
+class RefundRequest(db.Model):
+    """Permintaan pengembalian dana Midtrans yang ditinjau admin dan disinkronkan ke gateway."""
+    __tablename__ = "refund_requests"
+    __table_args__ = (
+        db.Index("ix_refund_requests_status_created", "status", "requested_at"),
+        db.Index("ix_refund_requests_order", "order_id", "requested_at"),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    order_id = db.Column(db.Integer, db.ForeignKey("orders.id", ondelete="RESTRICT"), nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="RESTRICT"), nullable=False, index=True)
+    reason = db.Column(db.String(500), nullable=False)
+    amount = db.Column(db.Numeric(14, 0), nullable=False)
+    status = db.Column(db.String(30), nullable=False, default="Menunggu persetujuan", index=True)
+    refund_key = db.Column(db.String(100), nullable=False, unique=True)
+    gateway_status = db.Column(db.String(40), nullable=True)
+    gateway_refund_id = db.Column(db.String(100), nullable=True)
+    gateway_payment_type = db.Column(db.String(40), nullable=True)
+    admin_note = db.Column(db.String(500), nullable=True)
+    requested_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utcnow)
+    reviewed_by = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    reviewed_at = db.Column(db.DateTime(timezone=True), nullable=True)
+    completed_at = db.Column(db.DateTime(timezone=True), nullable=True)
+
+    order = db.relationship("Order", foreign_keys=[order_id])
+    user = db.relationship("User", foreign_keys=[user_id])
+    reviewer = db.relationship("User", foreign_keys=[reviewed_by])
+
+    def to_dict(self):
+        return {
+            "id": self.id, "order_id": self.order_id,
+            "order_number": self.order.order_number if self.order else "",
+            "customer": self.user.nama if self.user else "Pelanggan",
+            "email": self.user.email if self.user else "",
+            "reason": self.reason, "amount": int(self.amount or 0),
+            "status": self.status, "gateway_status": self.gateway_status or "",
+            "payment_type": self.gateway_payment_type or (self.order.payment.gateway_payment_type if self.order and self.order.payment else ""),
+            "admin_note": self.admin_note or "",
+            "requested_at": self.requested_at.isoformat() if self.requested_at else "",
+            "reviewed_at": self.reviewed_at.isoformat() if self.reviewed_at else "",
+            "completed_at": self.completed_at.isoformat() if self.completed_at else "",
+        }

@@ -136,9 +136,14 @@ def register_commands(app):
         password = click.prompt("Password admin (minimal 16 karakter)", hide_input=True, confirmation_prompt=True)
         if len(password) < 16 or len(password) > 128:
             raise click.ClickException("Password harus terdiri dari 16–128 karakter.")
-        user = User(email=email, nama=nama.strip(), role="admin", telepon="", password_hash=generate_password_hash(password))
+        from datetime import datetime, timezone
+        user = User(email=email, nama=nama.strip(), role="admin", telepon="", is_verified=True,
+                    email_verified_at=datetime.now(timezone.utc), password_hash=generate_password_hash(password))
         try:
             db.session.add(user)
+            db.session.flush()
+            from .utils import audit
+            audit.catat("admin_dibuat_via_cli", "user", user.id, "Administrator dibuat melalui perintah create-admin.", email=user.email)
             db.session.commit()
         except SQLAlchemyError as exc:
             db.session.rollback()

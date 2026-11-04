@@ -8,11 +8,10 @@ di PostgreSQL; tidak ada data tiruan di browser.
 | Peran | Cara dibuat | Akses |
 |---|---|---|
 | Customer | Registrasi publik `/auth/register` (otomatis, tidak bisa memilih peran) | Katalog, keranjang, checkout, pesanan, ulasan, profil |
-| Admin | Hanya lewat CLI `flask create-admin` (orang internal kelompok) | Produk, kategori, pesanan, pembayaran, ulasan, laporan, audit log |
+| Admin | Hanya lewat CLI `flask create-admin` (orang internal kelompok) | Produk, kategori, pesanan, pembayaran, refund, laporan, audit log |
 
 ## Alur
-Customer: katalog → detail → keranjang → checkout (alamat tersimpan) → pesanan dibuat (stok dikunci & dikurangi) →
-transfer → unggah bukti → admin setujui/tolak (alasan wajib) → diproses → dikirim → selesai → ulasan.
+Customer: katalog → detail → keranjang → checkout → Snap Midtrans Sandbox → webhook/sinkronisasi pembayaran → diproses → dikirim → selesai → ulasan. Untuk pesanan Midtrans yang sudah dibayar tetapi belum dikirim, customer dapat mengajukan refund; admin meninjau dan gateway harus mengonfirmasi sebelum status lokal menjadi Direfund.
 Pesanan yang tidak dibayar dalam `ORDER_PAYMENT_TTL_JAM` (default 24 jam) otomatis dibatalkan dan stok kembali.
 
 ## Database siap-import
@@ -47,10 +46,10 @@ python run.py
 ```
 
 ## Perintah CLI
-`db-check`, `seed-catalog [--tanpa-produk]`, `create-admin`, `expire-orders`, `purge-security-events`, `db upgrade|check`.
+`db-check`, `seed-catalog [--tanpa-produk]`, `create-admin` (satu-satunya cara membuat admin), `expire-orders`, `purge-security-events`, `db upgrade|check`.
 
 ## Tes
 ```bash
-python -m pytest -q        # 144 tes (SQLite in-memory); lihat docs/REVISI-FINAL.md untuk uji di PostgreSQL
+python -m pytest -q        # seluruh test suite (SQLite in-memory); lihat docs/REVISI-FINAL.md untuk uji di PostgreSQL
 pip-audit -r requirements.txt && bandit -q -r app -ll
 ```

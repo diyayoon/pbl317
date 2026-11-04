@@ -28,8 +28,8 @@
             </div>
 
             <div class="hero-trust" aria-label="Ringkasan katalog">
-                <div><strong>120+</strong><span>koleksi</span></div>
-                <div><strong>8</strong><span>kategori</span></div>
+                <div><strong>{{ jumlah_koleksi }}</strong><span>koleksi</span></div>
+                <div><strong>{{ jumlah_kategori }}</strong><span>kategori</span></div>
                 <div><strong>1×</strong><span>stok unik</span></div>
             </div>
         </div>
@@ -66,6 +66,8 @@
                                     {% if not loop.first %}loading="lazy"{% endif %}
                                     draggable="false"
                                     referrerpolicy="no-referrer"
+                                    data-img-fallback="src"
+                                    data-fallback-src="{{ url_for('static', filename='images/ice-bg-hero.jpg') }}"
                                 >
                             </a>
                             <a class="slider-copy-link" href="{{ url_for('main.detail_produk', produk_id=item.id) }}" aria-label="Lihat detail koleksi {{ item.nama }}">

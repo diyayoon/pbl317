@@ -19,3 +19,5 @@ SQLAlchemy==2.0.54
 typing_extensions==4.16.0
 Werkzeug==3.1.9
 WTForms==3.2.2
+openpyxl==3.1.5
+reportlab==4.4.9

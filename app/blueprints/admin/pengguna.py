@@ -24,6 +24,12 @@ def api_pengguna():
     return jsonify(LayananPelangganAdmin().daftar(request.args.get("q", ""), request.args.get("status", "")))
 
 
+@admin_bp.get("/api/admin")
+@admin_required
+def api_daftar_admin_readonly():
+    return jsonify(LayananPelangganAdmin().daftar_admin_readonly(request.args.get("q", "")))
+
+
 @admin_bp.get("/api/pengguna/<int:user_id>")
 @admin_required
 def api_detail_pengguna(user_id: int):

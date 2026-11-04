@@ -436,6 +436,11 @@ document.addEventListener('error', event => {
     if (!(img instanceof HTMLImageElement)) return;
     if (img.dataset.imgFallback === 'remove') img.remove();
     else if (img.dataset.imgFallback === 'class') { img.classList.add('is-fallback'); img.removeAttribute('src'); }
+    else if (img.dataset.imgFallback === 'src' && img.dataset.fallbackSrc && !img.dataset.fallbackApplied) {
+        img.dataset.fallbackApplied = 'true';
+        img.classList.add('is-fallback');
+        img.src = img.dataset.fallbackSrc;
+    }
 }, true);
 
 document.addEventListener('DOMContentLoaded', () => {

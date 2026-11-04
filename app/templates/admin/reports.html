@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block title %}Laporan Penjualan — Albis Antique{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/dashboard.css') }}">{% endblock %}
+{% block content %}
+<section class="dashboard-shell admin-workspace-shell">
+  <button class="workspace-mobile-toggle" type="button" aria-controls="adminWorkspaceSidebar" aria-expanded="false">☰ <span>Menu admin</span></button>
+  <div class="dashboard-layout">
+    {% include 'partials/admin_sidebar.html' %}
+    <main class="dashboard-content" data-admin-view="report-page">
+      <header class="admin-page-heading"><div><span class="eyebrow">ANALISIS BISNIS</span><h1>Laporan Penjualan</h1><p>Rekap transaksi selesai berdasarkan rentang tanggal. Waktu laporan menggunakan WIB.</p></div></header>
+      <section class="panel">
+        <form method="get" action="{{ url_for('admin.laporan') }}" class="admin-user-filters" style="align-items:end">
+          <label for="reportStartDate">Tanggal awal<input id="reportStartDate" class="form-control" type="date" name="tanggal_awal" value="{{ tanggal_awal.isoformat() if tanggal_awal else '' }}"></label>
+          <label for="reportEndDate">Tanggal akhir<input id="reportEndDate" class="form-control" type="date" name="tanggal_akhir" value="{{ tanggal_akhir.isoformat() if tanggal_akhir else '' }}"></label>
+          <button class="button button-primary" type="submit">Terapkan filter</button>
+          <a class="button button-secondary" href="{{ url_for('admin.laporan') }}">Reset</a>
+        </form>
+        <p class="field-hint">Pendapatan hanya menghitung pesanan berstatus Selesai. Pesanan yang dibatalkan atau direfund tidak dihitung sebagai penjualan.</p>
+      </section>
+      <section class="admin-kpi-grid">
+        <article class="panel"><span class="eyebrow">PENDAPATAN</span><h2>Rp{{ '{:,.0f}'.format(laporan.pendapatan).replace(',', '.') }}</h2></article>
+        <article class="panel"><span class="eyebrow">PESANAN SELESAI</span><h2>{{ laporan.selesai }}</h2></article>
+        <article class="panel"><span class="eyebrow">PRODUK TERJUAL</span><h2>{{ laporan.produk_terjual }}</h2></article>
+        <article class="panel"><span class="eyebrow">PESANAN DIREfund</span><h2>{{ laporan.direfund }}</h2></article>
+      </section>
+      <section class="panel">
+        <div class="admin-panel-heading"><div><h2>Transaksi selesai</h2><p>{{ laporan.transaksi_selesai|length }} transaksi pada periode terpilih.</p></div>
+          <div class="admin-user-filters">
+            <a class="button button-secondary button-small" href="{{ url_for('admin.ekspor_laporan_pdf', tanggal_awal=tanggal_awal.isoformat() if tanggal_awal else '', tanggal_akhir=tanggal_akhir.isoformat() if tanggal_akhir else '') }}">Export PDF</a>
+            <a class="button button-primary button-small" href="{{ url_for('admin.ekspor_laporan_excel', tanggal_awal=tanggal_awal.isoformat() if tanggal_awal else '', tanggal_akhir=tanggal_akhir.isoformat() if tanggal_akhir else '') }}">Export Excel</a>
+          </div>
+        </div>
+        <div class="table-wrap"><table class="data-table"><thead><tr><th>Nomor Pesanan</th><th>Tanggal (WIB)</th><th>Customer</th><th>Email</th><th>Metode</th><th>Total</th></tr></thead>
+          <tbody>
+          {% for row in laporan.transaksi_selesai %}<tr><td>{{ row.order_number }}</td><td>{{ row.tanggal }}</td><td>{{ row.customer }}</td><td>{{ row.email }}</td><td>{{ row.metode }}</td><td>Rp{{ '{:,.0f}'.format(row.total).replace(',', '.') }}</td></tr>
+          {% else %}<tr><td colspan="6" class="table-empty">Belum ada transaksi selesai pada periode ini.</td></tr>{% endfor %}
+          </tbody></table></div>
+      </section>
+    </main>
+  </div>
+</section>
+{% endblock %}

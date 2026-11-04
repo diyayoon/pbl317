@@ -21,7 +21,8 @@ def pesanan():
 @admin_bp.get("/pembayaran")
 @admin_required
 def pembayaran():
-    return redirect(url_for("admin.pesanan") + "#pembayaran")
+    # Alias halaman gabungan pesanan & pembayaran; tab pembayaran dapat dibuka melalui hash.
+    return render_template("admin/orders.html", buka_tab="pembayaran")
 
 
 @admin_bp.get("/ulasan")

@@ -15,13 +15,13 @@ document.addEventListener('DOMContentLoaded', () => {
         return node;
     };
     const put = (id, value) => { const node = element(id); if (node) node.textContent = String(value); };
-    const STATUS = ['Menunggu pembayaran', 'Menunggu persetujuan', 'Diproses', 'Dikirim', 'Selesai', 'Dibatalkan'];
+    const STATUS = ['Menunggu pembayaran', 'Menunggu persetujuan', 'Diproses', 'Dikirim', 'Selesai', 'Dibatalkan', 'Direfund'];
     const NEXT = {
         'Menunggu pembayaran': ['Dibatalkan'], 'Menunggu persetujuan': ['Dibatalkan'],
         'Diproses': ['Dikirim'], 'Dikirim': ['Selesai'], 'Selesai': [], 'Dibatalkan': [],
     };
     const statusTag = value => make(
-        'span', `admin-status ${['Diproses', 'Dikirim', 'Selesai', 'Disetujui'].includes(value) ? 'is-paid' : 'is-pending'}`,
+        'span', `admin-status ${['Diproses', 'Dikirim', 'Selesai', 'Disetujui', 'Direfund'].includes(value) ? 'is-paid' : 'is-pending'}`,
         value || 'Menunggu pembayaran',
     );
 
@@ -125,6 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ['Dikirim', report.dikirim],
                 ['Selesai', report.selesai],
                 ['Dibatalkan', report.dibatalkan],
+                ['Direfund', report.direfund],
             ];
             statusItems.forEach(([label, value]) => {
                 const item = make('div', 'admin-sales-status-item');
@@ -163,7 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const st = make('td'); st.append(statusTag(order.status)); row.append(st);
             const act = make('td');
             const opsi = NEXT[order.status] || [];
-            if (!opsi.length) act.append(make('span', 'table-footnote', 'Selesai'));
+            if (!opsi.length) act.append(make('span', 'table-footnote', order.status));
             else {
                 const select = make('select', 'form-control');
                 select.setAttribute('aria-label', `Status pesanan ${order.orderNumber}`);
@@ -547,6 +548,75 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    async function daftarAdminReadOnly() {
+        const body = element('adminAccountRows');
+        if (!body) return;
+        const q = element('adminAccountSearch')?.value.trim() || '';
+        const rows = await api(`/admin/api/admin?q=${encodeURIComponent(q)}`);
+        if (!rows.length) { barisKosong(body, 4, 'Belum ada akun administrator.'); return; }
+        body.replaceChildren();
+        rows.forEach(admin => {
+            const row = make('tr');
+            row.append(
+                make('td', '', admin.nama),
+                make('td', 'admin-user-email', admin.email),
+                make('td', '', admin.status),
+                make('td', '', waktu(admin.bergabung)),
+            );
+            body.append(row);
+        });
+    }
+
+    async function daftarRefund() {
+        const body = element('adminRefundRows');
+        if (!body) return;
+        const list = await api('/admin/api/refund');
+        put('refundCount', `${list.length} permintaan refund`);
+        if (!list.length) { barisKosong(body, 8, 'Belum ada permintaan refund.'); return; }
+        body.replaceChildren();
+        list.forEach(item => {
+            const row = make('tr');
+            row.append(
+                make('td', '', `#${item.order_number}`),
+                make('td', '', `${item.customer}\n${item.email}`),
+                make('td', '', item.reason),
+                make('td', '', item.payment_type || '—'),
+                make('td', '', money(item.amount)),
+                make('td', '', item.status),
+                make('td', '', item.admin_note || item.gateway_status || '—'),
+            );
+            const actions = make('td', 'admin-user-actions-cell');
+            if (item.status === 'Menunggu persetujuan') {
+                actions.append(tombol('Setujui & kirim', async () => {
+                    const note = (window.prompt('Catatan admin (opsional):') || '').trim();
+                    try { await kirim(`/admin/api/refund/${item.id}/tinjau`, 'POST', { aksi: 'setujui', catatan: note }); toast('Permintaan dikirim ke Midtrans. Sinkronkan sampai status dikonfirmasi.'); await daftarRefund(); }
+                    catch (error) { toast(error.message, 'alert'); await daftarRefund(); }
+                }));
+                actions.append(tombol('Tolak', async () => {
+                    const note = (window.prompt('Alasan penolakan (minimal 5 karakter):') || '').trim();
+                    if (note.length < 5) { toast('Alasan penolakan minimal 5 karakter.', 'alert'); return; }
+                    try { await kirim(`/admin/api/refund/${item.id}/tinjau`, 'POST', { aksi: 'tolak', catatan: note }); toast('Permintaan refund ditolak.'); await daftarRefund(); }
+                    catch (error) { toast(error.message, 'alert'); }
+                }));
+            } else if (item.status === 'Diproses') {
+                actions.append(tombol('Sinkron status', async () => {
+                    try { await kirim(`/admin/api/refund/${item.id}/sinkron`, 'POST', {}); toast('Status diperbarui dari Midtrans.'); await daftarRefund(); }
+                    catch (error) { toast(error.message, 'alert'); }
+                }));
+            } else if (item.status === 'Gagal') {
+                actions.append(tombol('Coba kirim ulang', async () => {
+                    if (!window.confirm('Coba ulang menggunakan refund_key yang sama?')) return;
+                    try { await kirim(`/admin/api/refund/${item.id}/tinjau`, 'POST', { aksi: 'setujui', catatan: 'Percobaan ulang oleh admin.' }); toast('Permintaan dikirim ulang.'); await daftarRefund(); }
+                    catch (error) { toast(error.message, 'alert'); await daftarRefund(); }
+                }));
+            } else {
+                actions.append(make('span', 'field-hint', item.completed_at ? waktu(item.completed_at) : 'Tidak ada tindakan'));
+            }
+            row.append(actions); body.append(row);
+        });
+    }
+    element('refreshRefunds')?.addEventListener('click', () => daftarRefund().catch(error => toast(error.message, 'alert')));
+
     function renderDetail(box, d) {
         box.replaceChildren(); box.hidden = false;
         box.append(make('h3', '', `Detail: ${d.nama}`));
@@ -565,6 +635,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const jadwalkanPencarianPengguna = () => { window.clearTimeout(window._userT); window._userT = window.setTimeout(() => pengguna().catch(error => toast(error.message, 'alert')), 250); };
     element('userSearch')?.addEventListener('input', jadwalkanPencarianPengguna);
     element('userStatusFilter')?.addEventListener('change', () => pengguna().catch(error => toast(error.message, 'alert')));
+    element('adminAccountSearch')?.addEventListener('input', () => { window.clearTimeout(window._adminUserT); window._adminUserT = window.setTimeout(() => daftarAdminReadOnly().catch(error => toast(error.message, 'alert')), 250); });
     document.addEventListener('click', event => {
         if (event.target.closest('.admin-user-actions')) return;
         document.querySelectorAll('.admin-user-actions.is-open').forEach(menu => {
@@ -574,6 +645,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     element('adminOrderSearch')?.addEventListener('input', renderOrders);
-    const jalan = { dashboard, orders: muatOrders, payments: pembayaran, 'orders-payments': transaksi, reviews: ulasan, categories: kategori, users: pengguna }[view];
+    const jalan = { dashboard, orders: muatOrders, payments: pembayaran, 'orders-payments': transaksi, reviews: ulasan, categories: kategori, users: async () => { await Promise.all([pengguna(), daftarAdminReadOnly()]); }, refunds: daftarRefund }[view];
     if (jalan) jalan().catch(error => toast(`Data tidak dapat dimuat: ${error.message}`, 'alert'));
 });

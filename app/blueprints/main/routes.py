@@ -27,9 +27,11 @@ def beranda():
     terbaru = products[:4]
     unggulan = _unik(_pilih(products, CatalogService.id_terlaris(4)), terbaru, batas=4)
     slide = _unik(unggulan, products, batas=6)
+    kategori = CatalogService.category_summary()
     return render_template(
-        "main/index.html", kategori_unggulan=CatalogService.category_summary(),
+        "main/index.html", kategori_unggulan=kategori,
         produk_unggulan=unggulan, produk_slide=slide, produk_terbaru=terbaru,
+        jumlah_koleksi=len(products), jumlah_kategori=len(kategori),
     )
 
 
