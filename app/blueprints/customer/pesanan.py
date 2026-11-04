@@ -43,10 +43,10 @@ def api_orders():
         data["refund"] = refund.to_dict() if refund else None
         data["paymentType"] = order.payment.gateway_payment_type if order.payment else ""
         for item in data["items"]:
-            item["ulasanSaya"] = ulasan.get(item["id"])
+            item["ulasanSaya"] = ulasan.get(item["orderItemId"])
             item["bisaUlas"] = bool(
                 order.status == "Selesai" and item["id"] is not None
-                and not item["ulasanSaya"] and LayananUlasan.bisa_direview(current_user, item["id"])
+                and not item["ulasanSaya"] and LayananUlasan.bisa_direview(current_user, item["orderItemId"])
             )
         hasil.append(data)
     return jsonify(hasil)

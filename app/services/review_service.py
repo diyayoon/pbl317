@@ -1,4 +1,4 @@
-"""Ulasan produk: pembelian selesai, maksimal 7 hari, satu kali per produk, foto opsional."""
+"""Ulasan produk berdasarkan item pesanan selesai; satu ulasan per item pembelian."""
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from sqlalchemy import select
@@ -11,21 +11,21 @@ class LayananUlasan:
     BATAS_HARI = 7
 
     @staticmethod
-    def pesanan_selesai_terbaru(user: User, product_id: int) -> Order | None:
+    def item_pesanan_selesai(user: User, order_item_id: int) -> OrderItem | None:
         return db.session.scalars(
-            select(Order).join(OrderItem, OrderItem.order_id == Order.id).where(
-                Order.user_id == user.id, Order.status == "Selesai", OrderItem.product_id == product_id
-            ).order_by(Order.updated_at.desc(), Order.created_at.desc())
+            select(OrderItem).join(Order, Order.id == OrderItem.order_id).where(
+                OrderItem.id == order_item_id, Order.user_id == user.id, Order.status == "Selesai"
+            )
         ).first()
 
     @classmethod
-    def bisa_direview(cls, user: User, product_id: int) -> bool:
-        if not product_id or Review.query.filter_by(user_id=user.id, product_id=product_id).first():
+    def bisa_direview(cls, user: User, order_item_id: int) -> bool:
+        if not order_item_id or Review.query.filter_by(order_item_id=order_item_id).first():
             return False
-        order = cls.pesanan_selesai_terbaru(user, product_id)
-        if order is None:
+        item = cls.item_pesanan_selesai(user, order_item_id)
+        if item is None:
             return False
-        selesai_pada = order.updated_at or order.created_at
+        selesai_pada = item.order.updated_at or item.order.created_at
         if selesai_pada.tzinfo is None:
             selesai_pada = selesai_pada.replace(tzinfo=timezone.utc)
         return datetime.now(timezone.utc) - selesai_pada <= timedelta(days=cls.BATAS_HARI)
@@ -35,23 +35,21 @@ class LayananUlasan:
         if not isinstance(payload, dict):
             raise ValueError("Data ulasan tidak valid.")
         try:
-            product_id = int(payload.get("product_id"))
+            order_item_id = int(payload.get("order_item_id"))
             rating = int(payload.get("rating"))
         except (TypeError, ValueError):
-            raise ValueError("Produk dan rating wajib diisi.")
+            raise ValueError("Item pembelian dan rating wajib diisi.")
         komentar = str(payload.get("komentar", "")).strip()
         if not 1 <= rating <= 5:
             raise ValueError("Rating harus 1 sampai 5.")
         if len(komentar) > 1000:
             raise ValueError("Komentar maksimal 1000 karakter.")
-        if db.session.get(Product, product_id) is None:
-            raise LookupError("Produk tidak ditemukan.")
-        if Review.query.filter_by(user_id=user.id, product_id=product_id).first():
-            raise ValueError("Kamu sudah mengirim ulasan untuk produk ini. Setiap produk hanya bisa diulas satu kali.")
-        order = cls.pesanan_selesai_terbaru(user, product_id)
-        if order is None:
-            raise PermissionError("Ulasan hanya dapat diberikan untuk produk dari pesanan yang sudah selesai.")
-        selesai_pada = order.updated_at or order.created_at
+        item = cls.item_pesanan_selesai(user, order_item_id)
+        if item is None or item.product_id is None:
+            raise PermissionError("Ulasan hanya dapat diberikan untuk item dari pesanan yang sudah selesai milik akun ini.")
+        if Review.query.filter_by(order_item_id=order_item_id).first():
+            raise ValueError("Item pembelian ini sudah memiliki ulasan.")
+        selesai_pada = item.order.updated_at or item.order.created_at
         if selesai_pada.tzinfo is None:
             selesai_pada = selesai_pada.replace(tzinfo=timezone.utc)
         if datetime.now(timezone.utc) - selesai_pada > timedelta(days=cls.BATAS_HARI):
@@ -64,8 +62,8 @@ class LayananUlasan:
                 saved_path = simpan_gambar_upload(
                     image_file, current_app.config["REVIEW_UPLOAD_FOLDER"], current_app.config["REVIEW_MAX_BYTES"]
                 )
-            ulasan = Review(user_id=user.id, product_id=product_id, rating=rating, comment=komentar,
-                            image_path=str(saved_path) if saved_path else None)
+            ulasan = Review(user_id=user.id, product_id=item.product_id, order_item_id=item.id, rating=rating,
+                            comment=komentar, image_path=str(saved_path) if saved_path else None)
             db.session.add(ulasan)
             db.session.commit()
             return ulasan
@@ -77,10 +75,10 @@ class LayananUlasan:
 
     @staticmethod
     def milik_user(user: User) -> dict[int, dict]:
-        return {r.product_id: {"id": r.id, "rating": r.rating, "komentar": r.comment,
-                               "gambar_url": f"/media/reviews/{r.id}" if r.image_path else "",
-                               "tersembunyi": r.is_hidden}
-                for r in Review.query.filter_by(user_id=user.id).all()}
+        return {r.order_item_id: {"id": r.id, "rating": r.rating, "komentar": r.comment,
+                                  "gambar_url": f"/media/reviews/{r.id}" if r.image_path else "",
+                                  "tersembunyi": r.is_hidden}
+                for r in Review.query.filter(Review.user_id == user.id, Review.order_item_id.isnot(None)).all()}
 
     @staticmethod
     def terlihat(product_id: int, batas: int = 20) -> list[dict]:

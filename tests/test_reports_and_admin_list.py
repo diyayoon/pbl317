@@ -1,6 +1,8 @@
 from datetime import date
 from zoneinfo import ZoneInfo
 from datetime import datetime
+from io import BytesIO
+from openpyxl import load_workbook
 
 from app.extensions import db
 from app.models import Order
@@ -52,3 +54,9 @@ def test_report_page_date_filter_and_export_pdf_excel(app, client, midtrans_read
     xlsx = admin.get(f"/admin/laporan/export.xlsx?tanggal_awal={today}&tanggal_akhir={today}")
     assert pdf.status_code == 200 and pdf.mimetype == "application/pdf" and pdf.data.startswith(b"%PDF")
     assert xlsx.status_code == 200 and "spreadsheetml" in xlsx.mimetype and xlsx.data[:2] == b"PK"
+    workbook = load_workbook(BytesIO(xlsx.data))
+    sheet = workbook["Penjualan"]
+    assert sheet.freeze_panes is None
+    assert len(sheet.tables) == 1
+    assert sheet.column_dimensions["D"].width >= 30
+    assert sheet["A1"].value == "LAPORAN PENJUALAN ALBIS ANTIQUE"

@@ -108,9 +108,10 @@
     font: 600 1.25rem var(--font-heading);
 }
 
-/* Pembungkus tabel (bisa digeser) */
+/* Pembungkus tabel */
 .table-wrap {
     overflow-x: auto;
+    overflow-y: auto;
 }
 
 /* Tabel data */
@@ -1579,8 +1580,21 @@
     cursor: pointer;
 }
 .admin-user-actions-trigger:hover, .admin-user-actions.is-open .admin-user-actions-trigger { background: #eaf7fd; border-color: #a8d7eb; }
-.admin-user-actions-menu { display: none; width: 170px; padding: 6px; border: 1px solid var(--warna-garis); border-radius: 13px; background: #fff; box-shadow: 0 9px 24px rgba(41, 91, 116, .13); }
-.admin-user-actions.is-open .admin-user-actions-menu { display: grid; gap: 3px; }
+.admin-user-actions-menu {
+    display: none;
+    position: fixed;
+    z-index: 15000;
+    width: 190px;
+    max-width: calc(100vw - 16px);
+    max-height: calc(100vh - 16px);
+    overflow-y: auto;
+    padding: 6px;
+    border: 1px solid var(--warna-garis);
+    border-radius: 13px;
+    background: #fff;
+    box-shadow: 0 12px 30px rgba(25, 65, 86, .20);
+}
+.admin-user-actions-menu.is-visible { display: grid; gap: 3px; }
 .admin-user-action-item { width: 100%; padding: 9px 10px; border: 0; border-radius: 8px; background: transparent; color: var(--warna-teks); text-align: left; font: 650 .76rem var(--font-body); cursor: pointer; }
 .admin-user-action-item:hover { background: #eff8fc; }
 .admin-user-action-item.is-danger { color: #a33d48; }
@@ -1691,3 +1705,8 @@ body.admin-dialog-open { overflow: hidden; }
 .admin-kpi-grid .panel { border: 1px solid rgba(104, 157, 183, .18); }
 .admin-user-filters label { display: grid; gap: 6px; color: var(--warna-muted); font-size: .82rem; font-weight: 700; }
 .admin-user-filters label .form-control { min-width: 150px; }
+
+/* Tombol export laporan menempel pada sisi kanan area tabel. */
+.report-export-actions { display: flex; align-items: center; justify-content: flex-end; gap: 9px; width: auto; margin-left: auto; flex: 0 0 auto; }
+.report-export-actions .button { white-space: nowrap; }
+@media (max-width: 680px) { .report-export-actions { width: 100%; justify-content: flex-end; } }

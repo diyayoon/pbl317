@@ -60,6 +60,21 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     const waktu = iso => { const d = new Date(iso); return Number.isNaN(d.getTime()) ? '' : d.toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }); };
 
+    const tutupMenuPengguna = () => {
+        document.querySelectorAll('.admin-user-actions-menu.is-visible').forEach(item => {
+            item.classList.remove('is-visible');
+            item.remove();
+            item._ownerTrigger?.setAttribute('aria-expanded', 'false');
+            item._ownerMenu?.classList.remove('is-open');
+        });
+    };
+    document.addEventListener('pointerdown', event => {
+        if (!event.target.closest('.admin-user-actions-trigger, .admin-user-actions-menu')) tutupMenuPengguna();
+    });
+    window.addEventListener('resize', tutupMenuPengguna);
+    window.addEventListener('scroll', tutupMenuPengguna, true);
+    document.addEventListener('keydown', event => { if (event.key === 'Escape') tutupMenuPengguna(); });
+
     /* ---------------- DASHBOARD PENJUALAN ---------------- */
     async function dashboard() {
         const body = element('adminRecentOrders');
@@ -311,9 +326,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function showCategoryPreview(source) {
         if (!categoryPreview) return;
-        categoryPreview.src = source || '';
         categoryPreview.hidden = !source;
+        categoryPreview.removeAttribute('src');
+        if (!source) return;
+        categoryPreview.src = source;
     }
+    categoryPreview?.addEventListener('error', () => {
+        categoryPreview.hidden = true;
+        toast('Pratinjau foto tidak dapat dimuat. Pilih ulang file gambar.', 'alert');
+    });
 
     categoryImage?.addEventListener('change', () => {
         const file = categoryImage.files?.[0];
@@ -497,22 +518,43 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const actionCell = make('td', 'admin-user-actions-cell');
             const menu = make('div', 'admin-user-actions');
+            const listMenu = make('div', 'admin-user-actions-menu');
+            const closeMenu = () => {
+                listMenu.classList.remove('is-visible');
+                listMenu.remove();
+                menu.classList.remove('is-open');
+                trigger.setAttribute('aria-expanded', 'false');
+            };
             const trigger = tombol('⋯', 'admin-user-actions-trigger', () => {
-                const open = !menu.classList.contains('is-open');
-                document.querySelectorAll('.admin-user-actions.is-open').forEach(item => {
-                    item.classList.remove('is-open');
-                    item.querySelector('.admin-user-actions-trigger')?.setAttribute('aria-expanded', 'false');
+                const open = !listMenu.classList.contains('is-visible');
+                document.querySelectorAll('.admin-user-actions-menu.is-visible').forEach(other => {
+                    other.classList.remove('is-visible');
+                    other.remove();
+                    other._ownerTrigger?.setAttribute('aria-expanded', 'false');
+                    other._ownerMenu?.classList.remove('is-open');
                 });
-                menu.classList.toggle('is-open', open);
-                trigger.setAttribute('aria-expanded', String(open));
+                if (!open) return;
+                listMenu._ownerTrigger = trigger;
+                listMenu._ownerMenu = menu;
+                document.body.append(listMenu);
+                listMenu.classList.add('is-visible');
+                menu.classList.add('is-open');
+                trigger.setAttribute('aria-expanded', 'true');
+                const rect = trigger.getBoundingClientRect();
+                const width = Math.min(190, window.innerWidth - 16);
+                listMenu.style.width = `${width}px`;
+                const height = listMenu.getBoundingClientRect().height;
+                const left = Math.max(8, Math.min(rect.right - width, window.innerWidth - width - 8));
+                let top = rect.bottom + 6;
+                if (top + height > window.innerHeight - 8) top = Math.max(8, rect.top - height - 6);
+                listMenu.style.left = `${left}px`;
+                listMenu.style.top = `${top}px`;
             });
             trigger.setAttribute('aria-label', `Aksi untuk ${u.nama}`);
             trigger.setAttribute('aria-expanded', 'false');
-            const listMenu = make('div', 'admin-user-actions-menu');
             const pilih = (label, callback, danger = false) => {
                 const button = tombol(label, `admin-user-action-item${danger ? ' is-danger' : ''}`, () => {
-                    menu.classList.remove('is-open');
-                    trigger.setAttribute('aria-expanded', 'false');
+                    closeMenu();
                     callback();
                 });
                 listMenu.append(button);
@@ -541,7 +583,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }, true);
             }
 
-            menu.append(trigger, listMenu);
+            menu.append(trigger);
             actionCell.append(menu);
             row.append(actionCell);
             body.append(row);
@@ -636,14 +678,6 @@ document.addEventListener('DOMContentLoaded', () => {
     element('userSearch')?.addEventListener('input', jadwalkanPencarianPengguna);
     element('userStatusFilter')?.addEventListener('change', () => pengguna().catch(error => toast(error.message, 'alert')));
     element('adminAccountSearch')?.addEventListener('input', () => { window.clearTimeout(window._adminUserT); window._adminUserT = window.setTimeout(() => daftarAdminReadOnly().catch(error => toast(error.message, 'alert')), 250); });
-    document.addEventListener('click', event => {
-        if (event.target.closest('.admin-user-actions')) return;
-        document.querySelectorAll('.admin-user-actions.is-open').forEach(menu => {
-            menu.classList.remove('is-open');
-            menu.querySelector('.admin-user-actions-trigger')?.setAttribute('aria-expanded', 'false');
-        });
-    });
-
     element('adminOrderSearch')?.addEventListener('input', renderOrders);
     const jalan = { dashboard, orders: muatOrders, payments: pembayaran, 'orders-payments': transaksi, reviews: ulasan, categories: kategori, users: async () => { await Promise.all([pengguna(), daftarAdminReadOnly()]); }, refunds: daftarRefund }[view];
     if (jalan) jalan().catch(error => toast(`Data tidak dapat dimuat: ${error.message}`, 'alert'));

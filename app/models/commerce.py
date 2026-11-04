@@ -97,7 +97,7 @@ class OrderItem(db.Model):
     product = db.relationship("Product", back_populates="order_items")
 
     def to_dict(self):
-        return {"id": self.product_id, "nama": self.product_name_snapshot, "harga": int(self.unit_price), "gambar": self.product_image_snapshot, "jumlah": self.quantity}
+        return {"id": self.product_id, "orderItemId": self.id, "nama": self.product_name_snapshot, "harga": int(self.unit_price), "gambar": self.product_image_snapshot, "jumlah": self.quantity}
 
 
 class Payment(db.Model):
@@ -139,10 +139,11 @@ class Payment(db.Model):
 
 class Review(db.Model):
     __tablename__ = "reviews"
-    __table_args__ = (db.UniqueConstraint("user_id", "product_id", name="uq_review_user_product"),)
+    __table_args__ = (db.UniqueConstraint("order_item_id", name="uq_reviews_order_item"),)
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     product_id = db.Column(db.Integer, db.ForeignKey("products.id", ondelete="CASCADE"), nullable=False, index=True)
+    order_item_id = db.Column(db.Integer, db.ForeignKey("order_items.id", ondelete="SET NULL"), nullable=True)
     rating = db.Column(db.Integer, nullable=False)
     comment = db.Column(db.Text, nullable=False, default="")
     image_path = db.Column(db.String(500), nullable=True)
@@ -154,11 +155,12 @@ class Review(db.Model):
     updated_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utcnow, onupdate=utcnow)
     user = db.relationship("User", back_populates="reviews", foreign_keys=[user_id])
     product = db.relationship("Product", back_populates="reviews")
+    order_item = db.relationship("OrderItem", foreign_keys=[order_item_id])
     moderator = db.relationship("User", foreign_keys=[moderated_by])
 
     def to_dict(self, admin: bool = False):
         data = {
-            "id": self.id, "produk_id": self.product_id, "rating": self.rating,
+            "id": self.id, "produk_id": self.product_id, "order_item_id": self.order_item_id, "rating": self.rating,
             "komentar": self.comment, "tanggal": self.created_at.isoformat(),
             "nama": self.user.nama if self.user else "Pelanggan",
             "foto": self.user.avatar_data if self.user else None,

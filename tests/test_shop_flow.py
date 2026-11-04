@@ -84,12 +84,13 @@ def test_alur_midtrans_status_ulasan_foto_dan_moderasi(app, midtrans_ready):
     dibuat = _pesan(cust, alamat)
     assert dibuat.status_code == 201
     oid = dibuat.get_json()["order"]["id"]
+    order_item_id = dibuat.get_json()["order"]["items"][0]["orderItemId"]
 
     # Pesanan Midtrans tidak lagi menerima unggahan bukti manual.
     import io
     r = cust.post(f"/customer/api/orders/{oid}/bukti", data={"buktiBayar": (io.BytesIO(PNG), "bukti.png")}, content_type="multipart/form-data")
     assert r.status_code in (400, 409, 422)
-    assert cust.post("/customer/api/reviews", json={"product_id": 1, "rating": 4}).status_code == 403  # belum selesai
+    assert cust.post("/customer/api/reviews", json={"order_item_id": order_item_id, "rating": 4}).status_code == 403  # belum selesai
 
     # Simulasikan notifikasi settlement yang sudah diverifikasi oleh Midtrans.
     with app.test_request_context("/midtrans/notifikasi", method="POST"):
@@ -107,17 +108,17 @@ def test_alur_midtrans_status_ulasan_foto_dan_moderasi(app, midtrans_ready):
     assert adm.patch(f"/admin/api/pesanan/{oid}", json={"status": "Diproses"}).status_code == 422
 
     # Ulasan satu kali, maksimal tujuh hari, dan foto opsional.
-    data = {"product_id": "1", "rating": "4", "komentar": "<b>Bagus</b>", "gambarUlasan": (io.BytesIO(PNG), "ulasan.png")}
+    data = {"order_item_id": str(order_item_id), "rating": "4", "komentar": "<b>Bagus</b>", "gambarUlasan": (io.BytesIO(PNG), "ulasan.png")}
     ulas = cust.post("/customer/api/reviews", data=data, content_type="multipart/form-data")
     assert ulas.status_code == 201
     review = ulas.get_json()["review"]
     assert review["gambar_url"] == f"/media/reviews/{review['id']}"
     assert cust.get(review["gambar_url"]).status_code == 200
-    assert cust.post("/customer/api/reviews", json={"product_id": 1, "rating": 5}).status_code == 422
+    assert cust.post("/customer/api/reviews", json={"order_item_id": order_item_id, "rating": 5}).status_code == 422
 
     lain = app.test_client()
     daftar_dan_login(lain, email="lain@test.local")
-    assert lain.post("/customer/api/reviews", json={"product_id": 1, "rating": 5}).status_code == 403
+    assert lain.post("/customer/api/reviews", json={"order_item_id": order_item_id, "rating": 5}).status_code == 403
     halaman = cust.get("/produk/1").data
     assert b"&lt;b&gt;Bagus" in halaman and b"<b>Bagus</b>" not in halaman
 
@@ -128,6 +129,25 @@ def test_alur_midtrans_status_ulasan_foto_dan_moderasi(app, midtrans_ready):
     assert cust.get(review["gambar_url"]).status_code == 404  # foto ulasan tersembunyi tidak dapat diakses publik
     with app.app_context():
         assert db.session.get(Product, 1).ulasan == 0 and Review.query.count() == 1
+
+    # Pembelian produk yang sama pada pesanan lain boleh diberi ulasan tersendiri.
+    alamat_kedua = buat_alamat(cust)
+    dibuat_kedua = _pesan(cust, alamat_kedua)
+    oid_kedua = dibuat_kedua.get_json()["order"]["id"]
+    order_item_kedua = dibuat_kedua.get_json()["order"]["items"][0]["orderItemId"]
+    with app.test_request_context("/midtrans/notifikasi", method="POST"):
+        order_kedua = db.session.get(Order, oid_kedua)
+        ms.LayananMidtrans.terapkan({
+            "order_id": order_kedua.order_number, "gross_amount": f"{int(order_kedua.total)}.00",
+            "transaction_status": "settlement", "fraud_status": "accept",
+            "payment_type": "qris", "transaction_id": "uji-settlement-kedua",
+        })
+    assert adm.patch(f"/admin/api/pesanan/{oid_kedua}", json={"status": "Dikirim"}).status_code == 200
+    assert adm.patch(f"/admin/api/pesanan/{oid_kedua}", json={"status": "Selesai"}).status_code == 200
+    ulasan_kedua = cust.post("/customer/api/reviews", json={"order_item_id": order_item_kedua, "rating": 5, "komentar": "Pembelian kedua"})
+    assert ulasan_kedua.status_code == 201
+    with app.app_context():
+        assert Review.query.count() == 2
 
 
 def test_dashboard_total_pesanan_bukan_dibatasi_tiga(client, app, midtrans_ready):

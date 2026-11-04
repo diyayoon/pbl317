@@ -7,7 +7,7 @@
   <div class="dashboard-layout">
     {% include 'partials/admin_sidebar.html' %}
     <main class="dashboard-content" data-admin-view="report-page">
-      <header class="admin-page-heading"><div><span class="eyebrow">ANALISIS BISNIS</span><h1>Laporan Penjualan</h1><p>Rekap transaksi selesai berdasarkan rentang tanggal. Waktu laporan menggunakan WIB.</p></div></header>
+      <header class="admin-page-heading"><div><span class="eyebrow">ANALISIS BISNIS</span><h1>Laporan Penjualan</h1></div></header>
       <section class="panel">
         <form method="get" action="{{ url_for('admin.laporan') }}" class="admin-user-filters" style="align-items:end">
           <label for="reportStartDate">Tanggal awal<input id="reportStartDate" class="form-control" type="date" name="tanggal_awal" value="{{ tanggal_awal.isoformat() if tanggal_awal else '' }}"></label>
@@ -15,17 +15,16 @@
           <button class="button button-primary" type="submit">Terapkan filter</button>
           <a class="button button-secondary" href="{{ url_for('admin.laporan') }}">Reset</a>
         </form>
-        <p class="field-hint">Pendapatan hanya menghitung pesanan berstatus Selesai. Pesanan yang dibatalkan atau direfund tidak dihitung sebagai penjualan.</p>
       </section>
       <section class="admin-kpi-grid">
         <article class="panel"><span class="eyebrow">PENDAPATAN</span><h2>Rp{{ '{:,.0f}'.format(laporan.pendapatan).replace(',', '.') }}</h2></article>
         <article class="panel"><span class="eyebrow">PESANAN SELESAI</span><h2>{{ laporan.selesai }}</h2></article>
         <article class="panel"><span class="eyebrow">PRODUK TERJUAL</span><h2>{{ laporan.produk_terjual }}</h2></article>
-        <article class="panel"><span class="eyebrow">PESANAN DIREfund</span><h2>{{ laporan.direfund }}</h2></article>
+        <article class="panel"><span class="eyebrow">PESANAN DIREFUND</span><h2>{{ laporan.direfund }}</h2></article>
       </section>
       <section class="panel">
         <div class="admin-panel-heading"><div><h2>Transaksi selesai</h2><p>{{ laporan.transaksi_selesai|length }} transaksi pada periode terpilih.</p></div>
-          <div class="admin-user-filters">
+          <div class="report-export-actions">
             <a class="button button-secondary button-small" href="{{ url_for('admin.ekspor_laporan_pdf', tanggal_awal=tanggal_awal.isoformat() if tanggal_awal else '', tanggal_akhir=tanggal_akhir.isoformat() if tanggal_akhir else '') }}">Export PDF</a>
             <a class="button button-primary button-small" href="{{ url_for('admin.ekspor_laporan_excel', tanggal_awal=tanggal_awal.isoformat() if tanggal_awal else '', tanggal_akhir=tanggal_akhir.isoformat() if tanggal_akhir else '') }}">Export Excel</a>
           </div>

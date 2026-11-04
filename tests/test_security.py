@@ -6,6 +6,7 @@ def test_header_keamanan_dan_cookie(client):
     r = client.get("/")
     csp = r.headers["Content-Security-Policy"]
     assert "script-src 'self';" in csp and "frame-ancestors 'none'" in csp and "object-src 'none'" in csp
+    assert "img-src 'self' data: blob: https:" in csp
     assert r.headers["X-Content-Type-Options"] == "nosniff"
     assert r.headers["X-Frame-Options"] == "DENY"
     assert "Referrer-Policy" in r.headers
@@ -109,3 +110,8 @@ def test_pembuatan_admin_hanya_melalui_command_cli(app):
     with app.app_context():
         user = User.query.filter_by(email="operator@test.local").one()
         assert user.role == "admin" and user.is_verified is True
+
+
+def test_halaman_login_register_tanpa_logo_brand(client):
+    assert b'auth-brand' not in client.get("/auth/login").data
+    assert b'auth-brand' not in client.get("/auth/register").data

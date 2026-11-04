@@ -165,6 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function showImagePreview(source, name) {
         const preview = document.getElementById('productImagePreview');
         preview.replaceChildren();
+        preview.classList.remove('has-error');
         preview.hidden = !source;
         if (!source) return;
 

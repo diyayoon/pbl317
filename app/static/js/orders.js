@@ -84,7 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
         area.placeholder = 'Ceritakan kondisi barang dan pengalamanmu (opsional)';
         const fileLabel = tag('label', 'order-review-file-label', 'Lampirkan foto (opsional)');
         const fileInput = document.createElement('input'); fileInput.type = 'file'; fileInput.accept = 'image/jpeg,image/png,image/webp'; fileInput.setAttribute('aria-label', 'Foto untuk ulasan');
-        const note = tag('small', 'field-hint', 'JPG, PNG, WEBP maksimal 3 MB. Batas waktu ulasan: 7 hari setelah pesanan selesai; setiap produk hanya bisa diulas sekali.');
+        const note = tag('small', 'field-hint', 'Foto opsional · JPG, PNG, atau WEBP maksimal 3 MB. Batas ulasan 7 hari setelah pesanan selesai.');
         fileInput.addEventListener('change', () => {
             const file = fileInput.files?.[0];
             if (file && (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 3 * 1024 * 1024)) {
@@ -94,7 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const kirim = tag('button', 'button button-primary button-small', 'Kirim ulasan'); kirim.type = 'button';
         toggle.addEventListener('click', () => { form.hidden = !form.hidden; });
         kirim.addEventListener('click', async () => {
-            const data = new FormData(); data.append('product_id', String(item.id)); data.append('rating', select.value); data.append('komentar', area.value);
+            const data = new FormData(); data.append('order_item_id', String(item.orderItemId)); data.append('rating', select.value); data.append('komentar', area.value);
             const file = fileInput.files?.[0]; if (file) data.append('gambarUlasan', file);
             kirim.disabled = true; note.textContent = 'Mengirim ulasan…';
             try { await request('/customer/api/reviews', { method: 'POST', body: data }); await muat(); }
