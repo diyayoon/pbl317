@@ -144,7 +144,8 @@ def ekspor_laporan_excel():
         if currency:
             ws.cell(row_no, 7).number_format = '"Rp" #,##0;[Red]-"Rp" #,##0'
 
-    widths = [18, 16, 18, 22, 13, 17, 16]
+    
+    widths = [18, 16, 18, 30, 13, 17, 16]
     for idx, width in enumerate(widths, 1):
         ws.column_dimensions[get_column_letter(idx)].width = width
     ws.freeze_panes = None
