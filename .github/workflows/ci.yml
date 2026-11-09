@@ -1,3 +1,4 @@
+
 name: Albis Antique CI
 
 on:
@@ -18,15 +19,23 @@ jobs:
   test:
     name: test
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      APP_ENV: development
+      SECRET_KEY: ci-only-not-for-deployment
+      DATABASE_URL: postgresql+psycopg://ci:ci@localhost:5432/albis_db
+      MIGRATION_DATABASE_URL: postgresql+psycopg://ci:ci@localhost:5432/albis_db
+      APP_BASE_URL: http://localhost:5000
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
-          python-version: "3.14"
+          python-version: "3.13"
           cache: pip
           cache-dependency-path: requirements.txt
 
@@ -43,3 +52,19 @@ jobs:
       - name: Run Automated Tests
         run: |
           pytest -v
+
+      - name: Validate Docker Compose
+        run: |
+          docker compose -f docker-compose.yml config --quiet
+
+      - name: Validate Portainer Compose
+        run: |
+          docker compose -f docker_compose.portainer.yml config --quiet
+
+      - name: Build Flask Docker Image
+        run: |
+          docker build --pull -t albis-web:ci .
+
+      - name: Build Nginx Docker Image
+        run: |
+          docker build --pull -t albis-nginx:ci ./nginx
