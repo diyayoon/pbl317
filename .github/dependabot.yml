@@ -1,3 +1,4 @@
+
 version: 2
 
 updates:
@@ -11,12 +12,30 @@ updates:
       timezone: "Asia/Jakarta"
     open-pull-requests-limit: 5
 
-  # Main Flask Dockerfile
+    groups:
+      python-minor-patch:
+        applies-to: version-updates
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Flask application Dockerfile
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 3
+
+    groups:
+      docker-minor-patch:
+        applies-to: version-updates
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
 
   # Nginx Dockerfile
   - package-ecosystem: "docker"
@@ -24,6 +43,15 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 3
+
+    groups:
+      nginx-minor-patch:
+        applies-to: version-updates
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
 
   # GitHub Actions dependencies
   - package-ecosystem: "github-actions"
@@ -34,3 +62,12 @@ updates:
       time: "09:00"
       timezone: "Asia/Jakarta"
     open-pull-requests-limit: 5
+
+    groups:
+      actions-minor-patch:
+        applies-to: version-updates
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch" 
