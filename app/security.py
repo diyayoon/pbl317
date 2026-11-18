@@ -3,7 +3,7 @@
 Pemetaan OWASP Top 10:2025: A02 (header/konfigurasi), A05 (CSP: tanpa skrip inline),
 A10 (error tidak membocorkan detail dan tidak fail-open).
 """
-from flask import jsonify, render_template, request
+from flask import g, jsonify, render_template, request
 from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.exceptions import HTTPException
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -81,6 +81,17 @@ def init_security(app):
         kode = error.code or 500
         if kode >= 500:
             db.session.rollback()
+        elif kode == 403 and not getattr(g, "audit_403_recorded", False):
+            # 403 dari aplikasi (mis. role tidak berhak), bukan blokir WAF.
+            try:
+                from .utils import audit
+                target = (request.endpoint or request.path or "unknown")[:60]
+                audit.catat(
+                    "akses_ditolak", "route", target, "Permintaan ditolak oleh pemeriksaan otorisasi aplikasi.",
+                    outcome="blocked", severity="medium", commit=True,
+                )
+            except Exception:
+                app.logger.exception("Gagal mencatat audit akses ditolak.")
         return balas(kode)
 
     @app.errorhandler(Exception)

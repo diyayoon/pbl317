@@ -66,3 +66,35 @@ def simpan_gambar_upload(file, folder, batas_byte: int) -> Path:
     path = tujuan / nama_file_aman(file.filename)
     path.write_bytes(data)
     return path
+
+
+EKSTENSI_SERTIFIKAT = {"pdf"}
+
+
+def simpan_dokumen_sertifikat(file, folder, batas_byte: int) -> Path:
+    """Simpan sertifikat PDF secara privat setelah validasi ekstensi, MIME, ukuran, dan signature."""
+    if not file or not getattr(file, "filename", ""):
+        raise ValueError("Pilih file sertifikat PDF terlebih dahulu.")
+    if not ekstensi_file_diizinkan(file.filename, EKSTENSI_SERTIFIKAT):
+        raise ValueError("Sertifikat hanya boleh diunggah dalam format PDF.")
+
+    mime = (getattr(file, "mimetype", "") or "").split(";", 1)[0].strip().lower()
+    if mime and mime != "application/pdf":
+        raise ValueError("Tipe MIME sertifikat harus application/pdf.")
+
+    batas = int(batas_byte)
+    if batas <= 0:
+        raise ValueError("Batas ukuran sertifikat tidak valid.")
+    data = file.stream.read(batas + 1)
+    if not data:
+        raise ValueError("File sertifikat PDF kosong.")
+    if len(data) > batas:
+        raise ValueError(f"Ukuran sertifikat maksimal {max(1, batas // (1024 * 1024))} MB.")
+    if not data.startswith(b"%PDF-"):
+        raise ValueError("Isi berkas tidak cocok dengan format PDF.")
+
+    tujuan = Path(folder)
+    tujuan.mkdir(parents=True, exist_ok=True)
+    path = tujuan / nama_file_aman(file.filename)
+    path.write_bytes(data)
+    return path

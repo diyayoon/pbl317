@@ -55,6 +55,7 @@ class Order(db.Model):
     user = db.relationship("User", back_populates="orders")
     items = db.relationship("OrderItem", back_populates="order", cascade="all, delete-orphan", order_by="OrderItem.id")
     payment = db.relationship("Payment", back_populates="order", uselist=False, cascade="all, delete-orphan")
+    certificate_delivery = db.relationship("CertificateEmailDelivery", back_populates="order", uselist=False, cascade="all, delete-orphan")
 
     @property
     def batas_bayar(self):
@@ -81,6 +82,7 @@ class Order(db.Model):
             "alamat": self.shipping_address, "alamatPengiriman": self.address_snapshot,
             "items": [item.to_dict() for item in self.items],
             "buktiBayar": bukti,
+            "emailSertifikat": self.certificate_delivery.status if self.certificate_delivery else "belum_dikirim",
         }
 
 
@@ -135,6 +137,24 @@ class Payment(db.Model):
             "gateway_payment_type": self.gateway_payment_type or "",
             "uploaded_at": self.uploaded_at.isoformat() if self.uploaded_at else None,
         }
+
+
+class CertificateEmailDelivery(db.Model):
+    """Status pengiriman sertifikat per pesanan; mencegah callback pembayaran mengirim email berulang."""
+    __tablename__ = "certificate_email_deliveries"
+    __table_args__ = (db.UniqueConstraint("order_id", name="uq_certificate_email_order"),)
+
+    id = db.Column(db.Integer, primary_key=True)
+    order_id = db.Column(db.Integer, db.ForeignKey("orders.id", ondelete="CASCADE"), nullable=False)
+    status = db.Column(db.String(24), nullable=False, default="pending", index=True)
+    attempt_count = db.Column(db.Integer, nullable=False, default=0)
+    attachment_count = db.Column(db.Integer, nullable=False, default=0)
+    sent_at = db.Column(db.DateTime(timezone=True), nullable=True)
+    last_error = db.Column(db.String(300), nullable=True)
+    created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utcnow)
+    updated_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utcnow, onupdate=utcnow)
+
+    order = db.relationship("Order", back_populates="certificate_delivery")
 
 
 class Review(db.Model):

@@ -3,7 +3,8 @@ import logging
 import os
 from pathlib import Path
 
-from flask import Flask, abort, send_file, send_from_directory
+from flask import Flask, abort, g, send_file, send_from_directory
+from uuid import uuid4
 from flask_login import current_user
 
 from .config import DevelopmentConfig, ProductionConfig
@@ -49,6 +50,10 @@ def buat_app(konfigurasi=None):
 
     # Satu handler saja (log Flask ke stderr/stdout container); tanpa basicConfig agar tidak ganda.
     app.logger.setLevel(logging.INFO)
+
+    @app.before_request
+    def _request_id():
+        g.request_id = str(uuid4())
 
     db.init_app(app)
     from . import models  # noqa: F401  (metadata untuk Flask-Migrate)
@@ -151,11 +156,25 @@ def buat_app(konfigurasi=None):
         """Bukti bayar hanya untuk pemilik pesanan atau admin; dicari lewat ID, bukan nama file."""
         from .models import Payment
         if not current_user.is_authenticated:
+            from .utils import audit
+            audit.catat(
+                "akses_ditolak", "payment", payment_id, "Pengguna anonim mencoba mengakses bukti pembayaran.",
+                category="payment", event_action="payment.unauthorized_access", outcome="blocked", severity="high",
+                actor_role="anonymous", context={"attempted_action": "download_payment_proof"}, commit=True,
+            )
+            g.audit_403_recorded = True
             abort(403)
         payment = db.session.get(Payment, payment_id)
         if not payment or not payment.proof_path:
             abort(404)
         if current_user.role != "admin" and payment.order.user_id != current_user.id:
+            from .utils import audit
+            audit.catat(
+                "akses_ditolak", "payment", payment_id, "Customer mencoba mengakses bukti pembayaran milik akun lain.",
+                category="payment", event_action="payment.unauthorized_access", outcome="blocked", severity="high",
+                actor_role="customer", context={"attempted_action": "download_payment_proof"}, commit=True,
+            )
+            g.audit_403_recorded = True
             abort(403)
         path = Path(payment.proof_path).resolve()
         base = Path(app.config["PAYMENT_UPLOAD_FOLDER"]).resolve()

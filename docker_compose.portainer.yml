@@ -12,6 +12,7 @@ services:
       APP_ENV: ${APP_ENV:-production}
       SECRET_KEY: ${SECRET_KEY:?Isi SECRET_KEY di environment Portainer atau file .env}
       DATABASE_URL: ${DATABASE_URL:-}
+      AUDIT_LOG_FILE: ${AUDIT_LOG_FILE:-/app/instance/logs/albis_audit.jsonl}
       TRUSTED_PROXY_COUNT: ${TRUSTED_PROXY_COUNT:-1}
       # 1 = cookie hanya lewat HTTPS (wajib saat diakses lewat domain HTTPS).
       # Isi 0 HANYA untuk uji internal lewat http://IP:PORT.
@@ -30,6 +31,8 @@ services:
       MAIL_USERNAME: ${MAIL_USERNAME:-}
       MAIL_PASSWORD: ${MAIL_PASSWORD:-}
       MAIL_FROM: ${MAIL_FROM:-}
+      CERTIFICATE_EMAIL_MAX_ATTACHMENTS: ${CERTIFICATE_EMAIL_MAX_ATTACHMENTS:-10}
+      CERTIFICATE_EMAIL_MAX_TOTAL_BYTES: ${CERTIFICATE_EMAIL_MAX_TOTAL_BYTES:-18874368}
       EMAIL_VERIFY_TTL_JAM: ${EMAIL_VERIFY_TTL_JAM:-24}
       EMAIL_VERIFY_COOLDOWN_DETIK: ${EMAIL_VERIFY_COOLDOWN_DETIK:-60}
       EMAIL_VERIFY_MAX_PER_JAM: ${EMAIL_VERIFY_MAX_PER_JAM:-5}

@@ -40,13 +40,21 @@ class Config:
     SQLALCHEMY_DATABASE_URI = normalisasi_database_url(os.getenv("DATABASE_URL"))
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {"pool_pre_ping": True, "pool_recycle": 1800}
+    # JSONL untuk Wazuh; Docker Compose mengarahkannya ke volume persisten /app/instance.
+    AUDIT_LOG_FILE = os.getenv(
+        "AUDIT_LOG_FILE", str(BASE_DIR / "instance" / "logs" / "albis_audit.jsonl")
+    )
 
     # Upload
-    MAX_CONTENT_LENGTH = 6 * 1024 * 1024
+    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # maksimal 5 foto (2 MB/foto) + sertifikat (4 MB) dan overhead multipart
     UPLOAD_FOLDER = str(BASE_DIR / "instance" / "uploads")
     PAYMENT_UPLOAD_FOLDER = str(BASE_DIR / "instance" / "uploads" / "payments")
     PRODUCT_UPLOAD_FOLDER = str(BASE_DIR / "instance" / "uploads" / "products")
     PRODUCT_MAX_BYTES = 2 * 1024 * 1024
+    PRODUCT_CERTIFICATE_UPLOAD_FOLDER = str(BASE_DIR / "instance" / "uploads" / "product-certificates")
+    PRODUCT_CERTIFICATE_MAX_BYTES = 4 * 1024 * 1024
+    CERTIFICATE_EMAIL_MAX_ATTACHMENTS = _int("CERTIFICATE_EMAIL_MAX_ATTACHMENTS", 10)
+    CERTIFICATE_EMAIL_MAX_TOTAL_BYTES = _int("CERTIFICATE_EMAIL_MAX_TOTAL_BYTES", 18 * 1024 * 1024)
     CATEGORY_UPLOAD_FOLDER = str(BASE_DIR / "instance" / "uploads" / "categories")
     REVIEW_UPLOAD_FOLDER = str(BASE_DIR / "instance" / "uploads" / "reviews")
     AVATAR_UPLOAD_FOLDER = str(BASE_DIR / "instance" / "uploads" / "avatars")
@@ -145,9 +153,13 @@ class TestingConfig(Config):
     SHIPPING_FREE_ABOVE = 0
     PAYMENT_UPLOAD_FOLDER = "/tmp/albis_test_uploads/payments"  # nosec B108 (hanya konfigurasi uji)
     PRODUCT_UPLOAD_FOLDER = "/tmp/albis_test_uploads/products"  # nosec B108
+    PRODUCT_CERTIFICATE_UPLOAD_FOLDER = "/tmp/albis_test_uploads/product-certificates"  # nosec B108
+    CERTIFICATE_EMAIL_MAX_ATTACHMENTS = 10
+    CERTIFICATE_EMAIL_MAX_TOTAL_BYTES = 18 * 1024 * 1024
     CATEGORY_UPLOAD_FOLDER = "/tmp/albis_test_uploads/categories"  # nosec B108
     REVIEW_UPLOAD_FOLDER = "/tmp/albis_test_uploads/reviews"  # nosec B108
     AVATAR_UPLOAD_FOLDER = "/tmp/albis_test_uploads/avatars"  # nosec B108
+    AUDIT_LOG_FILE = None  # unit test menguji DB kecuali file logging diaktifkan secara eksplisit
 
 
 class ProductionConfig(Config):
