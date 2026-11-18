@@ -96,10 +96,13 @@
                 row.append(copy, make('strong', 'checkout-item-price', money(price * qty)));
                 itemsNode.append(row);
             });
-            subtotalNode.textContent = money(subtotal); totalNode.textContent = money(subtotal);
+            const ongkir = Number(data.ongkir || 0);   // dihitung server; total final tetap dihitung ulang server saat pesan
+            const ongkirNode = document.getElementById('checkoutShipping');
+            if (ongkirNode) ongkirNode.textContent = ongkir > 0 ? money(ongkir) : 'Gratis';
+            subtotalNode.textContent = money(subtotal); totalNode.textContent = money(subtotal + ongkir);
             if (!checkoutItems.length) { form.hidden = true; empty.hidden = false; return; }
             empty.hidden = true; form.hidden = false;
-            submit.disabled = !selectedAddressId;
+            submit.disabled = !selectedAddressId || submit.dataset.midtransReady !== 'true';
         } catch (error) {
             form.hidden = true; empty.hidden = false;
             const message = make('p', '', error.message || 'Data checkout gagal dimuat.');
@@ -120,13 +123,14 @@
                 };
                 if (directId) { payload.direct_product_id = directId; payload.quantity = directQuantity; }
                 const result = await request('/customer/api/orders', 'POST', payload);
-                form.hidden = true; empty.hidden = true; success.hidden = false;
-                document.getElementById('checkoutSuccessOrder').textContent = `Nomor pesanan: #${result.order.orderNumber} · Total ${money(result.order.total)} · Metode ${result.order.pembayaran}`;
-                success.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                const redirectUrl = String(result.redirectUrl || '');
+                if (!redirectUrl.startsWith('https://')) throw new Error('Pesanan tersimpan, tetapi alamat pembayaran Midtrans tidak tersedia. Buka Riwayat Pesanan untuk mencoba lagi.');
+                submit.textContent = 'Membuka Midtrans…';
+                window.location.assign(redirectUrl);
             } catch (error) {
                 showError(error.message || 'Pesanan gagal disimpan. Periksa stok dan alamat lalu coba lagi.');
             } finally {
-                submit.disabled = !selectedAddressId;
+                submit.disabled = !selectedAddressId || submit.dataset.midtransReady !== 'true';
                 submit.textContent = original;
             }
         });

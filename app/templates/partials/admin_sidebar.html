@@ -3,7 +3,7 @@
         <span aria-hidden="true">♕</span>
         <div>
             <strong>ALBIS ADMIN</strong>
-            <small>Workspace</small>
+            <small>Ruang kerja admin</small>
         </div>
     </div>
 
@@ -36,28 +36,28 @@
             <span aria-hidden="true">♙</span> Pengguna
         </a>
         <a
-            class="{% if request.endpoint == 'admin.pesanan' %}active{% endif %}"
+            class="{% if request.endpoint in ['admin.pesanan', 'admin.pembayaran'] %}active{% endif %}"
             href="{{ url_for('admin.pesanan') }}"
         >
-            <span aria-hidden="true">▤</span> Pesanan
+            <span aria-hidden="true">▤</span> Pesanan &amp; Pembayaran
         </a>
         <a
-            class="{% if request.endpoint == 'admin.pembayaran' %}active{% endif %}"
-            href="{{ url_for('admin.pembayaran') }}"
+            class="{% if request.endpoint == 'admin.refund' %}active{% endif %}"
+            href="{{ url_for('admin.refund') }}"
         >
-            <span aria-hidden="true">◇</span> Pembayaran
+            <span aria-hidden="true">↩</span> Pengembalian dana
+        </a>
+        <a
+            class="{% if request.endpoint == 'admin.laporan' %}active{% endif %}"
+            href="{{ url_for('admin.laporan') }}"
+        >
+            <span aria-hidden="true">▧</span> Laporan penjualan
         </a>
         <a
             class="{% if request.endpoint == 'admin.ulasan' %}active{% endif %}"
             href="{{ url_for('admin.ulasan') }}"
         >
             <span aria-hidden="true">★</span> Ulasan
-        </a>
-        <a
-            class="{% if request.endpoint == 'admin.laporan' %}active{% endif %}"
-            href="{{ url_for('admin.laporan') }}"
-        >
-            <span aria-hidden="true">▥</span> Laporan
         </a>
         <a
             class="{% if request.endpoint == 'admin.audit_log' %}active{% endif %}"
@@ -75,7 +75,7 @@
         <form class="workspace-logout-form" action="{{ url_for('auth.logout') }}" method="post">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button class="workspace-logout-link" type="submit">
-                <span aria-hidden="true">↪</span> Keluar dari akun
+                <img class="ui-icon workspace-action-icon" src="{{ url_for('static', filename='images/icons/logout.svg') }}" alt="" aria-hidden="true"> Keluar dari akun
             </button>
         </form>
     </nav>

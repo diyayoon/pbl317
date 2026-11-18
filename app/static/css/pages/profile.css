@@ -132,10 +132,14 @@
     object-fit: cover;
 }
 
-/* Pratinjau foto › ikon bawaan */
-.avatar-bulat svg {
-    width: 72px;
-    height: 72px;
+.avatar-ikon-default {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+    font-family: "Segoe UI Symbol", "Noto Sans Symbols 2", sans-serif;
+    font-size: 4.5rem;
+    line-height: 1;
 }
 
 /* Kolom aksi foto */

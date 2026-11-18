@@ -22,6 +22,10 @@ class User(UserMixin, db.Model):
     avatar_data = db.Column(db.Text, nullable=True)
     is_active = db.Column(db.Boolean, nullable=False, default=True)
     auth_version = db.Column(db.Integer, nullable=False, default=1)
+    is_verified = db.Column(db.Boolean, nullable=False, default=False)
+    email_verified_at = db.Column(db.DateTime(timezone=True), nullable=True)
+    status_reason = db.Column(db.String(300), nullable=True)
+    deleted_at = db.Column(db.DateTime(timezone=True), nullable=True, index=True)
     created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utcnow)
     updated_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utcnow, onupdate=utcnow)
 
@@ -43,6 +47,10 @@ class User(UserMixin, db.Model):
 
     def check_password(self, password: str) -> bool:
         return self.cek_password(password)
+
+    @property
+    def is_deleted(self) -> bool:
+        return self.deleted_at is not None
 
     def halaman_awal(self) -> str:
         return "admin.dashboard" if self.role == "admin" else "customer.dashboard"

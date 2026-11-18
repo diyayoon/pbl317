@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const apiItemBase = String(app.dataset.apiItemUrl || '').replace(/\/0$/, '');
     const csrfToken = document.getElementById('csrfToken')?.value || '';
     const money = value => `Rp${Number(value || 0).toLocaleString('id-ID')}`;
+    const formatRupiah = value => Number(value || 0).toLocaleString('id-ID');
     const make = (tag, className = '', text = undefined) => {
         const node = document.createElement(tag);
         if (className) node.className = className;
@@ -23,7 +24,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let products = [];
     let apiReady = false;
-    let newImageData = '';
+    let newImageFile = null;
+    let previewUrl = '';
+    let imageProcessing = false;
+    let imageSelectionVersion = 0;
 
 
     const fieldIds = {
@@ -46,7 +50,8 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         const method = String(options.method || 'GET').toUpperCase();
-        if (options.body !== undefined) {
+        // FormData (multipart): biarkan browser mengisi Content-Type + boundary sendiri.
+        if (options.body !== undefined && !(options.body instanceof FormData)) {
             headers['Content-Type'] = 'application/json';
         }
         if (!['GET', 'HEAD', 'OPTIONS', 'TRACE'].includes(method)) {
@@ -81,6 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         toast.textContent = message;
+        toast.setAttribute('role', type);
         toast.classList.add('is-visible');
         window.clearTimeout(toast._timer);
         toast._timer = window.setTimeout(() => toast.classList.remove('is-visible'), 3500);
@@ -129,7 +135,10 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('saveProductButton').disabled = !apiReady;
         document.getElementById('productImagePreview').replaceChildren();
         document.getElementById('productImagePreview').hidden = true;
-        newImageData = '';
+        newImageFile = null;
+        imageSelectionVersion += 1;
+        imageProcessing = false;
+        clearPreviewUrl();
         clearErrors();
     }
 
@@ -138,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (product) {
             Object.entries(fieldIds).forEach(([key, id]) => {
                 const input = document.getElementById(id);
-                if (input) input.value = product[key] ?? '';
+                if (input) input.value = key === 'harga' ? formatRupiah(product[key]) : (product[key] ?? '');
             });
             document.getElementById('productId').value = String(product.id);
             document.getElementById('productFormTitle').textContent = 'Edit produk antik';
@@ -148,17 +157,47 @@ document.addEventListener('DOMContentLoaded', () => {
         showPanel(true);
     }
 
+    function clearPreviewUrl() {
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
+        previewUrl = '';
+    }
+
     function showImagePreview(source, name) {
         const preview = document.getElementById('productImagePreview');
         preview.replaceChildren();
+        preview.classList.remove('has-error');
         preview.hidden = !source;
         if (!source) return;
 
         const image = make('img');
         image.src = source;
         image.alt = `Pratinjau foto ${name}`;
-        image.loading = 'lazy';
+        image.decoding = 'async';
+        image.addEventListener('error', () => {
+            preview.classList.add('has-error');
+        }, { once: true });
+        image.addEventListener('load', () => preview.classList.remove('has-error'), { once: true });
         preview.append(image);
+    }
+
+    function formatPriceInput() {
+        const input = document.getElementById('productPrice');
+        if (!input) return;
+        const original = input.value;
+        const cursor = input.selectionStart ?? original.length;
+        const digitBeforeCursor = original.slice(0, cursor).replace(/\D/g, '').length;
+        const digits = original.replace(/\D/g, '');
+        const formatted = digits ? Number(digits).toLocaleString('id-ID') : '';
+        input.value = formatted;
+
+        let nextCursor = 0;
+        let digitsSeen = 0;
+        while (nextCursor < formatted.length && digitsSeen < digitBeforeCursor) {
+            if (/\d/.test(formatted[nextCursor])) digitsSeen += 1;
+            nextCursor += 1;
+        }
+        if (digitBeforeCursor === 0) nextCursor = 0;
+        input.setSelectionRange(nextCursor, nextCursor);
     }
 
     function render() {
@@ -278,39 +317,37 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    async function buildImageData(file) {
-        if (typeof createImageBitmap === 'function') {
-            const bitmap = await createImageBitmap(file);
-            const maximumDimension = 1000;
-            const scale = Math.min(
-                1,
-                maximumDimension / Math.max(bitmap.width, bitmap.height),
-            );
-            const canvas = document.createElement('canvas');
-            canvas.width = Math.max(1, Math.round(bitmap.width * scale));
-            canvas.height = Math.max(1, Math.round(bitmap.height * scale));
-
-            const context = canvas.getContext('2d');
-            if (!context) {
-                bitmap.close();
-                throw new Error('Browser tidak dapat memproses foto ini.');
-            }
-            context.fillStyle = '#ffffff';
-            context.fillRect(0, 0, canvas.width, canvas.height);
-            context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-            bitmap.close();
-            return canvas.toDataURL('image/jpeg', 0.78);
+    async function buildImageFile(file) {
+        if (typeof createImageBitmap !== 'function') return file;
+        let bitmap;
+        try {
+            bitmap = await createImageBitmap(file);
+        } catch {
+            return file;
         }
+        const maximumDimension = 1000;
+        const scale = Math.min(1, maximumDimension / Math.max(bitmap.width, bitmap.height));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+        canvas.height = Math.max(1, Math.round(bitmap.height * scale));
 
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(String(reader.result || ''));
-            reader.onerror = () => reject(new Error('Tidak dapat membaca foto.'));
-            reader.readAsDataURL(file);
-        });
+        const context = canvas.getContext('2d');
+        if (!context) {
+            bitmap.close();
+            return file;
+        }
+        context.fillStyle = '#ffffff';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+        bitmap.close();
+
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.78));
+        if (!blob) return file;
+        const baseName = (file.name || 'foto').replace(/\.[^.]+$/, '') || 'foto';
+        return new File([blob], `${baseName}.jpg`, { type: 'image/jpeg' });
     }
 
-    function collectFormData(oldProduct = null) {
+    function collectFormData() {
         return {
             nama: document.getElementById('productName').value.trim(),
             kategori: document.getElementById('productCategory').value,
@@ -319,16 +356,22 @@ document.addEventListener('DOMContentLoaded', () => {
             kondisi: document.getElementById('productCondition').value,
             material: document.getElementById('productMaterial').value.trim(),
             autentikasi: document.getElementById('productAuthenticity').value,
-            harga: Number(document.getElementById('productPrice').value),
+            harga: Number(document.getElementById('productPrice').value.replace(/\D/g, '')),
             stok: document.getElementById('productStock').value === ''
                 ? null
                 : Number(document.getElementById('productStock').value),
             deskripsi: document.getElementById('productDescription').value.trim(),
-            gambar: newImageData || oldProduct?.gambar || '',
-            sumber_gambar: oldProduct?.sumber_gambar || '',
-            rating: oldProduct?.rating || 0,
-            ulasan: oldProduct?.ulasan || 0,
         };
+    }
+
+    function buildMultipart(payload, oldProduct = null) {
+        const data = new FormData();
+        Object.entries(payload).forEach(([key, value]) => {
+            data.append(key, value === null || value === undefined ? '' : String(value));
+        });
+        if (oldProduct?.sumber_gambar) data.append('sumber_gambar', oldProduct.sumber_gambar);
+        if (newImageFile) data.append('gambar', newImageFile, newImageFile.name);
+        return data;
     }
 
     function validateForm(payload) {
@@ -364,27 +407,53 @@ document.addEventListener('DOMContentLoaded', () => {
 
     search?.addEventListener('input', render);
 
+    document.getElementById('productPrice')?.addEventListener('input', formatPriceInput);
+
     document.getElementById('productImage')?.addEventListener('change', async event => {
         const input = event.currentTarget;
         const file = input.files?.[0];
-        newImageData = '';
-        showImagePreview('', 'produk');
-        if (!file) return;
+        const rawId = document.getElementById('productId').value;
+        const oldProduct = rawId
+            ? products.find(product => Number(product.id) === Number(rawId))
+            : null;
+        const version = ++imageSelectionVersion;
+        const saveButton = document.getElementById('saveProductButton');
 
-        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-        if (!allowedTypes.includes(file.type) || file.size > 2 * 1024 * 1024) {
+        newImageFile = null;
+        imageProcessing = false;
+        saveButton.disabled = !apiReady;
+        clearPreviewUrl();
+        if (!file) {
+            showImagePreview(oldProduct?.gambar || '', oldProduct?.nama || 'produk');
+            return;
+        }
+
+        const extension = file.name.split('.').pop()?.toLowerCase();
+        const accepted = ['image/jpeg', 'image/png', 'image/webp'].includes(file.type)
+            || (!file.type && ['jpg', 'jpeg', 'png', 'webp'].includes(extension));
+        if (!accepted || file.size > 2 * 1024 * 1024) {
             input.value = '';
+            showImagePreview(oldProduct?.gambar || '', oldProduct?.nama || 'produk');
             showToast('Pilih JPG, PNG, atau WEBP dengan ukuran maksimal 2 MB.', 'alert');
             return;
         }
 
+        previewUrl = URL.createObjectURL(file);
+        showImagePreview(previewUrl, file.name);
+        imageProcessing = true;
+        saveButton.disabled = true;
         try {
-            newImageData = await buildImageData(file);
-            showImagePreview(newImageData, file.name);
+            newImageFile = await buildImageFile(file);
+            if (version !== imageSelectionVersion) return;
         } catch (error) {
-            input.value = '';
-            newImageData = '';
-            showToast(error.message || 'Foto belum bisa dibaca.', 'alert');
+            if (version !== imageSelectionVersion) return;
+            newImageFile = file;
+            showToast('Foto akan diunggah tanpa kompresi tambahan.', 'status');
+        } finally {
+            if (version === imageSelectionVersion) {
+                imageProcessing = false;
+                saveButton.disabled = !apiReady;
+            }
         }
     });
 
@@ -392,6 +461,10 @@ document.addEventListener('DOMContentLoaded', () => {
         event.preventDefault();
         if (!apiReady) {
             showToast('Sumber data belum siap. Perubahan belum disimpan.', 'alert');
+            return;
+        }
+        if (imageProcessing) {
+            showToast('Tunggu sampai foto selesai diproses.', 'alert');
             return;
         }
 
@@ -402,7 +475,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const oldProduct = rawId
             ? products.find(product => Number(product.id) === Number(rawId))
             : null;
-        const payload = collectFormData(oldProduct);
+        const payload = collectFormData();
         const clientErrors = validateForm(payload);
         clearErrors();
         if (Object.keys(clientErrors).length) {
@@ -417,7 +490,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 oldProduct ? `${apiItemBase}/${oldProduct.id}` : apiUrl,
                 {
                     method: oldProduct ? 'PUT' : 'POST',
-                    body: JSON.stringify(payload),
+                    body: buildMultipart(payload, oldProduct),
                 },
             );
             products = response.products || [];

@@ -8,11 +8,10 @@ di PostgreSQL; tidak ada data tiruan di browser.
 | Peran | Cara dibuat | Akses |
 |---|---|---|
 | Customer | Registrasi publik `/auth/register` (otomatis, tidak bisa memilih peran) | Katalog, keranjang, checkout, pesanan, ulasan, profil |
-| Admin | Hanya lewat CLI `flask create-admin` (orang internal kelompok) | Produk, kategori, pesanan, pembayaran, ulasan, laporan, audit log |
+| Admin | Hanya lewat CLI `flask create-admin` (orang internal kelompok) | Produk, kategori, pesanan, pembayaran, refund, laporan, audit log |
 
 ## Alur
-Customer: katalog → detail → keranjang → checkout (alamat tersimpan) → pesanan dibuat (stok dikunci & dikurangi) →
-transfer → unggah bukti → admin setujui/tolak (alasan wajib) → diproses → dikirim → selesai → ulasan.
+Customer: katalog → detail → keranjang → checkout → Snap Midtrans Sandbox → webhook/sinkronisasi pembayaran → diproses → dikirim → selesai → ulasan. Untuk pesanan Midtrans yang sudah dibayar tetapi belum dikirim, customer dapat mengajukan refund; admin meninjau dan gateway harus mengonfirmasi sebelum status lokal menjadi Direfund.
 Pesanan yang tidak dibayar dalam `ORDER_PAYMENT_TTL_JAM` (default 24 jam) otomatis dibatalkan dan stok kembali.
 
 ## Database siap-import
@@ -31,8 +30,9 @@ python run.py                                         # http://127.0.0.1:5000
 SQLite ditolak otomatis bila `APP_ENV=production`. Untuk uji yang setara produksi (rebutan stok, dsb.) pakai PostgreSQL lewat Docker.
 
 ## Menjalankan
-Lihat [`docs/PANDUAN-DEPLOY.md`](docs/PANDUAN-DEPLOY.md) (Portainer/Docker Compose + migrasi + admin pertama)
-dan [`docs/KEAMANAN-OWASP-MITRE.md`](docs/KEAMANAN-OWASP-MITRE.md) (kontrol keamanan dan cara mengujinya).
+Lihat [`docs/REVISI-FINAL.md`](docs/REVISI-FINAL.md) (migrasi, konfigurasi, perilaku keamanan, cara uji),
+[`docs/REVISI-MIDTRANS.md`](docs/REVISI-MIDTRANS.md) (registrasi, email, dan pembayaran Midtrans sandbox), serta
+[`docs/REVISI-FRONTEND-20261027.md`](docs/REVISI-FRONTEND-20261027.md) (perbaikan UI, upload kategori/ulasan, migrasi, dan checklist testing).
 
 Lokal tanpa Docker:
 ```bash
@@ -46,10 +46,10 @@ python run.py
 ```
 
 ## Perintah CLI
-`db-check`, `seed-catalog [--tanpa-produk]`, `create-admin`, `expire-orders`, `purge-security-events`, `db upgrade|check`.
+`db-check`, `seed-catalog [--tanpa-produk]`, `create-admin` (satu-satunya cara membuat admin), `expire-orders`, `purge-security-events`, `db upgrade|check`.
 
 ## Tes
 ```bash
-python -m pytest -q        # 25 tes (SQLite in-memory)
+python -m pytest -q        # seluruh test suite (SQLite in-memory); lihat docs/REVISI-FINAL.md untuk uji di PostgreSQL
 pip-audit -r requirements.txt && bandit -q -r app -ll
 ```

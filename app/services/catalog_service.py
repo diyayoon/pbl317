@@ -1,17 +1,12 @@
 """Aturan bisnis katalog; semua CRUD database dilakukan dalam satu lapisan OOP."""
 from __future__ import annotations
-import base64
-import binascii
-import re
 from pathlib import Path
-from urllib.parse import urlsplit
-from uuid import uuid4
 from flask import current_app
-from sqlalchemy import func, or_, select
+from sqlalchemy import case, func, or_, select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.exc import IntegrityError
 from app.extensions import db
-from app.models import Category, OrderItem, Product, ProductImage, Review
+from app.models import Category, OrderItem, Product, ProductImage
 from app.models.catalog import slugify
 
 
@@ -19,7 +14,6 @@ class CatalogService:
     ERA = {"1800s", "1900–1949", "1950–1999", "2000–sekarang"}
     KONDISI = {"Excellent", "Good", "Fair", "Needs restoration"}
     AUTENTIKASI = {"Verified", "Documented", "Inspected", "Not verified"}
-    DATA_IMAGE_PATTERN = re.compile(r"^data:image/(jpeg|png|webp);base64,([A-Za-z0-9+/=\r\n]+)$")
 
     @staticmethod
     def slug_unik(name: str, exclude_id: int | None = None) -> str:
@@ -35,20 +29,59 @@ class CatalogService:
             slug = f"{base}-{index}"
             index += 1
 
+    MAKS_KATA = 6
+    MAKS_PANJANG_Q = 100
+
+    @classmethod
+    def tokenisasi(cls, query: str) -> list[str]:
+        """Normalisasi spasi/huruf, buang duplikat, batasi jumlah kata. Kata 1 huruf dibuang kecuali satu-satunya."""
+        kata = []
+        for k in " ".join(str(query or "").split())[: cls.MAKS_PANJANG_Q].lower().split(" "):
+            if k and k not in kata:
+                kata.append(k[:40])
+        panjang = [k for k in kata if len(k) > 1]
+        return (panjang or kata)[: cls.MAKS_KATA]
+
+    @staticmethod
+    def _pola(kata: str) -> str:
+        return "%" + kata.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+
+    @classmethod
+    def cari(cls, query: str, category_slug: str = "", active_only: bool = True, limit: int = 200) -> list[dict]:
+        """Pencarian ke PostgreSQL (ILIKE terparameter). Produk dengan lebih banyak kata cocok tampil lebih dulu,
+        lalu berdasarkan bobot bidang (nama > kategori > material/asal/era > kondisi/deskripsi), lalu terbaru."""
+        kata = cls.tokenisasi(query)
+        if not kata:
+            return cls.list_products(category_slug=category_slug, active_only=active_only)
+        bidang = [(Product.name, 5), (Category.name, 3), (Product.material, 2), (Product.origin, 2),
+                  (Product.era, 2), (Product.condition, 1), (Product.description, 1)]
+        jumlah_cocok, skor = 0, 0
+        for k in kata:
+            pola = cls._pola(k)
+            jumlah_cocok = jumlah_cocok + case((or_(*[f.ilike(pola, escape="\\") for f, _ in bidang]), 1), else_=0)
+            for f, bobot in bidang:
+                skor = skor + case((f.ilike(pola, escape="\\"), bobot), else_=0)
+        frasa = cls._pola(" ".join(kata))
+        skor = skor + case((Product.name.ilike(frasa, escape="\\"), 10), else_=0)  # bonus frasa utuh di nama
+        statement = (select(Product).join(Category, Product.category_id == Category.id)
+                     .options(selectinload(Product.images), selectinload(Product.category), selectinload(Product.reviews))
+                     .where(jumlah_cocok >= 1))
+        if active_only:
+            statement = statement.where(Product.is_active.is_(True))
+        if category_slug:
+            statement = statement.where(Category.slug == category_slug)
+        statement = statement.order_by(jumlah_cocok.desc(), skor.desc(), Product.id.desc()).limit(limit)
+        return [product.to_dict() for product in db.session.scalars(statement).unique().all()]
+
     @classmethod
     def list_products(cls, query: str = "", category_slug: str = "", active_only: bool = True) -> list[dict]:
+        if query.strip():
+            return cls.cari(query, category_slug, active_only)
         statement = select(Product).options(
             selectinload(Product.images), selectinload(Product.category), selectinload(Product.reviews)
         ).order_by(Product.id.desc())
         if active_only:
             statement = statement.where(Product.is_active.is_(True))
-        if query.strip():
-            esc = query.strip().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
-            needle = f"%{esc}%"
-            statement = statement.where(or_(
-                Product.name.ilike(needle, escape="\\"), Product.description.ilike(needle, escape="\\"),
-                Product.origin.ilike(needle, escape="\\"),
-            ))
         if category_slug:
             statement = statement.join(Category).where(Category.slug == category_slug)
         return [product.to_dict() for product in db.session.scalars(statement).unique().all()]
@@ -67,10 +100,30 @@ class CatalogService:
                 selectinload(Category.products).selectinload(Product.images)
             ).order_by(Category.id.asc())
         ).all()
+        gambar_bawaan = {
+            "timepiece": "/static/images/categories/jam-timepiece.jpg",
+            "camera": "/static/images/categories/kamera-vintage.jpg",
+            "porcelain": "/static/images/categories/porselen-keramik.jpg",
+            "books": "/static/images/categories/buku-manuskrip.jpg",
+            "jewelry": "/static/images/categories/perhiasan-antik.jpg",
+            "music": "/static/images/categories/musik-vintage.jpg",
+            "decor": "/static/images/categories/dekorasi-interior.jpg",
+            "travel": "/static/images/categories/travel-collectibles.jpg",
+        }
         results = []
         for category in categories:
             products = [item for item in category.products if item.is_active]
-            cover = next((p.gambar for p in products if p.gambar), "")
+            foto_produk = next((item.gambar for item in products if item.gambar), "")
+            gambar_khusus = (category.image_url or "").strip()
+            gambar_placeholder = gambar_khusus.lower().endswith(".svg") or "/assets/categories/" in gambar_khusus.lower()
+            if gambar_placeholder:
+                gambar_khusus = ""
+            cover = (
+                gambar_khusus
+                or gambar_bawaan.get(category.slug)
+                or foto_produk
+                or "/static/images/categories/jam-timepiece.jpg"
+            )
             results.append({
                 "id": category.id, "slug": category.slug, "nama": category.name,
                 "ikon": category.icon, "jumlah": len(products), "gambar": cover,
@@ -78,7 +131,7 @@ class CatalogService:
         return results
 
     @classmethod
-    def normalize_payload(cls, payload, existing: Product | None = None):
+    def normalize_payload(cls, payload, existing: Product | None = None, image_url: str = ""):
         if not isinstance(payload, dict):
             return None, {"umum": "Data produk tidak valid."}
         errors = {}
@@ -126,16 +179,9 @@ class CatalogService:
         except (ValueError, TypeError, OverflowError):
             stock = 0
             errors["stok"] = "Stok harus bilangan bulat nonnegatif."
-        image = payload.get("gambar", "")
-        image = image.strip() if isinstance(image, str) else ""
-        if len(image) > 2_800_000:
-            errors["gambar"] = "Foto terlalu besar. Gunakan foto maksimal 2 MB."
-        elif image and not image.startswith("data:"):
-            parsed = urlsplit(image)
-            if parsed.scheme not in {"https", "/"} and not image.startswith("/media/products/"):
-                errors["gambar"] = "URL foto eksternal harus HTTPS atau path media produk."
-        elif image and not cls.DATA_IMAGE_PATTERN.fullmatch(image):
-            errors["gambar"] = "Format foto tidak valid. Gunakan JPG, PNG, atau WEBP."
+        image = str(image_url or "").strip()
+        if image and not image.startswith("/media/products/"):
+            errors["gambar"] = "Lokasi foto produk tidak valid."
         if errors:
             return None, errors
         return {
@@ -147,34 +193,8 @@ class CatalogService:
         }, {}
 
     @classmethod
-    def _store_image(cls, image: str, alt: str) -> str:
-        if not image:
-            return ""
-        if image.startswith("/media/products/") or image.startswith("https://"):
-            return image
-        match = cls.DATA_IMAGE_PATTERN.fullmatch(image)
-        if not match:
-            raise ValueError("Format gambar tidak diizinkan.")
-        extension = match.group(1).lower()
-        raw = base64.b64decode(match.group(2), validate=True)
-        if len(raw) > 2 * 1024 * 1024:
-            raise ValueError("Ukuran gambar melebihi 2 MB.")
-        signatures = {
-            "png": raw.startswith(b"\x89PNG\r\n\x1a\n"),
-            "jpeg": raw.startswith(b"\xff\xd8\xff"),
-            "webp": len(raw) >= 12 and raw[:4] == b"RIFF" and raw[8:12] == b"WEBP",
-        }
-        if not signatures.get(extension, False):
-            raise ValueError("Isi file tidak sesuai dengan format gambar.")
-        folder = Path(current_app.config["PRODUCT_UPLOAD_FOLDER"]).resolve()
-        folder.mkdir(parents=True, exist_ok=True)
-        filename = f"{uuid4().hex}.{ 'jpg' if extension == 'jpeg' else extension }"
-        (folder / filename).write_bytes(raw)
-        return f"/media/products/{filename}"
-
-    @classmethod
-    def create_product(cls, payload):
-        values, errors = cls.normalize_payload(payload)
+    def create_product(cls, payload, image_url: str = ""):
+        values, errors = cls.normalize_payload(payload, image_url=image_url)
         if errors:
             return None, errors
         product = Product(
@@ -185,22 +205,18 @@ class CatalogService:
             image_alt=values["image_alt"], image_source=values["image_source"],
         )
         try:
-            image_url = cls._store_image(values["image"], values["image_alt"])
-            if image_url:
-                product.images.append(ProductImage(image_url=image_url, alt_text=values["image_alt"], is_primary=True, position=0))
+            if values["image"]:
+                product.images.append(ProductImage(image_url=values["image"], alt_text=values["image_alt"], is_primary=True, position=0))
             db.session.add(product)
             db.session.commit()
             return product, {}
-        except (ValueError, binascii.Error) as exc:
-            db.session.rollback()
-            return None, {"gambar": str(exc)}
         except IntegrityError:
             db.session.rollback()
             return None, {"umum": "Data produk bentrok dengan data lain. Coba lagi."}
 
     @classmethod
-    def update_product(cls, product: Product, payload):
-        values, errors = cls.normalize_payload(payload, existing=product)
+    def update_product(cls, product: Product, payload, image_url: str = ""):
+        values, errors = cls.normalize_payload(payload, existing=product, image_url=image_url)
         if errors:
             return None, errors
         new_image = values.pop("image")
@@ -211,18 +227,14 @@ class CatalogService:
             for key in ("description", "price", "stock", "era", "origin", "material", "condition", "authenticity_status", "image_alt", "image_source"):
                 setattr(product, key, values[key])
             if new_image:
-                image_url = cls._store_image(new_image, values["image_alt"])
                 primary = next((image for image in product.images if image.is_primary), None)
                 if primary is None:
                     primary = ProductImage(product=product, is_primary=True, position=0)
                     db.session.add(primary)
-                primary.image_url = image_url
+                primary.image_url = new_image
                 primary.alt_text = values["image_alt"]
             db.session.commit()
             return product, {}
-        except (ValueError, binascii.Error) as exc:
-            db.session.rollback()
-            return None, {"gambar": str(exc)}
         except IntegrityError:
             db.session.rollback()
             return None, {"umum": "Perubahan produk bentrok dengan data lain. Coba lagi."}

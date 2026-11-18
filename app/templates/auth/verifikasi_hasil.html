@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block title %}Verifikasi Email — Albis Antique{% endblock %}
+{% block body_class %}halaman-penuh auth-page{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/auth.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="auth-shell">
+    <div class="auth-form-area">
+        <div class="auth-card">
+            {% if berhasil %}
+            <h2>Email terverifikasi</h2>
+            <p>Terima kasih. Akun Anda sudah dapat dipakai untuk berbelanja.</p>
+            <a class="button button-primary button-full" href="{{ url_for('auth.login') }}">Lanjut</a>
+            {% else %}
+            <h2>Tautan tidak berlaku</h2>
+            <p>Tautan verifikasi tidak valid, sudah dipakai, atau sudah kedaluwarsa. Masuk lalu kirim ulang email verifikasi.</p>
+            <a class="button button-primary button-full" href="{{ url_for('auth.login') }}">Masuk</a>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endblock %}

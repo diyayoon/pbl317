@@ -1,11 +1,16 @@
 <aside id="customerWorkspaceSidebar" class="dashboard-sidebar customer-sidebar workspace-sidebar">
     <div class="customer-sidebar-brand">
-        <span class="customer-sidebar-crest" aria-hidden="true">♕</span>
-        <span>MY ACCOUNT</span>
-        <small>Ruang pribadi kolektor</small>
+        <img
+            class="customer-sidebar-crest"
+            src="{{ url_for('static', filename='images/favicon/brand-96.png') }}"
+            alt=""
+            aria-hidden="true"
+        >
+        <span>AKUN KOLEKTOR</span>
+        <small>Ruang koleksi pribadi</small>
     </div>
 
-    <nav aria-label="Menu akun pelanggan">
+    <nav aria-label="Navigasi akun kolektor">
         <a href="{{ url_for('main.katalog') }}">
             <span aria-hidden="true">⌕</span> Jelajahi katalog
         </a>
@@ -13,37 +18,37 @@
             class="{% if request.endpoint == 'customer.dashboard' %}active{% endif %}"
             href="{{ url_for('customer.dashboard') }}"
         >
-            <span aria-hidden="true">⌂</span> Ringkasan
+            <span aria-hidden="true">⌂</span> Dashboard
         </a>
         <a
             class="{% if request.endpoint == 'customer.pesanan' %}active{% endif %}"
             href="{{ url_for('customer.pesanan') }}"
         >
-            <span aria-hidden="true">♧</span> Pesanan
+            <span aria-hidden="true">♧</span> Pesanan saya
         </a>
         <a
             class="{% if request.endpoint == 'customer.keranjang' %}active{% endif %}"
             href="{{ url_for('customer.keranjang') }}"
         >
-            <span aria-hidden="true">♙</span> Keranjang
+            <img class="ui-icon workspace-action-icon" src="{{ url_for('static', filename='images/icons/cart.svg') }}" alt="" aria-hidden="true"> Keranjang
         </a>
         <a
             class="{% if request.endpoint == 'customer.profil' %}active{% endif %}"
             href="{{ url_for('customer.profil') }}"
         >
-            <span aria-hidden="true">♔</span> Profil
+            <span aria-hidden="true">♔</span> Profil saya
         </a>
         <a
             class="{% if request.endpoint == 'customer.keamanan' %}active{% endif %}"
             href="{{ url_for('customer.keamanan') }}"
         >
-            <span aria-hidden="true">♧</span> Keamanan
+            <span aria-hidden="true">♧</span> Keamanan akun
         </a>
 
         <form class="workspace-logout-form" action="{{ url_for('auth.logout') }}" method="post">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button class="workspace-logout-link" type="submit">
-                <span aria-hidden="true">↪</span> Keluar dari akun
+                <img class="ui-icon workspace-action-icon" src="{{ url_for('static', filename='images/icons/logout.svg') }}" alt="" aria-hidden="true"> Keluar dari akun
             </button>
         </form>
     </nav>

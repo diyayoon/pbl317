@@ -284,6 +284,7 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+    display: block;
 }
 
 /* Kartu kategori › foto watermark besar di sudut kanan bawah */
@@ -813,3 +814,9 @@
 /* Batch 5: foto hero tampil bersih tanpa bayangan gelap yang membuatnya tampak melayang. */
 .hero-object-image,
 .slider-slide .hero-object-image { box-shadow: none !important; }
+
+/* Kartu kategori selalu memakai aset sampul kategori sendiri; tidak menimpa dengan foto produk. */
+.category-icon-emoji { display: none !important; }
+.category-icon { background: rgba(255,255,255,.8); }
+.category-photo { object-fit: cover; }
+.category-watermark { object-fit: contain; opacity: .22; mix-blend-mode: multiply; }

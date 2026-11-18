@@ -26,17 +26,26 @@
         <div class="dashboard-content" data-admin-view="users">
             <header class="admin-page-heading">
                 <div>
-                    <span class="eyebrow">ACCOUNT DIRECTORY</span>
+                    <span class="eyebrow">DAFTAR PENGGUNA</span>
                     <h1>Pengguna</h1>
-                    <p>Daftar akun customer dan admin dari PostgreSQL.</p>
+
                 </div>
             </header>
 
             <section class="panel">
                 <div class="admin-panel-heading">
                     <div>
-                        <h2>Daftar akun</h2>
-                        <p>{{ pengguna_list|length }} akun dikenali oleh aplikasi.</p>
+                        <h2>Daftar pengguna</h2>
+                        <p id="userCount">{{ pengguna_list|length }} pengguna</p>
+                    </div>
+                    <div class="admin-user-filters">
+                        <input class="form-control" id="userSearch" type="search" placeholder="Cari nama atau email" maxlength="100" aria-label="Cari pengguna">
+                        <select class="form-control" id="userStatusFilter" aria-label="Filter status pengguna">
+                            <option value="">Semua status</option>
+                            <option value="Aktif">Aktif</option>
+                            <option value="Nonaktif">Nonaktif</option>
+                            <option value="Dihapus">Dihapus</option>
+                        </select>
                     </div>
                 </div>
 
@@ -46,32 +55,40 @@
                             <tr>
                                 <th scope="col">Nama</th>
                                 <th scope="col">Email</th>
-                                <th scope="col">Role</th>
                                 <th scope="col">Telepon</th>
+                                <th scope="col">Pesanan</th>
                                 <th scope="col">Bergabung</th>
                                 <th scope="col">Status</th>
+                                <th scope="col">Aksi</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            {% for akun in pengguna_list %}
-                            <tr>
-                                <td><strong>{{ akun.nama }}</strong></td>
-                                <td>{{ akun.email }}</td>
-                                <td><span class="admin-status">{{ akun.role|capitalize }}</span></td>
-                                <td>{{ akun.telepon or "—" }}</td>
-                                <td>{{ akun.bergabung }}</td>
-                                <td>{{ akun.status }}</td>
-                            </tr>
-                            {% else %}
-                            <tr>
-                                <td colspan="6" class="table-empty">Belum ada akun dalam database.</td>
-                            </tr>
-                            {% endfor %}
+                        <tbody id="userRows">
+                            <tr><td colspan="7" class="table-empty">Memuat data…</td></tr>
                         </tbody>
+                    </table>
+                </div>
+                <div id="userDetail" class="admin-report-status" hidden></div>
+            </section>
+
+            <section class="panel" aria-labelledby="adminAccountsHeading">
+                <div class="admin-panel-heading">
+                    <div>
+                        <h2 id="adminAccountsHeading">Daftar admin (read-only)</h2>
+                    </div>
+                    <input class="form-control" id="adminAccountSearch" type="search" placeholder="Cari admin" maxlength="100" aria-label="Cari administrator">
+                </div>
+                <div class="table-wrap">
+                    <table class="data-table">
+                        <thead><tr><th>Nama</th><th>Email</th><th>Status</th><th>Bergabung</th></tr></thead>
+                        <tbody id="adminAccountRows"><tr><td colspan="4" class="table-empty">Memuat daftar admin…</td></tr></tbody>
                     </table>
                 </div>
             </section>
         </div>
     </div>
 </section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/admin.js') }}" defer></script>
 {% endblock %}

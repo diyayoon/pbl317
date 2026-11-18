@@ -23,6 +23,10 @@ Get-Content database/01_schema.sql -Raw | docker exec -i albis-db psql -U postgr
 Get-Content database/02_data_awal.sql -Raw | docker exec -i albis-db psql -U postgres -d albis_antique -v ON_ERROR_STOP=1
 ```
 
+## WAJIB setelah import
+Dump ini berhenti di revisi `20261017_0003`. Setelah memuat `01_schema.sql` dan `02_data_awal.sql`, jalankan
+`python -m flask --app run db upgrade` agar revisi berikutnya (status akun, verifikasi email, sesi, Midtrans) ikut terpasang.
+
 ## Catatan
 - **Jangan** import ke database yang sudah punya tabel (mis. dari versi lama). Cek dulu `select * from alembic_version;`
   lalu pakai `python -m flask --app run db upgrade` agar data lama aman.

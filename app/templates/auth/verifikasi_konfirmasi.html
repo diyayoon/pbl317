@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block title %}Verifikasi Email — Albis Antique{% endblock %}
+{% block body_class %}halaman-penuh auth-page{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/auth.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="auth-shell">
+    <div class="auth-form-area">
+        <div class="auth-card">
+            <h2>Konfirmasi email</h2>
+            <p>Tekan tombol di bawah untuk menyelesaikan verifikasi email akun Anda.</p>
+            <form method="post">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="button button-primary button-full" type="submit">Verifikasi email saya</button>
+            </form>
+        </div>
+    </div>
+</section>
+{% endblock %}

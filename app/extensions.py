@@ -22,7 +22,13 @@ def memuat_pengguna(user_id: str):
     try:
         uid, _, versi = str(user_id).partition(":")
         user = db.session.get(User, int(uid))
-        if user is None or not user.is_active or str(user.auth_version) != versi:
+        if user is None or not user.is_active or user.deleted_at is not None or str(user.auth_version) != versi:
+            return None
+        from flask import g
+        from .services.sesi_service import LayananSesi
+        alasan = LayananSesi.validasi(user)
+        if alasan:
+            g.sesi_alasan = alasan
             return None
         return user
     except (TypeError, ValueError):
@@ -33,6 +39,9 @@ def memuat_pengguna(user_id: str):
 def tidak_terautentikasi():
     """API mendapat JSON 401; halaman biasa diarahkan ke login."""
     from flask import jsonify, redirect, request, url_for
+    from flask import g
     if "/api/" in request.path:
-        return jsonify(error="Sesi berakhir. Silakan login kembali.", login=url_for("auth.login")), 401
+        pesan = "Sesi berakhir karena tidak ada aktivitas. Silakan login kembali." if g.get("sesi_alasan") == "tidak_aktif" \
+            else "Sesi berakhir. Silakan login kembali."
+        return jsonify(error=pesan, login=url_for("auth.login")), 401
     return redirect(url_for("auth.login", next=request.full_path.rstrip("?")))

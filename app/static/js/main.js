@@ -18,7 +18,8 @@ function inisialisasiProfilNavbar() {
         if (namaNode) namaNode.textContent = nama;
         tautan.setAttribute('aria-label', `Akun ${nama}`);
         tautan.title = `Akun ${nama}`;
-        const foto = typeof profil.foto === 'string' && profil.foto.startsWith('data:image/') ? profil.foto : '';
+        const fotoValid = typeof profil.foto === 'string' && (profil.foto.startsWith('data:image/') || profil.foto.startsWith('/media/avatars/'));
+        const foto = fotoValid ? profil.foto : '';
         if (fotoNode && foto) {
             fotoNode.src = foto; fotoNode.hidden = false;
             if (fallbackNode) fallbackNode.hidden = true;
@@ -48,7 +49,7 @@ function tampilkanPromptLogin() {
             <p id="albisAuthDescription">Masuk ke akun customer Albis Antique agar keranjang tersimpan khusus untuk akunmu.</p>
             <div class="albis-auth-actions">
                 <button class="albis-auth-later" type="button">Nanti saja</button>
-                <a class="albis-auth-login" href="${albisBody.dataset.loginUrl || '/auth/login'}">Masuk</a>
+                <a class="albis-auth-login" href="${albisBody.dataset.loginUrl || '/auth/login'}"><img class="ui-icon button-leading-icon" src="${albisBody.dataset.loginIconUrl || '/static/images/icons/login.svg'}" alt="" aria-hidden="true">Masuk</a>
             </div>
         </section>`;
     document.body.append(overlay);
@@ -296,16 +297,17 @@ function inisialisasiFilterMobile() {
     });
 }
 function inisialisasiKuantitasDetail() {
-    document.querySelectorAll('.detail-actions .quantity-control').forEach(control => {
-        const tombol = [...control.querySelectorAll('button')];
-        const angka = control.querySelector('strong');
-        const addButton = control.parentElement?.querySelector('[data-add-cart]');
-        if (!angka || tombol.length < 2 || !addButton) return;
+    document.querySelectorAll('.detail-cart-panel .quantity-control').forEach(control => {
+        const minus = control.querySelector('[data-quantity-minus]');
+        const plus = control.querySelector('[data-quantity-plus]');
+        const angka = control.querySelector('[data-quantity-value]');
+        const addButton = control.closest('.detail-cart-panel')?.querySelector('[data-add-cart]');
+        if (!angka || !minus || !plus || !addButton) return;
         let quantity = 1;
         const max = () => Math.max(1, Number(addButton.dataset.productStock || 1));
-        const render = () => { angka.textContent = String(quantity); tombol[0].disabled = quantity <= 1; tombol[1].disabled = quantity >= max(); };
-        tombol[0].addEventListener('click', () => { quantity = Math.max(1, quantity - 1); render(); });
-        tombol[1].addEventListener('click', () => { quantity = Math.min(max(), quantity + 1); render(); });
+        const render = () => { angka.textContent = String(quantity); minus.disabled = quantity <= 1; plus.disabled = quantity >= max(); };
+        minus.addEventListener('click', () => { quantity = Math.max(1, quantity - 1); render(); });
+        plus.addEventListener('click', () => { quantity = Math.min(max(), quantity + 1); render(); });
         render();
     });
 }
@@ -323,8 +325,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 5200 + indeks * 250);
     });
 
-    const bahasa = new window.PengelolaBahasa();
-    bahasa.terapkanBahasa();
     const hero = document.querySelector('.hero');
     const judulKetik = document.querySelector('[data-ketik]');
     const kurangGerak = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -333,13 +333,31 @@ document.addEventListener('DOMContentLoaded', () => {
     const efekKetik = new window.EfekKetik(judulKetik, { saatSelesai: tandaiHeroSiap });
     efekKetik.mulai();
     window.setTimeout(tandaiHeroSiap, 6000);
-    document.getElementById('languageToggle')?.addEventListener('click', () => { bahasa.gantiBahasa(); efekKetik.ulangi(); });
     new window.EfekMuncul().pasang();
     new window.EfekSalju(document.getElementById('snowfall')).mulai();
     inisialisasiNavigasi();
     inisialisasiFilterMobile();
     inisialisasiKuantitasDetail();
     inisialisasiProfilNavbar();
+
+    const bukaPanelKeranjang = document.getElementById('detailOpenCart');
+    const panelKeranjang = document.getElementById('detailCartPanel');
+    const tutupPanelKeranjang = document.getElementById('detailCloseCart');
+    const aturPanelKeranjang = (terbuka) => {
+        if (!panelKeranjang || !bukaPanelKeranjang) return;
+        panelKeranjang.hidden = !terbuka;
+        bukaPanelKeranjang.setAttribute('aria-expanded', String(terbuka));
+        if (terbuka) panelKeranjang.querySelector('[data-quantity-minus]')?.focus();
+    };
+    bukaPanelKeranjang?.addEventListener('click', () => {
+        if (!albisIsCustomer()) {
+            if (albisBody.dataset.userRole === 'admin') tampilkanToast('Keranjang hanya tersedia untuk akun customer.');
+            else tampilkanPromptLogin();
+            return;
+        }
+        aturPanelKeranjang(panelKeranjang?.hidden !== false);
+    });
+    tutupPanelKeranjang?.addEventListener('click', () => { aturPanelKeranjang(false); bukaPanelKeranjang?.focus(); });
 
     const keranjang = new Keranjang();
     window.albisCart = keranjang;
@@ -360,7 +378,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 tampilkanPromptLogin(); return;
             }
             const produk = ambilDetailProduk(tombolBeli);
-            const quantity = Number(tombolBeli.closest('.product-copy')?.querySelector('.quantity-control strong')?.textContent || 1);
+            const quantity = Number(tombolBeli.closest('.product-copy')?.querySelector('[data-quantity-value]')?.textContent || 1);
             const stok = Math.max(0, Number(produk.stok || 0));
             if (stok < 1) { tampilkanToast('Stok produk sedang habis.'); return; }
             const safeQuantity = Math.min(stok, Math.max(1, quantity));
@@ -384,11 +402,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (albisBody.dataset.userRole === 'admin') { tampilkanToast('Keranjang hanya tersedia untuk akun customer.'); return; }
             tampilkanPromptLogin(); return;
         }
-        const quantity = Number(tombol.closest('.detail-actions')?.querySelector('.quantity-control strong')?.textContent || 1);
+        const quantity = Number(tombol.closest('.detail-cart-panel')?.querySelector('[data-quantity-value]')?.textContent || 1);
         if (await keranjang.tambahProduk(Number(tombol.dataset.addCart), quantity)) {
             tombol.classList.add('is-ditambah'); tombol.setAttribute('aria-pressed', 'true');
             window.setTimeout(() => { tombol.classList.remove('is-ditambah'); tombol.setAttribute('aria-pressed', 'false'); }, 900);
             tampilkanToast('Produk ditambahkan ke keranjang akunmu.');
+            aturPanelKeranjang(false);
         }
     });
 
@@ -417,6 +436,11 @@ document.addEventListener('error', event => {
     if (!(img instanceof HTMLImageElement)) return;
     if (img.dataset.imgFallback === 'remove') img.remove();
     else if (img.dataset.imgFallback === 'class') { img.classList.add('is-fallback'); img.removeAttribute('src'); }
+    else if (img.dataset.imgFallback === 'src' && img.dataset.fallbackSrc && !img.dataset.fallbackApplied) {
+        img.dataset.fallbackApplied = 'true';
+        img.classList.add('is-fallback');
+        img.src = img.dataset.fallbackSrc;
+    }
 }, true);
 
 document.addEventListener('DOMContentLoaded', () => {

@@ -33,74 +33,75 @@ document.addEventListener('DOMContentLoaded', () => {
         catch (error) { list.replaceChildren(tag('div', 'account-empty-state', error.message)); }
     }
 
-    function kotakInstruksi(order) {
+    function kotakMidtrans(order) {
         const box = tag('div', 'order-payment-info');
         box.append(tag('strong', '', `Total yang harus dibayar: ${money(order.total)}`));
+        box.append(tag('p', '', 'Bayar aman lewat halaman Midtrans (VA bank, QRIS, e-wallet, kartu). Pesanan otomatis diproses setelah pembayaran berhasil.'));
+        const catatan = tag('small', 'field-hint', '');
+        const tombol = tag('button', 'button button-primary button-small', 'Bayar sekarang');
+        tombol.type = 'button';
+        tombol.addEventListener('click', async () => {
+            tombol.disabled = true; catatan.textContent = 'Menyiapkan halaman pembayaran…';
+            try {
+                const hasil = await request(`/customer/api/orders/${order.id}/midtrans`, { method: 'POST' });
+                if (!String(hasil.redirectUrl || '').startsWith('https://')) throw new Error('Alamat pembayaran tidak valid.');
+                window.location.assign(hasil.redirectUrl);
+            } catch (error) { catatan.textContent = error.message; tombol.disabled = false; }
+        });
+        box.append(tombol, catatan);
         const batas = new Date(order.batasBayar);
-        if (order.pembayaran === 'QRIS') {
-            box.append(tag('p', '', info.qris || 'Hubungi admin Albis Antique untuk mendapatkan kode QRIS pembayaran.'));
-        } else if (info.rekening) {
-            box.append(tag('p', '', `Transfer ke ${info.bank || 'rekening toko'} ${info.rekening}${info.atasNama ? ` a.n. ${info.atasNama}` : ''}.`));
-        } else {
-            box.append(tag('p', '', 'Hubungi admin Albis Antique untuk mendapatkan nomor rekening pembayaran.'));
-        }
-        if (!Number.isNaN(batas.getTime())) {
-            box.append(tag('small', 'field-hint', `Bayar sebelum ${batas.toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}; pesanan otomatis dibatalkan setelah itu.`));
-        }
+        if (!Number.isNaN(batas.getTime())) box.append(tag('small', 'field-hint', `Bayar sebelum ${batas.toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}.`));
         return box;
     }
 
-    function formUnggah(order, ulang) {
-        const box = tag('div', 'order-proof-upload');
-        const label = tag('label', '', ulang ? 'Unggah ulang bukti pembayaran' : 'Unggah bukti pembayaran');
-        const input = document.createElement('input');
-        input.type = 'file'; input.accept = 'image/jpeg,image/png,image/webp,application/pdf';
-        input.setAttribute('aria-label', 'Pilih file bukti pembayaran');
-        const note = tag('small', 'field-hint', 'JPG, PNG, WEBP, atau PDF — maksimal 5 MB.');
-        const action = tag('button', 'button button-primary button-small', 'Kirim bukti');
-        action.type = 'button'; action.disabled = true;
-        input.addEventListener('change', () => {
-            const file = input.files?.[0];
-            action.disabled = !file;
-            if (file && (file.size > 5 * 1024 * 1024 || !['image/jpeg', 'image/png', 'image/webp', 'application/pdf'].includes(file.type))) {
-                input.value = ''; action.disabled = true; note.textContent = 'Gunakan JPG, PNG, WEBP, atau PDF maksimal 5 MB.';
-            } else if (file) note.textContent = `${file.name} siap dikirim.`;
-        });
-        action.addEventListener('click', async () => {
-            const file = input.files?.[0]; if (!file) return;
-            const data = new FormData(); data.append('buktiBayar', file);
-            action.disabled = true; note.textContent = 'Mengunggah bukti pembayaran…';
-            try { await request(`/customer/api/orders/${order.id}/bukti`, { method: 'POST', body: data }); await muat(); }
-            catch (error) { note.textContent = error.message; action.disabled = false; }
-        });
-        label.append(input);
-        box.append(label, note, action);
-        return box;
+    async function sinkronSetelahKembali() {
+        if (new URLSearchParams(window.location.search).get('midtrans') !== 'selesai') return;
+        const pending = orders.filter(o => o.pembayaran === 'Midtrans' && o.status === 'Menunggu pembayaran');
+        for (const o of pending) { try { await request(`/customer/api/orders/${o.id}/midtrans/sinkron`, { method: 'POST' }); } catch (_) { /* webhook akan menyusul */ } }
+        window.history.replaceState(null, '', window.location.pathname);
+        if (pending.length) await muat();
     }
 
     function formUlasan(item) {
         const wrap = tag('div', 'order-review');
         const saya = item.ulasanSaya;
-        const toggle = tag('button', 'button button-secondary button-small', saya ? 'Ubah ulasan' : 'Tulis ulasan');
+        if (saya) {
+            wrap.append(tag('strong', 'order-review-submitted', 'Ulasan sudah dikirim'));
+            wrap.append(tag('p', '', `${'★'.repeat(Number(saya.rating || 0))}${'☆'.repeat(5 - Number(saya.rating || 0))}${saya.komentar ? ` · ${saya.komentar}` : ''}`));
+            if (saya.gambar_url) {
+                const link = tag('a', 'order-review-photo-link'); link.href = saya.gambar_url; link.target = '_blank'; link.rel = 'noopener noreferrer';
+                const img = tag('img', 'order-review-photo'); img.src = saya.gambar_url; img.alt = `Foto ulasan ${item.nama}`; img.loading = 'lazy'; link.append(img); wrap.append(link);
+            }
+            if (saya.tersembunyi) wrap.append(tag('small', 'field-hint', 'Ulasanmu saat ini disembunyikan oleh admin.'));
+            return wrap;
+        }
+        const toggle = tag('button', 'button button-secondary button-small', 'Tulis ulasan');
         toggle.type = 'button';
         const form = tag('div', 'order-review-form'); form.hidden = true;
-        const select = tag('select', 'form-control');
-        select.setAttribute('aria-label', `Rating untuk ${item.nama}`);
+        const select = tag('select', 'form-control'); select.setAttribute('aria-label', `Rating untuk ${item.nama}`);
         for (let n = 5; n >= 1; n -= 1) { const o = tag('option', '', `${'★'.repeat(n)}${'☆'.repeat(5 - n)} (${n})`); o.value = String(n); select.append(o); }
-        if (saya) select.value = String(saya.rating);
         const area = tag('textarea', 'form-control'); area.maxLength = 1000; area.rows = 3;
-        area.placeholder = 'Ceritakan kondisi barang dan pengalamanmu (opsional)'; area.value = saya?.komentar || '';
-        const kirim = tag('button', 'button button-primary button-small', 'Simpan ulasan'); kirim.type = 'button';
-        const note = tag('small', 'field-hint', saya?.tersembunyi ? 'Ulasanmu disembunyikan oleh admin.' : '');
+        area.placeholder = 'Ceritakan kondisi barang dan pengalamanmu (opsional)';
+        const fileLabel = tag('label', 'order-review-file-label', 'Lampirkan foto (opsional)');
+        const fileInput = document.createElement('input'); fileInput.type = 'file'; fileInput.accept = 'image/jpeg,image/png,image/webp'; fileInput.setAttribute('aria-label', 'Foto untuk ulasan');
+        const note = tag('small', 'field-hint', 'Foto opsional · JPG, PNG, atau WEBP maksimal 3 MB. Batas ulasan 7 hari setelah pesanan selesai.');
+        fileInput.addEventListener('change', () => {
+            const file = fileInput.files?.[0];
+            if (file && (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 3 * 1024 * 1024)) {
+                fileInput.value = ''; note.textContent = 'Pilih foto JPG, PNG, atau WEBP maksimal 3 MB.';
+            }
+        });
+        const kirim = tag('button', 'button button-primary button-small', 'Kirim ulasan'); kirim.type = 'button';
         toggle.addEventListener('click', () => { form.hidden = !form.hidden; });
         kirim.addEventListener('click', async () => {
-            kirim.disabled = true;
-            try {
-                await request('/customer/api/reviews', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ product_id: item.id, rating: Number(select.value), komentar: area.value }) });
-                await muat();
-            } catch (error) { note.textContent = error.message; kirim.disabled = false; }
+            const data = new FormData(); data.append('order_item_id', String(item.orderItemId)); data.append('rating', select.value); data.append('komentar', area.value);
+            const file = fileInput.files?.[0]; if (file) data.append('gambarUlasan', file);
+            kirim.disabled = true; note.textContent = 'Mengirim ulasan…';
+            try { await request('/customer/api/reviews', { method: 'POST', body: data }); await muat(); }
+            catch (error) { note.textContent = error.message; kirim.disabled = false; }
         });
-        form.append(select, area, kirim, note);
+        fileLabel.append(fileInput);
+        form.append(select, area, fileLabel, kirim, note);
         wrap.append(toggle, form);
         return wrap;
     }
@@ -117,27 +118,73 @@ document.addEventListener('DOMContentLoaded', () => {
             const card = tag('article', 'order-card'); card.dataset.orderStatus = order.status;
             const top = tag('div', 'order-card-top');
             const meta = tag('div');
-            meta.append(tag('span', 'order-number', `ORDER ${order.orderNumber}`),
+            meta.append(tag('span', 'order-number', `PESANAN ${order.orderNumber}`),
                 tag('span', 'order-date', new Date(order.date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })));
             top.append(meta, tag('span', `order-status ${order.status === 'Selesai' ? 'is-complete' : 'is-processing'}`, order.status));
 
             const items = tag('div', 'order-items');
             (order.items || []).forEach(item => {
                 const row = tag('div', 'order-product');
-                const visual = tag('div', 'order-product-visual', '♜'); visual.setAttribute('aria-hidden', 'true');
+                const visual = tag('div', 'order-product-visual'); visual.setAttribute('aria-hidden', 'true');
+                if (item.gambar) { const foto = tag('img'); foto.src = item.gambar; foto.alt = ''; foto.loading = 'lazy'; foto.referrerPolicy = 'no-referrer'; visual.append(foto); }
+                else visual.textContent = 'Foto belum tersedia';
                 const copy = tag('div', 'order-product-copy');
                 const title = tag('h3');
                 if (item.id) { const a = tag('a', '', item.nama); a.href = `/produk/${item.id}`; title.append(a); } else title.textContent = item.nama;
                 copy.append(title, tag('p', '', `${item.jumlah} × ${money(item.harga)}`));
                 row.append(visual, copy, tag('strong', '', money(Number(item.harga) * Number(item.jumlah))));
                 items.append(row);
-                if (item.bisaUlas) items.append(formUlasan(item));
+                if (item.bisaUlas || item.ulasanSaya) items.append(formUlasan(item));
             });
 
             const bottom = tag('div', 'order-card-bottom');
-            bottom.append(tag('span', '', `Total ${money(order.total)} · ${order.pembayaran}`));
+            bottom.append(tag('span', '', `Total ${money(order.total)}${order.ongkir > 0 ? ` (termasuk ongkir ${money(order.ongkir)})` : ''} · ${order.pembayaran}`));
             bottom.append(tag('span', '', `Penerima: ${order.nama} · ${order.alamat || ''}`));
             card.append(top, items, bottom);
+            if (order.status === 'Menunggu pembayaran') {
+                const batal = tag('button', 'button button-secondary button-small', 'Batalkan pesanan');
+                batal.type = 'button';
+                batal.addEventListener('click', async () => {
+                    if (!window.confirm(`Batalkan pesanan ${order.orderNumber}? Stok akan dikembalikan.`)) return;
+                    batal.disabled = true;
+                    try { await request(`/customer/api/orders/${order.id}/batal`, { method: 'POST' }); await muat(); }
+                    catch (error) { batal.disabled = false; window.alert(error.message); }
+                });
+                card.append(batal);
+            }
+
+            const metodeRefundDidukung = new Set(['credit_card', 'gopay', 'shopeepay', 'dana', 'ovo', 'qris', 'kredivo', 'akulaku'])
+                .has(String(order.paymentType || '').toLowerCase());
+            const dapatAjukanRefund = order.status === 'Diproses' && order.pembayaran === 'Midtrans'
+                && order.statusPembayaran === 'Disetujui' && metodeRefundDidukung
+                && (!order.refund || order.refund.status === 'Ditolak');
+            if (order.refund) {
+                const refundBox = tag('div', 'order-payment-info');
+                refundBox.append(tag('strong', '', `Status refund: ${order.refund.status}`));
+                refundBox.append(tag('p', '', order.refund.admin_note || order.refund.reason || 'Permintaan pengembalian dana sedang ditangani admin.'));
+                card.append(refundBox);
+            }
+            if (order.status === 'Diproses' && order.pembayaran === 'Midtrans'
+                && order.statusPembayaran === 'Disetujui' && !metodeRefundDidukung) {
+                card.append(tag('p', 'order-payment-info', 'Metode pembayaran ini belum mendukung refund otomatis melalui Midtrans. Hubungi admin untuk penanganan lebih lanjut.'));
+            }
+            if (dapatAjukanRefund) {
+                const refundBox = tag('div', 'order-payment-info');
+                refundBox.append(tag('p', '', 'Pesanan belum dikirim. Pengajuan akan ditinjau admin dan diproses melalui Midtrans jika metode pembayaran mendukung.'));
+                const refundButton = tag('button', 'button button-secondary button-small', order.refund ? 'Ajukan refund ulang' : 'Ajukan refund');
+                refundButton.type = 'button';
+                refundButton.addEventListener('click', async () => {
+                    const alasan = (window.prompt('Jelaskan alasan pengajuan refund (minimal 10 karakter):') || '').trim();
+                    if (alasan.length < 10) { window.alert('Alasan refund minimal 10 karakter.'); return; }
+                    refundButton.disabled = true;
+                    try {
+                        await request(`/customer/api/orders/${order.id}/refund`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ alasan }) });
+                        await muat();
+                    } catch (error) { window.alert(error.message); refundButton.disabled = false; }
+                });
+                refundBox.append(refundButton);
+                card.append(refundBox);
+            }
 
             const bukti = order.buktiBayar;
             if (bukti) {
@@ -146,7 +193,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 state.append(link); bottom.append(state);
                 if (bukti.status === 'Ditolak') card.append(tag('p', 'order-rejected-note', `Bukti ditolak admin: ${bukti.catatan || 'tidak sesuai'}. Silakan unggah ulang.`));
             }
-            if (order.status === 'Menunggu pembayaran') card.append(kotakInstruksi(order), formUnggah(order, bukti?.status === 'Ditolak'));
+            if (order.status === 'Menunggu pembayaran' && order.pembayaran === 'Midtrans') card.append(kotakMidtrans(order));
+            else if (order.status === 'Menunggu pembayaran') card.append(tag('p', 'order-payment-info', 'Metode pembayaran pada pesanan lama tidak lagi tersedia. Hubungi admin jika kamu memerlukan bantuan.'));
             list.append(card);
         });
     }
@@ -156,5 +204,5 @@ document.addEventListener('DOMContentLoaded', () => {
         buttons.forEach(node => node.classList.toggle('is-active', node === button));
         render();
     }));
-    muat();
+    muat().then(sinkronSetelahKembali);
 });

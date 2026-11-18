@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %}Pengembalian Dana — Albis Antique{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/dashboard.css') }}">{% endblock %}
+{% block content %}
+<section class="dashboard-shell admin-workspace-shell">
+  <button class="workspace-mobile-toggle" type="button" aria-controls="adminWorkspaceSidebar" aria-expanded="false">☰ <span>Menu admin</span></button>
+  <div class="dashboard-layout">
+    {% include 'partials/admin_sidebar.html' %}
+    <main class="dashboard-content" data-admin-view="refunds">
+      <header class="admin-page-heading"><div><span class="eyebrow">TRANSAKSI MIDTRANS</span><h1>Pengembalian Dana</h1><p>Tinjau pengajuan customer. Persetujuan admin mengirim request ke Midtrans; status berhasil hanya ditetapkan setelah konfirmasi gateway.</p></div></header>
+      <section class="panel">
+        <div class="admin-panel-heading"><div><h2>Permintaan refund</h2><p id="refundCount">Memuat permintaan…</p></div><button class="button button-secondary button-small" id="refreshRefunds" type="button">Muat ulang</button></div>
+        <div class="table-wrap"><table class="data-table"><thead><tr><th>Pesanan</th><th>Customer</th><th>Alasan</th><th>Metode</th><th>Jumlah</th><th>Status</th><th>Catatan</th><th>Aksi</th></tr></thead>
+          <tbody id="adminRefundRows"><tr><td colspan="8" class="table-empty">Memuat data refund…</td></tr></tbody></table></div>
+      </section>
+    </main>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/admin.js') }}" defer></script>{% endblock %}

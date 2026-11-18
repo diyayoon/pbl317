@@ -1,5 +1,5 @@
 """Route publik Albis Antique: beranda, katalog, detail produk (data dari PostgreSQL)."""
-from flask import abort, render_template, request
+from flask import abort, make_response, redirect, render_template, request, url_for
 
 from app.services.catalog_service import CatalogService
 from app.services.review_service import LayananUlasan
@@ -27,22 +27,40 @@ def beranda():
     terbaru = products[:4]
     unggulan = _unik(_pilih(products, CatalogService.id_terlaris(4)), terbaru, batas=4)
     slide = _unik(unggulan, products, batas=6)
+    kategori = CatalogService.category_summary()
     return render_template(
-        "main/index.html", kategori_unggulan=CatalogService.category_summary(),
+        "main/index.html", kategori_unggulan=kategori,
         produk_unggulan=unggulan, produk_slide=slide, produk_terbaru=terbaru,
+        jumlah_koleksi=len(products), jumlah_kategori=len(kategori),
     )
+
+
+@main_bp.get("/favicon.ico")
+def favicon():
+    """Browser/aplikasi tertentu meminta /favicon.ico langsung; arahkan ke berkas statis agar tidak 404."""
+    return redirect(url_for("static", filename="images/favicon/favicon.ico"), code=301)
 
 
 @main_bp.get("/katalog")
 def katalog():
-    """Seluruh produk aktif dirender; pencarian/filter/sortir dilakukan di browser (catalog.js).
+    """Produk dari PostgreSQL. `?q=` dicari di server (berperingkat); filter lain, sortir, dan paginasi di catalog.js.
 
     `?kategori=<slug>` hanya menentukan pilihan awal dropdown, bukan menyaring di server.
     """
+    q = " ".join(request.args.get("q", "").split())[:CatalogService.MAKS_PANJANG_Q]
     return render_template(
         "main/explore.html", kategori_unggulan=CatalogService.category_summary(),
-        produk=CatalogService.list_products(), kategori_awal=request.args.get("kategori", "")[:100],
+        produk=CatalogService.list_products(query=q), kategori_awal=request.args.get("kategori", "")[:100], q_awal=q,
     )
+
+
+@main_bp.get("/katalog/hasil")
+def katalog_hasil():
+    """Potongan HTML kartu produk (template yang sama dengan katalog) untuk pencarian langsung; selalu dari database."""
+    q = " ".join(request.args.get("q", "").split())[:CatalogService.MAKS_PANJANG_Q]
+    resp = make_response(render_template("main/_hasil_katalog.html", produk=CatalogService.list_products(query=q)))
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
 
 
 @main_bp.get("/produk/<int:produk_id>")
@@ -51,10 +69,7 @@ def detail_produk(produk_id):
     if product_model is None:
         abort(404)
     product = product_model.to_dict()
-    products = CatalogService.list_products()
-    terkait = [p for p in products if p["id"] != produk_id and p["slug_kategori"] == product["slug_kategori"]]
-    lain = [p for p in products if p["id"] != produk_id and p not in terkait]
     return render_template(
         "main/product.html", produk=product, produk_id=produk_id,
-        produk_terkait=(terkait + lain)[:4], daftar_ulasan=LayananUlasan.terlihat(produk_id),
+        daftar_ulasan=LayananUlasan.terlihat(produk_id),
     )

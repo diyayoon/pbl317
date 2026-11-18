@@ -17,22 +17,21 @@
 <section class="auth-shell">
     <div class="auth-form-area auth-form-daftar">
         <div class="auth-card auth-card-daftar">
-            
-            <div class="auth-message auth-message-register">
+<div class="auth-message auth-message-register">
                 <span class="eyebrow">New Collector</span>
                 <h1>Mulai ruang koleksi pribadi Anda.</h1>
             </div>
 
             <br class="auth-divider" aria-hidden="true">
-            <h2 data-i18n="register_title">Buat akun baru</h2>
-            <p data-i18n="register_desc">Daftar untuk mengelola profil dan melanjutkan checkout.</p>
+            <h2>Buat akun baru</h2>
+            <p>Daftar untuk mengelola profil dan melanjutkan pemesanan.</p>
 
             <form id="formRegister" method="post" novalidate>
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
                 <div class="form-baris-dua">
                     <div class="form-field">
-                        <label for="email" data-i18n="email">Email</label>
+                        <label for="email">Email</label>
                         <input
                             class="form-control{% if galat.email %} is-invalid{% endif %}"
                             id="email"
@@ -53,7 +52,7 @@
 
                     <div class="form-field">
                         <div class="label-baris">
-                            <label for="password" data-i18n="password">Kata sandi</label>
+                            <label for="password">Kata sandi</label>
                             <span class="char-count" id="passwordCount" aria-live="polite">0 / 16</span>
                         </div>
                         <div class="password-wrap">
@@ -65,7 +64,7 @@
                                 autocomplete="new-password"
                                 maxlength="128"
                                 placeholder="Minimal 16 karakter"
-                                data-i18n-placeholder="password_placeholder"
+                               
                                 aria-describedby="passwordError"
                                 {% if galat.password %}aria-invalid="true"{% endif %}
                                 required
@@ -76,39 +75,11 @@
                                 type="button"
                                 aria-controls="password"
                                 aria-pressed="false"
-                                aria-label="Tahan untuk melihat kata sandi"
-                                title="Tahan untuk melihat kata sandi"
+                                aria-label="Tampilkan kata sandi"
+                                title="Tampilkan kata sandi"
                             >
-                                <svg
-                                    class="ikon-mata-coret"
-                                    viewBox="0 0 24 24"
-                                    width="20"
-                                    height="20"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="1.8"
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    aria-hidden="true"
-                                >
-                                    <path d="M17.94 17.94A10.9 10.9 0 0 1 12 19c-6.4 0-10-7-10-7a18.5 18.5 0 0 1 4.06-5.06M9.9 4.24A10.1 10.1 0 0 1 12 5c6.4 0 10 7 10 7a18.6 18.6 0 0 1-2.16 3.19M14.12 14.12a3 3 0 1 1-4.24-4.24"/>
-                                    <path d="M1 1l22 22"/>
-                                </svg>
-                                <svg
-                                    class="ikon-mata"
-                                    viewBox="0 0 24 24"
-                                    width="20"
-                                    height="20"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="1.8"
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    aria-hidden="true"
-                                >
-                                    <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/>
-                                    <circle cx="12" cy="12" r="3"/>
-                                </svg>
+                                <img class="password-toggle-icon password-icon-close" src="{{ url_for('static', filename='images/icons/eye-close.svg') }}" alt="" aria-hidden="true">
+                                <img class="password-toggle-icon password-icon-open" src="{{ url_for('static', filename='images/icons/eye-open.svg') }}" alt="" aria-hidden="true">
                             </button>
                             <div class="strength-meter" id="strengthMeter" data-level="0" aria-hidden="true">
                                 <span></span><span></span><span></span><span></span>
@@ -122,7 +93,7 @@
 
                 <div class="form-baris-dua">
                     <div class="form-field">
-                        <label for="nama" data-i18n="name">Nama lengkap</label>
+                        <label for="nama">Nama lengkap</label>
                         <input
                             class="form-control{% if galat.nama %} is-invalid{% endif %}"
                             id="nama"
@@ -133,7 +104,7 @@
                             minlength="3"
                             maxlength="100"
                             placeholder="Masukkan nama lengkap"
-                            data-i18n-placeholder="name_placeholder"
+                           
                             aria-describedby="namaError"
                             {% if galat.nama %}aria-invalid="true"{% endif %}
                             required
@@ -145,75 +116,33 @@
 
                     <div class="form-field">
                         <label for="konfirmasiPassword">Konfirmasi kata sandi</label>
-                        <input
-                            class="form-control{% if galat.konfirmasi_password %} is-invalid{% endif %}"
-                            id="konfirmasiPassword"
-                            name="konfirmasi_password"
-                            type="password"
-                            autocomplete="new-password"
-                            maxlength="128"
-                            aria-describedby="konfirmasiPasswordError"
-                            {% if galat.konfirmasi_password %}aria-invalid="true"{% endif %}
-                            required
-                        >
+                        <div class="password-wrap">
+                            <input
+                                class="form-control{% if galat.konfirmasi_password %} is-invalid{% endif %}"
+                                id="konfirmasiPassword"
+                                name="konfirmasi_password"
+                                type="password"
+                                autocomplete="new-password"
+                                maxlength="128"
+                                aria-describedby="konfirmasiPasswordError"
+                                {% if galat.konfirmasi_password %}aria-invalid="true"{% endif %}
+                                required
+                            >
+                            <button class="password-toggle" type="button" aria-controls="konfirmasiPassword" aria-pressed="false" aria-label="Tampilkan kata sandi" title="Tampilkan kata sandi">
+                                <img class="password-toggle-icon password-icon-close" src="{{ url_for('static', filename='images/icons/eye-close.svg') }}" alt="" aria-hidden="true">
+                                <img class="password-toggle-icon password-icon-open" src="{{ url_for('static', filename='images/icons/eye-open.svg') }}" alt="" aria-hidden="true">
+                            </button>
+                        </div>
                         <p class="field-error" id="konfirmasiPasswordError" role="alert" {% if not galat.konfirmasi_password %}hidden{% endif %}>
                             {{ galat.konfirmasi_password or '' }}
                         </p>
                     </div>
                 </div>
 
-                <div class="form-field">
-                    <div class="label-baris">
-                        <label for="alamat" data-i18n="address">Alamat utama</label>
-                        <span class="char-count" id="alamatCount" aria-hidden="true">0 / 255</span>
-                    </div>
-                    <textarea
-                        class="form-control{% if galat.alamat %} is-invalid{% endif %}"
-                        id="alamat"
-                        name="alamat"
-                        rows="3"
-                        placeholder="Jalan, nomor, kelurahan, kota, kode pos"
-                        data-i18n-placeholder="address_placeholder"
-                        autocomplete="street-address"
-                        minlength="10"
-                        maxlength="255"
-                        aria-describedby="alamatError"
-                        {% if galat.alamat %}aria-invalid="true"{% endif %}
-                        required
-                    >{{ nilai.alamat or '' }}</textarea>
-                    <p class="field-error" id="alamatError" role="alert" {% if not galat.alamat %}hidden{% endif %}>
-                        {{ galat.alamat or '' }}
-                    </p>
-                </div>
-
-                <div class="form-field">
-                    <div class="label-baris">
-                        <label for="telepon" data-i18n="phone">Nomor telepon</label>
-                    </div>
-                    <input
-                        class="form-control{% if galat.telepon %} is-invalid{% endif %}"
-                        id="telepon"
-                        name="telepon"
-                        type="tel"
-                        inputmode="tel"
-                        value="{{ nilai.telepon or '' }}"
-                        placeholder="Contoh: 628123456789"
-                        data-i18n-placeholder="phone_placeholder"
-                        autocomplete="tel"
-                        maxlength="20"
-                        aria-describedby="teleponHint teleponError"
-                        {% if galat.telepon %}aria-invalid="true"{% endif %}
-                        required
-                    >
-                    <p class="field-error" id="teleponError" role="alert" {% if not galat.telepon %}hidden{% endif %}>
-                        {{ galat.telepon or '' }}
-                    </p>
-                </div>
-
                 <button
                     class="button button-primary button-full"
                     type="submit"
-                    data-i18n="register_button"
+                   
                 >
                     Daftar
                 </button>
@@ -221,8 +150,8 @@
 
             <br class="auth-divider" aria-hidden="true">
             <p class="auth-note">
-                <span data-i18n="have_account">Sudah punya akun?</span>
-                <a href="{{ url_for('auth.login') }}" data-i18n="login_link">Masuk</a>
+                <span>Sudah punya akun?</span>
+                <a href="{{ url_for('auth.login') }}">Masuk</a>
             </p>
         </div>
     </div>

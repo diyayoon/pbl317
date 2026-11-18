@@ -260,17 +260,8 @@ body.auth-page .auth-card-daftar {
     font-weight: 700;
 }
 
-/* Kolom password: pembungkus untuk tombol mata dan garis kemajuan */
-.password-wrap {
-    position: relative;
-}
-
-/* Kolom password: sisakan ruang untuk tombol mata di kanan */
-.password-wrap .form-control {
-    padding-right: 54px;
-}
-
-/* Tombol mata: tahan untuk melihat password */
+.password-wrap { position: relative; }
+.password-wrap .form-control { padding-right: 54px; }
 .password-toggle {
     position: absolute;
     top: 50%;
@@ -287,35 +278,18 @@ body.auth-page .auth-card-daftar {
     cursor: pointer;
     touch-action: manipulation;
     user-select: none;
-    -webkit-user-select: none;
-    -webkit-touch-callout: none;
 }
-
-/* Tombol mata › saat hover */
-.password-toggle:hover {
-    background: rgba(97,168,214,.14);
-}
-
-/* Tombol mata › saat ditahan (password terlihat) */
-.password-toggle[aria-pressed="true"] {
-    background: rgba(97,168,214,.22);
-    color: var(--warna-biru-dalam);
-}
-
-/* Ikon mata terbuka: hanya tampil saat tombol ditahan */
-.password-toggle .ikon-mata {
-    display: none;
-}
-
-/* Ikon mata terbuka › saat ditahan */
-.password-toggle[aria-pressed="true"] .ikon-mata {
+.password-toggle:hover { background: rgba(97,168,214,.14); }
+.password-toggle[aria-pressed="true"] { background: rgba(97,168,214,.22); }
+.password-toggle-icon {
     display: block;
+    width: 21px;
+    height: 21px;
+    object-fit: contain;
 }
-
-/* Ikon mata dicoret › disembunyikan saat tombol ditahan */
-.password-toggle[aria-pressed="true"] .ikon-mata-coret {
-    display: none;
-}
+.password-icon-open { display: none; }
+.password-toggle[aria-pressed="true"] .password-icon-open { display: block; }
+.password-toggle[aria-pressed="true"] .password-icon-close { display: none; }
 
 /* Garis kemajuan panjang password: menempel di dasar kolom, tidak menambah tinggi form */
 .strength-meter {

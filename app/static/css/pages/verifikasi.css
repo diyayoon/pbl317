@@ -1,0 +1,15 @@
+/* Halaman verifikasi email: mengikuti tema icy blue Albis Antique. */
+.verif-card { text-align: center; }
+.verif-ikon { font-size: 3rem; line-height: 1; margin-bottom: 12px; }
+.verif-sub { color: var(--warna-muted); margin: 8px 0 22px; }
+.verif-card form { text-align: left; }
+.verif-kode { text-align: center; font-size: 1.6rem; letter-spacing: 0.5em; font-variant-numeric: tabular-nums; }
+.verif-kode::placeholder { letter-spacing: 0.4em; color: var(--warna-biru-sekunder); }
+.verif-gap { margin-top: 10px; }
+.verif-ulang { margin-top: 18px; text-align: center !important; color: var(--warna-muted); }
+.verif-ulang .text-link { background: none; border: 0; cursor: pointer; padding: 0 0 0 4px; font: inherit; }
+.verif-ulang #teksUlang:not(:empty) {
+    display: inline-block; padding: 6px 12px; border-radius: var(--radius-kecil);
+    background: var(--warna-biru-muda); color: var(--warna-muted); font-weight: 600; font-variant-numeric: tabular-nums;
+}
+.verif-kembali { display: inline-block; margin-top: 14px; }
