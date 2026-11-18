@@ -1,7 +1,6 @@
 """Entitas kategori dan produk katalog."""
 import re
 from datetime import datetime, timezone
-from decimal import Decimal
 from app.extensions import db
 
 
@@ -15,7 +14,8 @@ class Category(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80), nullable=False, unique=True)
     slug = db.Column(db.String(100), nullable=False, unique=True, index=True)
-    icon = db.Column(db.String(20), nullable=False, default="✧")
+    icon = db.Column(db.String(20), nullable=False, default="✧")  # legacy, dipertahankan untuk kompatibilitas data lama
+    image_url = db.Column(db.String(500), nullable=True, default="")
     is_active = db.Column(db.Boolean, nullable=False, default=True)
     created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utcnow)
 
@@ -42,6 +42,9 @@ class Product(db.Model):
     authenticity_status = db.Column(db.String(32), nullable=False, default="Not verified")
     image_alt = db.Column(db.String(200), nullable=False, default="")
     image_source = db.Column(db.String(1000), nullable=False, default="")
+    certificate_path = db.Column(db.String(500), nullable=True)
+    certificate_original_filename = db.Column(db.String(255), nullable=True)
+    certificate_uploaded_at = db.Column(db.DateTime(timezone=True), nullable=True)
     is_active = db.Column(db.Boolean, nullable=False, default=True, index=True)
     created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utcnow)
     updated_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utcnow, onupdate=utcnow)
@@ -132,7 +135,13 @@ class Product(db.Model):
             "stok": self.stock, "rating": self.rating, "ulasan": self.ulasan,
             "autentikasi": self.authenticity_status, "deskripsi": self.description,
             "gambar": self.gambar, "alt_gambar": self.alt_gambar,
+            "gambar_list": [
+                {"id": image.id, "url": image.image_url, "alt": image.alt_text or self.alt_gambar,
+                 "utama": bool(image.is_primary), "position": image.position}
+                for image in sorted(self.images, key=lambda item: (item.position, item.id or 0))
+            ],
             "sumber_gambar": self.sumber_gambar, "is_active": self.is_active,
+            "sertifikat_tersedia": bool(self.certificate_path),
         }
 
     def __repr__(self):

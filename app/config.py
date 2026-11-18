@@ -40,12 +40,26 @@ class Config:
     SQLALCHEMY_DATABASE_URI = normalisasi_database_url(os.getenv("DATABASE_URL"))
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {"pool_pre_ping": True, "pool_recycle": 1800}
+    # JSONL untuk Wazuh; Docker Compose mengarahkannya ke volume persisten /app/instance.
+    AUDIT_LOG_FILE = os.getenv(
+        "AUDIT_LOG_FILE", str(BASE_DIR / "instance" / "logs" / "albis_audit.jsonl")
+    )
 
     # Upload
-    MAX_CONTENT_LENGTH = 6 * 1024 * 1024
+    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # maksimal 5 foto (2 MB/foto) + sertifikat (4 MB) dan overhead multipart
     UPLOAD_FOLDER = str(BASE_DIR / "instance" / "uploads")
     PAYMENT_UPLOAD_FOLDER = str(BASE_DIR / "instance" / "uploads" / "payments")
     PRODUCT_UPLOAD_FOLDER = str(BASE_DIR / "instance" / "uploads" / "products")
+    PRODUCT_MAX_BYTES = 2 * 1024 * 1024
+    PRODUCT_CERTIFICATE_UPLOAD_FOLDER = str(BASE_DIR / "instance" / "uploads" / "product-certificates")
+    PRODUCT_CERTIFICATE_MAX_BYTES = 4 * 1024 * 1024
+    CERTIFICATE_EMAIL_MAX_ATTACHMENTS = _int("CERTIFICATE_EMAIL_MAX_ATTACHMENTS", 10)
+    CERTIFICATE_EMAIL_MAX_TOTAL_BYTES = _int("CERTIFICATE_EMAIL_MAX_TOTAL_BYTES", 18 * 1024 * 1024)
+    CATEGORY_UPLOAD_FOLDER = str(BASE_DIR / "instance" / "uploads" / "categories")
+    REVIEW_UPLOAD_FOLDER = str(BASE_DIR / "instance" / "uploads" / "reviews")
+    AVATAR_UPLOAD_FOLDER = str(BASE_DIR / "instance" / "uploads" / "avatars")
+    CATEGORY_MAX_BYTES = 3 * 1024 * 1024
+    REVIEW_MAX_BYTES = 3 * 1024 * 1024
     PAYMENT_MAX_BYTES = 5 * 1024 * 1024
     AVATAR_MAX_BYTES = 1024 * 1024
     PAYMENT_ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "webp", "pdf"}
@@ -70,9 +84,38 @@ class Config:
     REGISTER_MAX_PER_IP = _int("REGISTER_MAX_PER_IP", 10)
     REGISTER_WINDOW_MENIT = _int("REGISTER_WINDOW_MENIT", 60)
 
+    # Timeout inaktivitas (menit) ditegakkan di server. Admin sengaja lebih ketat.
+    SESI_INAKTIF_MENIT_CUSTOMER = _int("SESI_INAKTIF_MENIT_CUSTOMER", 10)
+    SESI_INAKTIF_MENIT_ADMIN = _int("SESI_INAKTIF_MENIT_ADMIN", 5)
+    SESI_MAKS_MENIT = _int("SESI_MAKS_MENIT", 480)   # batas mutlak sejak login
+    SESI_SENTUH_DETIK = _int("SESI_SENTUH_DETIK", 10)  # jeda minimum antar penulisan last_activity
+
+    # Midtrans (Snap Redirect). Kunci hanya dari environment; kosong = metode Midtrans nonaktif.
+    MIDTRANS_SERVER_KEY = os.getenv("MIDTRANS_SERVER_KEY", "").strip()
+    MIDTRANS_IS_PRODUCTION = _bool("MIDTRANS_IS_PRODUCTION", False)
+
     # Aturan bisnis
     ORDER_PAYMENT_TTL_JAM = _int("ORDER_PAYMENT_TTL_JAM", 24)
+    # Kedaluwarsa pesanan dijalankan berkala di dalam aplikasi (detik; 0 = nonaktif, pakai `flask expire-orders` terjadwal).
+    ORDER_EXPIRE_INTERVAL_DETIK = _int("ORDER_EXPIRE_INTERVAL_DETIK", 60)
+    # Ongkir tarif tetap (rupiah). SHIPPING_FREE_ABOVE > 0: gratis ongkir bila subtotal mencapai nilai itu.
+    SHIPPING_COST_FLAT = _int("SHIPPING_COST_FLAT", 25000)
+    SHIPPING_FREE_ABOVE = _int("SHIPPING_FREE_ABOVE", 0)
     MAX_OPEN_ORDERS = _int("MAX_OPEN_ORDERS", 5)
+
+    # Verifikasi email & SMTP (kredensial hanya dari environment)
+    EMAIL_VERIFY_TTL_JAM = _int("EMAIL_VERIFY_TTL_JAM", 24)
+    EMAIL_VERIFY_COOLDOWN_DETIK = _int("EMAIL_VERIFY_COOLDOWN_DETIK", 60)
+    EMAIL_VERIFY_MAX_PER_JAM = _int("EMAIL_VERIFY_MAX_PER_JAM", 5)
+    EMAIL_VERIFY_KODE_DIGIT = _int("EMAIL_VERIFY_KODE_DIGIT", 6)      # 4-8; makin pendek makin mudah ditebak
+    EMAIL_VERIFY_KODE_MAX_SALAH = _int("EMAIL_VERIFY_KODE_MAX_SALAH", 5)
+    APP_BASE_URL = os.getenv("APP_BASE_URL", "").rstrip("/")
+    MAIL_SERVER = os.getenv("MAIL_SERVER", "")
+    MAIL_PORT = _int("MAIL_PORT", 587)
+    MAIL_SECURITY = os.getenv("MAIL_SECURITY", "starttls").strip().lower()  # starttls | ssl
+    MAIL_USERNAME = os.getenv("MAIL_USERNAME", "")
+    MAIL_PASSWORD = os.getenv("MAIL_PASSWORD", "")
+    MAIL_FROM = os.getenv("MAIL_FROM", "")
 
     # Proxy (nginx -> gunicorn). Isi 1 bila di belakang satu reverse proxy.
     TRUSTED_PROXY_COUNT = _int("TRUSTED_PROXY_COUNT", 0)
@@ -93,10 +136,30 @@ class TestingConfig(Config):
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
     SQLALCHEMY_ENGINE_OPTIONS = {}
     WTF_CSRF_ENABLED = False
+    ORDER_EXPIRE_INTERVAL_DETIK = 0   # test memicu kedaluwarsa secara eksplisit
     SECRET_KEY = "kunci-khusus-pengujian-otomatis-0123456789abcdef"
     LOGIN_MAX_PER_EMAIL = 5
+    # Isolasi total dari .env development/production: tes tidak boleh menghubungi layanan nyata.
+    MIDTRANS_SERVER_KEY = ""
+    MIDTRANS_IS_PRODUCTION = False
+    MAIL_SERVER = ""
+    MAIL_PORT = 587
+    MAIL_SECURITY = "starttls"
+    MAIL_USERNAME = ""
+    MAIL_PASSWORD = ""
+    MAIL_FROM = ""
+    APP_BASE_URL = "http://localhost:5000"
+    SHIPPING_COST_FLAT = 25000
+    SHIPPING_FREE_ABOVE = 0
     PAYMENT_UPLOAD_FOLDER = "/tmp/albis_test_uploads/payments"  # nosec B108 (hanya konfigurasi uji)
     PRODUCT_UPLOAD_FOLDER = "/tmp/albis_test_uploads/products"  # nosec B108
+    PRODUCT_CERTIFICATE_UPLOAD_FOLDER = "/tmp/albis_test_uploads/product-certificates"  # nosec B108
+    CERTIFICATE_EMAIL_MAX_ATTACHMENTS = 10
+    CERTIFICATE_EMAIL_MAX_TOTAL_BYTES = 18 * 1024 * 1024
+    CATEGORY_UPLOAD_FOLDER = "/tmp/albis_test_uploads/categories"  # nosec B108
+    REVIEW_UPLOAD_FOLDER = "/tmp/albis_test_uploads/reviews"  # nosec B108
+    AVATAR_UPLOAD_FOLDER = "/tmp/albis_test_uploads/avatars"  # nosec B108
+    AUDIT_LOG_FILE = None  # unit test menguji DB kecuali file logging diaktifkan secara eksplisit
 
 
 class ProductionConfig(Config):

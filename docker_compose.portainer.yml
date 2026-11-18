@@ -12,6 +12,7 @@ services:
       APP_ENV: ${APP_ENV:-production}
       SECRET_KEY: ${SECRET_KEY:?Isi SECRET_KEY di environment Portainer atau file .env}
       DATABASE_URL: ${DATABASE_URL:-}
+      AUDIT_LOG_FILE: ${AUDIT_LOG_FILE:-/app/instance/logs/albis_audit.jsonl}
       TRUSTED_PROXY_COUNT: ${TRUSTED_PROXY_COUNT:-1}
       # 1 = cookie hanya lewat HTTPS (wajib saat diakses lewat domain HTTPS).
       # Isi 0 HANYA untuk uji internal lewat http://IP:PORT.
@@ -22,6 +23,31 @@ services:
       PAYMENT_BANK_ACCOUNT: ${PAYMENT_BANK_ACCOUNT:-}
       PAYMENT_BANK_HOLDER: ${PAYMENT_BANK_HOLDER:-}
       PAYMENT_QRIS_NOTE: ${PAYMENT_QRIS_NOTE:-}
+      # Tautan email & verifikasi (APP_BASE_URL wajib saat APP_ENV=production)
+      APP_BASE_URL: ${APP_BASE_URL:-}
+      MAIL_SERVER: ${MAIL_SERVER:-}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_SECURITY: ${MAIL_SECURITY:-starttls}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_FROM: ${MAIL_FROM:-}
+      CERTIFICATE_EMAIL_MAX_ATTACHMENTS: ${CERTIFICATE_EMAIL_MAX_ATTACHMENTS:-10}
+      CERTIFICATE_EMAIL_MAX_TOTAL_BYTES: ${CERTIFICATE_EMAIL_MAX_TOTAL_BYTES:-18874368}
+      EMAIL_VERIFY_TTL_JAM: ${EMAIL_VERIFY_TTL_JAM:-24}
+      EMAIL_VERIFY_COOLDOWN_DETIK: ${EMAIL_VERIFY_COOLDOWN_DETIK:-60}
+      EMAIL_VERIFY_MAX_PER_JAM: ${EMAIL_VERIFY_MAX_PER_JAM:-5}
+      EMAIL_VERIFY_KODE_DIGIT: ${EMAIL_VERIFY_KODE_DIGIT:-6}
+      EMAIL_VERIFY_KODE_MAX_SALAH: ${EMAIL_VERIFY_KODE_MAX_SALAH:-5}
+      # Ongkir tarif tetap (rupiah) dan kedaluwarsa pesanan berkala (detik)
+      SHIPPING_COST_FLAT: ${SHIPPING_COST_FLAT:-25000}
+      SHIPPING_FREE_ABOVE: ${SHIPPING_FREE_ABOVE:-0}
+      ORDER_EXPIRE_INTERVAL_DETIK: ${ORDER_EXPIRE_INTERVAL_DETIK:-60}
+      # Timeout inaktivitas sesi (menit)
+      SESI_INAKTIF_MENIT_CUSTOMER: ${SESI_INAKTIF_MENIT_CUSTOMER:-20}
+      SESI_INAKTIF_MENIT_ADMIN: ${SESI_INAKTIF_MENIT_ADMIN:-20}
+      # Midtrans (kosongkan MIDTRANS_SERVER_KEY untuk menonaktifkan)
+      MIDTRANS_SERVER_KEY: ${MIDTRANS_SERVER_KEY:-}
+      MIDTRANS_IS_PRODUCTION: ${MIDTRANS_IS_PRODUCTION:-0}
     volumes:
       - instance_data:/app/instance
     restart: unless-stopped
@@ -43,7 +69,8 @@ services:
     image: albis-nginx:latest
     pull_policy: never
     ports:
-      - "${APP_HTTP_PORT:-8081}:80"
+      # Hanya bisa diakses dari server itu sendiri. Traffic publik lewat BunkerWeb.
+      - "127.0.0.1:${APP_HTTP_PORT:-8081}:80"
     depends_on:
       web:
         condition: service_healthy
@@ -56,7 +83,10 @@ services:
       timeout: 5s
       retries: 3
     networks:
-      - app_net
+      app_net: {}
+      bw-services:
+        aliases:
+          - ecommerce-nginx
 
   # Alat sekali jalan (tidak ikut start otomatis): migrasi skema dengan role OWNER database.
   #   docker compose --profile tools run --rm migrate
@@ -79,3 +109,5 @@ volumes:
 networks:
   app_net:
     driver: bridge
+  bw-services:
+    external: true

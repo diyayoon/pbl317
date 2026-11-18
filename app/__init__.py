@@ -3,10 +3,11 @@ import logging
 import os
 from pathlib import Path
 
-from flask import Flask, abort, send_file, send_from_directory
+from flask import Flask, abort, g, send_file, send_from_directory
+from uuid import uuid4
 from flask_login import current_user
 
-from .config import DevelopmentConfig, ProductionConfig, TestingConfig
+from .config import DevelopmentConfig, ProductionConfig
 from .extensions import csrf, db, login_manager, migrate
 
 _PLACEHOLDER_SECRET = (
@@ -32,6 +33,10 @@ def _validasi_konfigurasi(app: Flask) -> None:
         secret = str(app.config.get("SECRET_KEY") or "").strip()
         if len(secret) < 32 or any(m in secret.lower() for m in _PLACEHOLDER_SECRET):
             raise RuntimeError("Production membutuhkan SECRET_KEY acak minimal 32 karakter; nilai contoh/placeholder tidak boleh digunakan.")
+        # Mode Midtrans hanya ditentukan MIDTRANS_IS_PRODUCTION; awalan kunci tidak andal untuk membedakan sandbox/production.
+        # Tautan email dibuat dari nilai ini, bukan header Host (anti Host header injection).
+        if not str(app.config.get("APP_BASE_URL") or "").startswith(("http://", "https://")):
+            raise RuntimeError("Production membutuhkan APP_BASE_URL (mis. https://domain-anda) untuk tautan verifikasi email.")
 
 
 def buat_app(konfigurasi=None):
@@ -46,6 +51,10 @@ def buat_app(konfigurasi=None):
     # Satu handler saja (log Flask ke stderr/stdout container); tanpa basicConfig agar tidak ganda.
     app.logger.setLevel(logging.INFO)
 
+    @app.before_request
+    def _request_id():
+        g.request_id = str(uuid4())
+
     db.init_app(app)
     from . import models  # noqa: F401  (metadata untuk Flask-Migrate)
     migrate.init_app(app, db)
@@ -54,13 +63,23 @@ def buat_app(konfigurasi=None):
 
     from .security import init_security
     init_security(app)
+    from .sesi import init_sesi
+    init_sesi(app)
+    from .kedaluwarsa import init_kedaluwarsa
+    init_kedaluwarsa(app)
 
     from .blueprints.main import main_bp
     from .blueprints.auth import auth_bp
     from .blueprints.customer import customer_bp
     from .blueprints.admin import admin_bp
-    for bp in (main_bp, auth_bp, customer_bp, admin_bp):
+    from .blueprints.midtrans import midtrans_bp
+    for bp in (main_bp, auth_bp, customer_bp, admin_bp, midtrans_bp):
         app.register_blueprint(bp)
+
+    @app.context_processor
+    def _konteks_pembayaran():
+        from .services.midtrans_service import aktif
+        return {"midtrans_aktif": aktif()}
 
     from .commands import register_commands
     register_commands(app)
@@ -88,16 +107,74 @@ def buat_app(konfigurasi=None):
             abort(404)
         return send_from_directory(folder, nama_file, conditional=True)
 
+    @app.get("/media/categories/<path:nama_file>")
+    def media_kategori(nama_file):
+        folder = Path(app.config["CATEGORY_UPLOAD_FOLDER"]).resolve()
+        target = (folder / nama_file).resolve()
+        if folder not in target.parents or not target.is_file():
+            abort(404)
+        return send_from_directory(folder, nama_file, conditional=True)
+
+    @app.get("/media/avatars/<path:nama_file>")
+    def media_avatar(nama_file):
+        from .models import User
+
+        if Path(nama_file).name != nama_file:
+            abort(404)
+        referensi = f"/media/avatars/{nama_file}"
+        pengguna = User.query.filter_by(
+            avatar_data=referensi, is_active=True, deleted_at=None
+        ).first()
+        if pengguna is None:
+            abort(404)
+        if not current_user.is_authenticated or current_user.id != pengguna.id:
+            from .models import Review
+            if not Review.query.filter_by(user_id=pengguna.id, is_hidden=False).first():
+                abort(404)
+
+        folder = Path(app.config["AVATAR_UPLOAD_FOLDER"]).resolve()
+        target = (folder / nama_file).resolve()
+        if folder not in target.parents or not target.is_file():
+            abort(404)
+        return send_from_directory(folder, nama_file, conditional=True)
+
+    @app.get("/media/reviews/<int:review_id>")
+    def media_ulasan(review_id):
+        """Foto ulasan publik hanya tersedia bila ulasan tidak disembunyikan admin."""
+        from .models import Review
+        ulasan = db.session.get(Review, review_id)
+        if not ulasan or ulasan.is_hidden or not ulasan.image_path:
+            abort(404)
+        path = Path(ulasan.image_path).resolve()
+        base = Path(app.config["REVIEW_UPLOAD_FOLDER"]).resolve()
+        if base not in path.parents or not path.is_file():
+            abort(404)
+        return send_file(path, conditional=True, as_attachment=False)
+
     @app.get("/media/payments/<int:payment_id>")
     def media_pembayaran(payment_id):
         """Bukti bayar hanya untuk pemilik pesanan atau admin; dicari lewat ID, bukan nama file."""
         from .models import Payment
         if not current_user.is_authenticated:
+            from .utils import audit
+            audit.catat(
+                "akses_ditolak", "payment", payment_id, "Pengguna anonim mencoba mengakses bukti pembayaran.",
+                category="payment", event_action="payment.unauthorized_access", outcome="blocked", severity="high",
+                actor_role="anonymous", context={"attempted_action": "download_payment_proof"}, commit=True,
+            )
+            g.audit_403_recorded = True
             abort(403)
         payment = db.session.get(Payment, payment_id)
         if not payment or not payment.proof_path:
             abort(404)
         if current_user.role != "admin" and payment.order.user_id != current_user.id:
+            from .utils import audit
+            audit.catat(
+                "akses_ditolak", "payment", payment_id, "Customer mencoba mengakses bukti pembayaran milik akun lain.",
+                category="payment", event_action="payment.unauthorized_access", outcome="blocked", severity="high",
+                actor_role="customer", context={"attempted_action": "download_payment_proof"}, commit=True,
+            )
+            g.audit_403_recorded = True
             abort(403)
         path = Path(payment.proof_path).resolve()
         base = Path(app.config["PAYMENT_UPLOAD_FOLDER"]).resolve()

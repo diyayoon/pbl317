@@ -17,9 +17,9 @@ RUN pip install -r requirements.txt
 
 COPY . .
 
-# Jalan sebagai user biasa. Hanya instance/ (upload foto produk & bukti bayar) yang boleh ditulis.
+# Jalan sebagai user biasa. Upload dan application audit log hanya ditulis ke instance/ persisten.
 RUN useradd --create-home --uid 10001 appuser \
-    && mkdir -p /app/instance/uploads/products /app/instance/uploads/payments \
+    && mkdir -p /app/instance/uploads/products /app/instance/uploads/product-certificates /app/instance/uploads/payments /app/instance/logs \
     && chown -R appuser:appuser /app/instance
 USER appuser
 
