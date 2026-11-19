@@ -7,7 +7,9 @@ from flask import current_app
 from sqlalchemy import select
 from app.extensions import db
 from app.models import Order, Payment, User
+from app.models.commerce import CertificateEmailDelivery
 from app.utils.uploads import ekstensi_file_diizinkan
+from app.utils import audit
 
 
 class LayananPembayaran:
@@ -73,6 +75,20 @@ class LayananPembayaran:
         payment = db.session.scalar(select(Payment).where(Payment.id == payment_id).with_for_update())
         if not payment:
             raise LookupError("Pembayaran tidak ditemukan.")
+        if payment.method == "Midtrans" or (payment.order and payment.order.payment_method == "Midtrans"):
+            audit.catat(
+                "midtrans_persetujuan_manual_diblokir",
+                "payment",
+                payment.id,
+                (
+                    "Upaya peninjauan manual diblokir. "
+                    "Pembayaran Midtrans hanya dapat disetujui "
+                    "melalui status gateway terverifikasi."
+                ),
+                actor=admin,
+                commit=True,
+            )
+            raise ValueError("Pembayaran Midtrans tidak dapat disetujui atau ditolak secara manual. Status hanya diperbarui dari verifikasi server-to-server Midtrans.")
         if action not in {"approve", "reject"}:
             raise ValueError("Aksi pembayaran tidak valid.")
         note = str(note or "").strip()
@@ -88,6 +104,8 @@ class LayananPembayaran:
         if action == "approve":
             payment.status = "Disetujui"
             payment.order.status = "Diproses"
+            if payment.order.certificate_delivery is None:
+                db.session.add(CertificateEmailDelivery(order=payment.order, status="pending"))
         else:
             payment.status = "Ditolak"
             payment.order.status = "Menunggu pembayaran"
