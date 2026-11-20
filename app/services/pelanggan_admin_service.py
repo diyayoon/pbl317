@@ -95,7 +95,7 @@ class LayananPelangganAdmin:
         else:
             u.is_active, u.status_reason = False, alasan
             u.auth_version = (u.auth_version or 1) + 1  # cabut semua sesi/remember-me yang masih aktif
-        audit.catat(f"akun_{aksi}", "user", u.id, f"{u.email}: {alasan}"[:500])
+        audit.catat(f"akun_{aksi}", "user", u.id, f"Status akun customer diubah: {aksi}.", context={"reason_provided": bool(alasan)})
         db.session.commit()
         return self._ringkas(u, Order.query.filter_by(user_id=u.id).count())
 
@@ -105,7 +105,6 @@ class LayananPelangganAdmin:
             raise ErrorPelanggan("Akun sudah dihapus.", 409)
         if (konfirmasi_email or "").strip().lower() != u.email:
             raise ErrorPelanggan("Konfirmasi email tidak cocok.")
-        email_lama = u.email
         # Pesanan/pembayaran tetap utuh (FK RESTRICT + snapshot alamat). Data pribadi dianonimkan.
         u.deleted_at = datetime.now(timezone.utc)
         u.is_active = False
@@ -115,6 +114,6 @@ class LayananPelangganAdmin:
         u.auth_version = (u.auth_version or 1) + 1
         u.set_password(secrets.token_urlsafe(32))  # hash acak: login mustahil
         Address.query.filter_by(user_id=u.id).delete(synchronize_session=False)
-        audit.catat("akun_dihapus", "user", u.id, f"soft delete {email_lama}"[:500])
+        audit.catat("akun_dihapus", "user", u.id, "Akun customer dianonimkan melalui soft delete.")
         db.session.commit()
         return self._ringkas(u, Order.query.filter_by(user_id=u.id).count())

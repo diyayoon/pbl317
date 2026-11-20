@@ -29,13 +29,20 @@
                 <div class="form-field">
                     <label for="email">Email</label>
                     <input
-                        class="form-control"
+                        class="form-control{% if galat.email %} is-invalid{% endif %}"
                         id="email"
                         name="email"
                         type="email"
                         autocomplete="email"
+                        maxlength="254"
+                        aria-describedby="emailError"
+                        {% if galat.email %}aria-invalid="true"{% endif %}
                         required
                     >
+                    <p class="field-error" id="emailError" role="alert"
+                    {% if not galat.email %}hidden{% endif %}>
+                        {{ galat.email or '' }}
+                    </p>
                 </div>
 
                 <div class="form-field">

@@ -60,7 +60,11 @@ def signature_valid(data: dict) -> bool:
     kunci = current_app.config.get("MIDTRANS_SERVER_KEY") or ""
     bahan = f"{data.get('order_id', '')}{data.get('status_code', '')}{data.get('gross_amount', '')}{kunci}"
     benar = hashlib.sha512(bahan.encode()).hexdigest()
-    return bool(kunci) and hmac.compare_digest(benar, str(data.get("signature_key", "")))
+    return bool(kunci) and hmac.compare_digest(
+        benar, str(data.get("signature_key", ""))
+    )
+
+    return valid
 
 
 class LayananMidtrans:
