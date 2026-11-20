@@ -55,7 +55,7 @@ def _notif(order, status="settlement", fraud="accept", gross=None, salah=False):
 
 def _kirim_notif(client, mid, order, **kw):
     data = _notif(order, **kw)
-    mid.status_resp = {k: v for k, v in data.items() if k != "signature_key"}   # status resmi dari Midtrans
+    mid.status_resp = {k: v for k, v in data.items() if k != "signature_key"}
     return client.post("/midtrans/notifikasi", json=data)
 
 
