@@ -19,6 +19,50 @@ class KesalahanUploadProduk(ValueError):
         super().__init__(message)
         self.field = field
 
+_PESAN_UPLOAD_AMAN = {
+    "Foto produk harus diunggah sebagai berkas multipart/form-data.":
+        "Foto produk harus diunggah sebagai berkas multipart/form-data.",
+    "Sertifikat harus diunggah sebagai berkas multipart/form-data.":
+        "Sertifikat harus diunggah sebagai berkas multipart/form-data.",
+    "Maksimal 5 foto produk dapat diunggah.":
+        "Maksimal 5 foto produk dapat diunggah.",
+    "Pilihan foto utama tidak valid.":
+        "Pilihan foto utama tidak valid.",
+    "Pilihan foto utama tidak tersedia.":
+        "Pilihan foto utama tidak tersedia.",
+    "ID gambar yang ingin dihapus tidak valid.":
+        "ID gambar yang ingin dihapus tidak valid.",
+    "Daftar gambar yang dihapus mengandung ID duplikat.":
+        "Daftar gambar yang dihapus mengandung ID duplikat.",
+}
+
+
+def _detail_upload_aman(exc: KesalahanUploadProduk):
+    field = (
+        exc.field
+        if exc.field in {"gambar", "sertifikat"}
+        else "upload"
+    )
+
+    pesan_asli = exc.args[0] if exc.args else ""
+    pesan = _PESAN_UPLOAD_AMAN.get(pesan_asli)
+
+    if pesan is None:
+        if field == "sertifikat":
+            pesan = (
+                "File sertifikat tidak valid. "
+                "Pastikan berkas berupa PDF dan ukurannya sesuai ketentuan."
+            )
+        elif field == "gambar":
+            pesan = (
+                "File gambar tidak valid. "
+                "Periksa format dan ukuran berkas."
+            )
+        else:
+            pesan = "Data upload tidak valid."
+
+    return field, pesan
+
 def _hapus_file_produk(url: str | None) -> None:
     """Hapus file foto produk lokal (hanya yang berada di folder upload produk)."""
     if not url or not url.startswith("/media/products/"):
@@ -194,13 +238,29 @@ def _baca_payload_produk():
                 current_app.config["PRODUCT_CERTIFICATE_MAX_BYTES"],
             )
 
-    except ValueError as exc:
+    except ValueError:
         for path in path_gambar:
             _hapus_upload_sementara(path)
 
         _hapus_upload_sementara(path_sertifikat)
 
-        raise KesalahanUploadProduk(field, str(exc)) from exc
+        current_app.logger.info(
+            "Validasi upload produk gagal pada field %s.",
+            field,
+        )
+
+        if field == "sertifikat":
+            pesan = (
+                "File sertifikat tidak valid. "
+                "Pastikan berkas berupa PDF dan ukurannya sesuai ketentuan."
+            )
+        else:
+            pesan = (
+                "File gambar tidak valid. "
+                "Periksa format dan ukuran berkas."
+            )
+
+        raise KesalahanUploadProduk(field, pesan) from None
 
     except Exception:
         for path in path_gambar:
@@ -250,10 +310,13 @@ def api_tambah_produk():
             primary_index,
             delete_ids,
         ) = _baca_payload_produk()
+
     except KesalahanUploadProduk as exc:
+        field, pesan = _detail_upload_aman(exc)
+
         return jsonify(
-            error=str(exc),
-            errors={exc.field: str(exc)},
+            error=pesan,
+            errors={field: pesan},
         ), 422
 
     # Pembersihan file upload jika proses gagal.
@@ -341,10 +404,13 @@ def api_ubah_produk(produk_id: int):
             primary_index,
             delete_ids,
         ) = _baca_payload_produk()
+
     except KesalahanUploadProduk as exc:
+        field, pesan = _detail_upload_aman(exc)
+
         return jsonify(
-            error=str(exc),
-            errors={exc.field: str(exc)},
+            error=pesan,
+            errors={field: pesan},
         ), 422
 
     def bersihkan_upload():
