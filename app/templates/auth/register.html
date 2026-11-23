@@ -50,6 +50,28 @@
                         </p>
                     </div>
 
+                    <div class="form-baris-dua">
+                    <div class="form-field">
+                        <label for="nama">Nama lengkap</label>
+                        <input
+                            class="form-control{% if galat.nama %} is-invalid{% endif %}"
+                            id="nama"
+                            name="nama"
+                            type="text"
+                            value="{{ nilai.nama or '' }}"
+                            autocomplete="name"
+                            minlength="3"
+                            maxlength="100"
+                            placeholder="Masukkan nama lengkap"
+                            aria-describedby="namaError"
+                            {% if galat.nama %}aria-invalid="true"{% endif %}
+                            required
+                        >
+                        <p class="field-error" id="namaError" role="alert" {% if not galat.nama %}hidden{% endif %}>
+                            {{ galat.nama or '' }}
+                        </p>
+                    </div>
+
                     <div class="form-field">
                         <div class="label-baris">
                             <label for="password">Kata sandi</label>
@@ -64,7 +86,6 @@
                                 autocomplete="new-password"
                                 maxlength="128"
                                 placeholder="Minimal 16 karakter"
-                               
                                 aria-describedby="passwordError"
                                 {% if galat.password %}aria-invalid="true"{% endif %}
                                 required
@@ -90,29 +111,6 @@
                         </p>
                     </div>
                 </div>
-
-                <div class="form-baris-dua">
-                    <div class="form-field">
-                        <label for="nama">Nama lengkap</label>
-                        <input
-                            class="form-control{% if galat.nama %} is-invalid{% endif %}"
-                            id="nama"
-                            name="nama"
-                            type="text"
-                            value="{{ nilai.nama or '' }}"
-                            autocomplete="name"
-                            minlength="3"
-                            maxlength="100"
-                            placeholder="Masukkan nama lengkap"
-                           
-                            aria-describedby="namaError"
-                            {% if galat.nama %}aria-invalid="true"{% endif %}
-                            required
-                        >
-                        <p class="field-error" id="namaError" role="alert" {% if not galat.nama %}hidden{% endif %}>
-                            {{ galat.nama or '' }}
-                        </p>
-                    </div>
 
                     <div class="form-field">
                         <label for="konfirmasiPassword">Konfirmasi kata sandi</label>

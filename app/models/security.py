@@ -1,5 +1,6 @@
 """Jejak audit dan pencatat percobaan (anti brute-force)."""
 from datetime import datetime, timezone
+from uuid import uuid4
 from app.extensions import db
 
 
@@ -12,6 +13,14 @@ class AuditLog(db.Model):
     __tablename__ = "audit_logs"
 
     id = db.Column(db.Integer, primary_key=True)
+    event_id = db.Column(db.String(36), nullable=True, default=lambda: str(uuid4()), index=True, unique=True)
+    event_category = db.Column(db.String(40), nullable=False, default="application", index=True)
+    event_action = db.Column(db.String(100), nullable=False, default="application.legacy")
+    outcome = db.Column(db.String(20), nullable=False, default="success", index=True)
+    severity = db.Column(db.String(12), nullable=False, default="info", index=True)
+    actor_role = db.Column(db.String(20), nullable=True)
+    request_id = db.Column(db.String(36), nullable=True, index=True)
+    context_data = db.Column(db.JSON, nullable=False, default=dict)
     actor_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
     actor_email = db.Column(db.String(254), nullable=False, default="")
     action = db.Column(db.String(60), nullable=False, index=True)
@@ -23,9 +32,13 @@ class AuditLog(db.Model):
 
     def to_dict(self):
         return {
-            "id": self.id, "waktu": self.created_at.isoformat(), "aktor": self.actor_email or "—",
-            "aksi": self.action, "target": f"{self.target_type} {self.target_id}".strip(),
-            "detail": self.detail, "ip": self.ip,
+            "id": self.id, "event_id": self.event_id or "", "request_id": self.request_id or "",
+            "waktu": self.created_at.isoformat(), "aktor": self.actor_email or (f"User #{self.actor_id}" if self.actor_id else "System / Gateway"),
+            "role": self.actor_role or "—", "aksi": self.action if self.event_action in (None, "", "application.legacy") else self.event_action,
+            "aksi_lama": self.action, "kategori": self.event_category or "application",
+            "outcome": self.outcome or "success", "severity": self.severity or "info",
+            "target": f"{self.target_type} {self.target_id}".strip(),
+            "detail": self.detail, "ip": self.ip, "context": self.context_data or {},
         }
 
 

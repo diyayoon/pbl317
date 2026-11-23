@@ -14,7 +14,7 @@ from app.utils import audit, ratelimit
 from app.utils.network import client_ip
 from app.services.sesi_service import LayananSesi
 from app.services.verifikasi_email_service import LayananVerifikasiEmail, samarkan_email
-from app.utils.validasi import ValidasiRegistrasi
+from app.forms.auth import LoginForm, RegisterForm
 from . import auth_bp
 
 # Hash tiruan agar waktu respons sama baik email ada maupun tidak (anti user-enumeration).
@@ -31,6 +31,14 @@ def _next_aman(target: str) -> str | None:
     return target
 
 
+def _identifier_samar(email: str) -> str:
+    """Mask login identifier pada audit trail agar email mentah tidak tersebar ke log."""
+    if "@" not in email:
+        return (email[:1] + "***") if email else ""
+    nama, domain = email.split("@", 1)
+    return f"{nama[:1]}***@{domain[:80]}"
+
+
 def _terlalu_banyak(email: str, ip: str) -> bool:
     cfg, w = current_app.config, current_app.config["LOGIN_WINDOW_MENIT"]
     return (
@@ -44,15 +52,30 @@ def login():
     if current_user.is_authenticated:
         return redirect(url_for(current_user.halaman_awal()))
 
+    form = LoginForm()
     if request.method == "POST":
-        email = request.form.get("email", "").strip().lower()[:254]
-        password = request.form.get("password", "")[:200]
+        if not form.validate():
+            email = (form.email.data or "")[:254]
+            galat = {field: errors[0] for field, errors in form.errors.items() if field != "csrf_token" and errors}
+            audit.catat(
+                "login_gagal", "authentication", "-", "Input login tidak lolos validasi form.",
+                email=_identifier_samar(email), actor_role="anonymous",
+                context={"identifier_masked": _identifier_samar(email), "reason": "invalid_input"},
+                outcome="rejected", severity="low", commit=True,
+            )
+            return render_template("auth/login.html", form=form, galat=galat), 422
+
+        email = form.email.data
+        password = form.password.data
         ip = client_ip()
 
         if _terlalu_banyak(email, ip):
-            audit.catat("login_diblokir", "user", email, "melewati batas percobaan", email=email, commit=True)
+            audit.catat(
+                "login_diblokir", "authentication", "-", "Melewati batas percobaan login.",
+                email=_identifier_samar(email), actor_role="anonymous", context={"identifier_masked": _identifier_samar(email)}, commit=True,
+            )
             flash(f"Terlalu banyak percobaan masuk. Coba lagi dalam {current_app.config['LOGIN_WINDOW_MENIT']} menit.", "danger")
-            return render_template("auth/login.html"), 429
+            return render_template("auth/login.html", form=form, galat={}), 429
 
         user = User.query.filter_by(email=email).first() if email else None
         sah = check_password_hash(user.password_hash if user else _HASH_TIRUAN, password) and user is not None and user.is_active and len(password) <= 128
@@ -62,18 +85,23 @@ def login():
             login_user(user, remember=False)  # remember-me dimatikan: bertentangan dengan timeout inaktivitas
             session.permanent = True
             LayananSesi.mulai(user)
-            audit.catat("login_berhasil", "user", user.id, actor=user, commit=True)
             if user.role == "admin":
                 audit.catat("login_admin_berhasil", "user", user.id, actor=user, detail="Administrator masuk ke panel admin.", commit=True)
+            else:
+                audit.catat("login_berhasil", "user", user.id, actor=user, commit=True)
             return redirect(_next_aman(request.args.get("next", "")) or url_for(user.halaman_awal()))
 
         ratelimit.catat("login_email", email)
         ratelimit.catat("login_ip", ip)
-        audit.catat("login_gagal", "user", email or "-", "kredensial tidak cocok", email=email, commit=True)
+        audit.catat(
+            "login_gagal", "authentication", "-", "Kredensial tidak cocok.",
+            email=_identifier_samar(email), actor_role="anonymous",
+            context={"identifier_masked": _identifier_samar(email), "reason": "invalid_credentials"}, commit=True,
+        )
         flash("Email atau kata sandi tidak sesuai.", "danger")
-        return render_template("auth/login.html"), 401
+        return render_template("auth/login.html", form=form, galat={}), 401
 
-    return render_template("auth/login.html")
+    return render_template("auth/login.html", form=form, galat={})
 
 
 @auth_bp.post("/logout")
@@ -89,24 +117,46 @@ def logout():
 @auth_bp.route("/register", methods=["GET", "POST"])
 def register():
     """Registrasi publik: role selalu customer; admin hanya dibuat lewat `flask create-admin`."""
+    form = RegisterForm()
     nilai: dict = {}
     galat: dict = {}
     if request.method == "POST":
         ip = client_ip()
         cfg = current_app.config
         if ratelimit.terblokir("register_ip", ip, cfg["REGISTER_MAX_PER_IP"], cfg["REGISTER_WINDOW_MENIT"]):
+            audit.catat(
+                "registrasi_diblokir", "authentication", "-", "Batas percobaan registrasi per IP tercapai.",
+                actor_role="anonymous", outcome="blocked", severity="high",
+                context={"limit": cfg["REGISTER_MAX_PER_IP"], "window_minutes": cfg["REGISTER_WINDOW_MENIT"]}, commit=True,
+            )
             flash("Terlalu banyak pembuatan akun dari jaringan ini. Coba lagi nanti.", "danger")
-            return render_template("auth/register.html", nilai={}, galat={}), 429
+            return render_template("auth/register.html", form=form, nilai={}, galat={}), 429
         ratelimit.catat("register_ip", ip)
 
-        nilai, galat = ValidasiRegistrasi(request.form).periksa()
-        email = nilai.get("email", "")
-        if not galat and User.query.filter_by(email=email).first():
+        if not form.validate():
+            galat = {field: errors[0] for field, errors in form.errors.items() if field != "csrf_token" and errors}
+            nilai = {"email": form.email.data or "", "nama": form.nama.data or ""}
+            audit.catat(
+                "registrasi_gagal", "authentication", "-", "Input registrasi tidak lolos validasi form.",
+                email=_identifier_samar(form.email.data or ""), actor_role="anonymous",
+                context={"reason": "invalid_input", "invalid_fields": sorted(galat.keys())},
+                outcome="rejected", severity="low", commit=True,
+            )
+            return render_template("auth/register.html", form=form, nilai=nilai, galat=galat), 422
+
+        email = form.email.data
+        if User.query.filter_by(email=email).first():
+            audit.catat(
+                "registrasi_gagal", "authentication", "-", "Registrasi ditolak karena email sudah terdaftar.",
+                email=_identifier_samar(email), actor_role="anonymous", outcome="rejected", severity="low",
+                context={"identifier_masked": _identifier_samar(email), "reason": "email_exists"}, commit=True,
+            )
             galat["email"] = "Email ini sudah terdaftar. Silakan masuk atau gunakan email lain."
-        if galat:
-            return render_template("auth/register.html", nilai=nilai, galat=galat), 422
-        user = User(email=email, nama=nilai["nama"], role="customer")  # alamat & telepon diisi setelah login
-        user.set_password(request.form.get("password", ""))
+            nilai = {"email": email, "nama": form.nama.data}
+            return render_template("auth/register.html", form=form, nilai=nilai, galat=galat), 422
+
+        user = User(email=email, nama=form.nama.data, role="customer")  # alamat & telepon diisi setelah login
+        user.set_password(form.password.data)
         try:
             db.session.add(user)
             db.session.flush()
@@ -114,8 +164,14 @@ def register():
             db.session.commit()
         except IntegrityError:
             db.session.rollback()
+            audit.catat(
+                "registrasi_gagal", "authentication", "-", "Registrasi ditolak oleh constraint keunikan akun.",
+                email=_identifier_samar(email), actor_role="anonymous", outcome="rejected", severity="low",
+                context={"identifier_masked": _identifier_samar(email), "reason": "unique_constraint"}, commit=True,
+            )
             galat["email"] = "Email ini sudah terdaftar. Silakan masuk atau gunakan email lain."
-            return render_template("auth/register.html", nilai=nilai, galat=galat), 422
+            nilai = {"email": email, "nama": form.nama.data}
+            return render_template("auth/register.html", form=form, nilai=nilai, galat=galat), 422
         try:
             terkirim = LayananVerifikasiEmail().kirim(user)
         except Exception:  # registrasi tidak boleh gagal hanya karena email
@@ -127,7 +183,7 @@ def register():
             flash("Akun dibuat, tetapi email verifikasi belum terkirim. Tekan Kirim ulang untuk mencoba lagi.", "warning")
         return redirect(url_for("auth.verifikasi_cek_email"))
 
-    return render_template("auth/register.html", nilai=nilai, galat=galat)
+    return render_template("auth/register.html", form=form, nilai=nilai, galat=galat)
 
 
 def _akun_verifikasi() -> User | None:
