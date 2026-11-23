@@ -8,6 +8,7 @@ from sqlalchemy.exc import IntegrityError
 from app.extensions import db
 from app.models import Category, OrderItem, Product, ProductImage
 from app.models.catalog import slugify
+from datetime import datetime, timezone
 
 
 class CatalogService:
@@ -193,51 +194,231 @@ class CatalogService:
         }, {}
 
     @classmethod
-    def create_product(cls, payload, image_url: str = ""):
-        values, errors = cls.normalize_payload(payload, image_url=image_url)
+    def create_product(
+        cls,
+        payload,
+        image_url: str = "",
+        certificate_path: str | None = None,
+        certificate_original_filename: str | None = None,
+        image_urls: list[str] | None = None,
+        primary_image_index: int | None = None,
+    ):
+        urls = (
+            list(image_urls)
+            if image_urls is not None
+            else ([image_url] if image_url else [])
+        )
+
+        values, errors = cls.normalize_payload(
+            payload,
+            image_url=urls[0] if urls else "",
+        )
         if errors:
             return None, errors
+
+        if len(urls) > 5:
+            return None, {"gambar": "Maksimal 5 gambar per produk."}
+
+        if any(not url.startswith("/media/products/") for url in urls):
+            return None, {"gambar": "Lokasi foto produk tidak valid."}
+
+        if urls:
+            selected_index = 0 if primary_image_index is None else primary_image_index
+            if not 0 <= selected_index < len(urls):
+                return None, {"gambar": "Pilihan foto utama tidak valid."}
+        elif primary_image_index is not None:
+            return None, {"gambar": "Foto utama tidak tersedia."}
+        else:
+            selected_index = None
+
         product = Product(
-            category=values["category"], name=values["name"], slug=cls.slug_unik(values["name"]),
-            description=values["description"], price=values["price"], stock=values["stock"],
-            era=values["era"], origin=values["origin"], material=values["material"],
-            condition=values["condition"], authenticity_status=values["authenticity_status"],
-            image_alt=values["image_alt"], image_source=values["image_source"],
+            category=values["category"],
+            name=values["name"],
+            slug=cls.slug_unik(values["name"]),
+            description=values["description"],
+            price=values["price"],
+            stock=values["stock"],
+            era=values["era"],
+            origin=values["origin"],
+            material=values["material"],
+            condition=values["condition"],
+            authenticity_status=values["authenticity_status"],
+            image_alt=values["image_alt"],
+            image_source=values["image_source"],
+            certificate_path=str(certificate_path) if certificate_path else None,
+            certificate_original_filename=(
+                certificate_original_filename[:255]
+                if certificate_path and certificate_original_filename
+                else None
+            ),
+            certificate_uploaded_at=(
+                datetime.now(timezone.utc) if certificate_path else None
+            ),
         )
+
+        for index, url in enumerate(urls):
+            product.images.append(
+                ProductImage(
+                    image_url=url,
+                    alt_text=values["image_alt"],
+                    is_primary=(index == selected_index),
+                    position=index,
+                )
+            )
+
         try:
-            if values["image"]:
-                product.images.append(ProductImage(image_url=values["image"], alt_text=values["image_alt"], is_primary=True, position=0))
             db.session.add(product)
             db.session.commit()
             return product, {}
         except IntegrityError:
             db.session.rollback()
-            return None, {"umum": "Data produk bentrok dengan data lain. Coba lagi."}
+            return None, {
+                "umum": "Data produk bentrok dengan data lain. Coba lagi."
+            }
 
     @classmethod
-    def update_product(cls, product: Product, payload, image_url: str = ""):
-        values, errors = cls.normalize_payload(payload, existing=product, image_url=image_url)
+    def update_product(
+        cls,
+        product: Product,
+        payload,
+        image_url: str = "",
+        certificate_path: str | None = None,
+        certificate_original_filename: str | None = None,
+        image_urls: list[str] | None = None,
+        primary_image_index: int | None = None,
+        delete_image_ids: list[int] | None = None,
+    ):
+        legacy_single_image = image_urls is None and bool(image_url)
+        urls = (
+            list(image_urls)
+            if image_urls is not None
+            else ([image_url] if image_url else [])
+        )
+        delete_ids = {int(value) for value in (delete_image_ids or [])}
+
+        values, errors = cls.normalize_payload(
+            payload,
+            existing=product,
+            image_url=urls[0] if urls else "",
+        )
         if errors:
             return None, errors
+
+        if any(not url.startswith("/media/products/") for url in urls):
+            return None, {"gambar": "Lokasi foto produk tidak valid."}
+
+        current_images = list(product.images)
+        retained_images = [
+            image for image in current_images
+            if image.id not in delete_ids
+        ]
+
+        jumlah_baru = 0 if legacy_single_image else len(urls)
+        if len(retained_images) + jumlah_baru > 5:
+            return None, {"gambar": "Maksimal 5 gambar per produk."}
+
+        if primary_image_index is not None:
+            if not 0 <= primary_image_index < len(urls):
+                return None, {"gambar": "Pilihan foto utama tidak valid."}
+
         new_image = values.pop("image")
+
         try:
             product.category = values["category"]
             product.name = values["name"]
-            product.slug = cls.slug_unik(values["name"], exclude_id=product.id)
-            for key in ("description", "price", "stock", "era", "origin", "material", "condition", "authenticity_status", "image_alt", "image_source"):
+            product.slug = cls.slug_unik(
+                values["name"], exclude_id=product.id
+            )
+
+            for key in (
+                "description",
+                "price",
+                "stock",
+                "era",
+                "origin",
+                "material",
+                "condition",
+                "authenticity_status",
+                "image_alt",
+                "image_source",
+            ):
                 setattr(product, key, values[key])
-            if new_image:
-                primary = next((image for image in product.images if image.is_primary), None)
+
+            if legacy_single_image:
+                # Kompatibilitas dengan pemanggilan lama yang mengganti
+                # satu foto utama secara langsung.
+                primary = next(
+                    (image for image in retained_images if image.is_primary),
+                    None,
+                )
                 if primary is None:
-                    primary = ProductImage(product=product, is_primary=True, position=0)
+                    primary = ProductImage(
+                        product=product,
+                        is_primary=True,
+                        position=len(retained_images),
+                    )
                     db.session.add(primary)
+
                 primary.image_url = new_image
                 primary.alt_text = values["image_alt"]
+
+            else:
+                # Hapus hanya gambar yang ID-nya dimiliki produk ini.
+                for image in current_images:
+                    if image.id in delete_ids:
+                        product.images.remove(image)
+
+                retained_images.sort(
+                    key=lambda image: (image.position, image.id or 0)
+                )
+                for index, image in enumerate(retained_images):
+                    image.position = index
+
+                # Tambahkan foto baru setelah foto lama yang dipertahankan.
+                gambar_baru = []
+                for index, url in enumerate(urls):
+                    image = ProductImage(
+                        image_url=url,
+                        alt_text=values["image_alt"],
+                        is_primary=False,
+                        position=len(retained_images) + index,
+                    )
+                    product.images.append(image)
+                    gambar_baru.append(image)
+
+                semua_gambar = retained_images + gambar_baru
+
+                if primary_image_index is not None:
+                    foto_utama = gambar_baru[primary_image_index]
+                else:
+                    foto_utama = next(
+                        (image for image in semua_gambar if image.is_primary),
+                        None,
+                    )
+
+                if foto_utama is None and semua_gambar:
+                    foto_utama = semua_gambar[0]
+
+                for image in semua_gambar:
+                    image.is_primary = image is foto_utama
+
+            if certificate_path:
+                product.certificate_path = str(certificate_path)
+                product.certificate_original_filename = (
+                    certificate_original_filename[:255]
+                    if certificate_original_filename
+                    else Path(certificate_path).name[:255]
+                )
+                product.certificate_uploaded_at = datetime.now(timezone.utc)
+
             db.session.commit()
             return product, {}
+
         except IntegrityError:
             db.session.rollback()
-            return None, {"umum": "Perubahan produk bentrok dengan data lain. Coba lagi."}
+            return None, {
+                "umum": "Perubahan produk bentrok dengan data lain. Coba lagi."
+            }
 
     @classmethod
     def delete_product(cls, product: Product) -> str:

@@ -6,7 +6,8 @@ from pathlib import Path
 from werkzeug.datastructures import MultiDict
 
 from app.extensions import db
-from app.models import CertificateEmailDelivery, Order, Product
+from app.models import Order, Product
+from app.models.commerce import CertificateEmailDelivery
 from app.services import midtrans_service as ms
 from tests.conftest import buat_alamat, daftar_dan_login, login_admin
 
