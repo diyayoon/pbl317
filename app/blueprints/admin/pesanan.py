@@ -79,6 +79,24 @@ def api_tinjau_pembayaran(payment_id: int):
     return jsonify(message="Status pembayaran diperbarui.", payment=payment.to_dict())
 
 
+@admin_bp.post("/api/pesanan/<int:order_id>/kirim-sertifikat")
+@admin_required
+def api_kirim_ulang_sertifikat(order_id: int):
+    """Retry email sertifikat jika sebelumnya gagal atau sertifikat baru saja dilengkapi."""
+    order = db.session.get(Order, order_id)
+    if not order:
+        return jsonify(error="Pesanan tidak ditemukan."), 404
+    from app.services.certificate_delivery_service import kirim_sertifikat_untuk_order
+    hasil = kirim_sertifikat_untuk_order(order_id, retry_failed=True)
+    audit.catat(
+        "certificate_email_retry", "order", order_id,
+        "Admin meminta percobaan pengiriman ulang sertifikat.",
+        category="certificate", event_action="certificate.email.retry_requested",
+        outcome="requested", severity="info", context={"result": hasil}, commit=True,
+    )
+    return jsonify(message="Permintaan pengiriman sertifikat diproses.", hasil=hasil, order_id=order_id)
+
+
 @admin_bp.get("/api/ulasan")
 @admin_required
 def api_ulasan():

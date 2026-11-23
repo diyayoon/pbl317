@@ -12,6 +12,7 @@ from flask import current_app, url_for
 from sqlalchemy import select
 from app.extensions import db
 from app.models import Order
+from app.models.commerce import CertificateEmailDelivery
 from app.services.order_service import LayananPesanan
 from app.utils import audit
 
@@ -60,11 +61,7 @@ def signature_valid(data: dict) -> bool:
     kunci = current_app.config.get("MIDTRANS_SERVER_KEY") or ""
     bahan = f"{data.get('order_id', '')}{data.get('status_code', '')}{data.get('gross_amount', '')}{kunci}"
     benar = hashlib.sha512(bahan.encode()).hexdigest()
-    return bool(kunci) and hmac.compare_digest(
-        benar, str(data.get("signature_key", ""))
-    )
-
-    return valid
+    return bool(kunci) and hmac.compare_digest(benar, str(data.get("signature_key", "")))
 
 
 class LayananMidtrans:
@@ -118,41 +115,89 @@ class LayananMidtrans:
         order = db.session.scalar(select(Order).where(Order.order_number == ref, Order.payment_method == "Midtrans").with_for_update())
         payment = order.payment if order else None
         if payment is None:
+            audit.catat(
+                "midtrans_order_not_found", "order", ref[:60] or "-", "Callback merujuk pesanan yang tidak ditemukan.",
+                actor_role="gateway", outcome="rejected", severity="high", commit=True,
+            )
             raise ErrorMidtrans("Pesanan tidak dikenal.", 404)
         try:
             jumlah = Decimal(str(data.get("gross_amount")))
-        except InvalidOperation as exc:
-            raise ErrorMidtrans("Jumlah pembayaran tidak valid.", 400) from exc
+        except (InvalidOperation, TypeError, ValueError):
+            audit.catat(
+                "midtrans_jumlah_tidak_cocok", "order", order.id, "Nilai gross_amount dari status resmi tidak valid.",
+                actor_role="gateway", outcome="rejected", severity="high", commit=True,
+            )
+            raise ErrorMidtrans("Jumlah pembayaran tidak valid.", 400)
         if jumlah != Decimal(order.total):
-            audit.catat("midtrans_jumlah_tidak_cocok", "order", order.id, order.order_number, commit=True)
+            audit.catat(
+                "midtrans_jumlah_tidak_cocok", "order", order.id,
+                f"Expected {int(order.total)}; received {str(data.get('gross_amount'))[:32]}.",
+                actor_role="gateway", outcome="rejected", severity="high",
+                context={"expected_amount": int(order.total), "received_amount": str(data.get("gross_amount"))[:32]}, commit=True,
+            )
             raise ErrorMidtrans("Jumlah pembayaran tidak cocok dengan pesanan.", 400)
         ts, fraud = str(data.get("transaction_status") or ""), str(data.get("fraud_status") or "")
-        if payment.status == "Disetujui":   # sudah lunas: notifikasi susulan (pending/refund) tidak menurunkan status
+        known_statuses = {"capture", "settlement", "pending", "deny", "cancel", "expire", "refund", "partial_refund", "authorize", "chargeback", "partial_chargeback", "failure"}
+        if ts not in known_statuses:
+            audit.catat(
+                "midtrans_status_tidak_valid", "order", order.id, "Status transaksi di luar daftar status Midtrans yang dikenali.",
+                actor_role="gateway", outcome="rejected", severity="high", context={"received_status": ts[:30]}, commit=True,
+            )
+            raise ErrorMidtrans("Status transaksi tidak valid.", 400)
+        if payment.status == "Disetujui":   # callback ulang tidak boleh menurunkan status atau memproses ulang pembayaran
+            audit.catat(
+                "midtrans_notifikasi_duplikat", "order", order.id, "Notifikasi diterima setelah pembayaran sudah disetujui.",
+                actor_role="gateway", outcome="duplicate", severity="low", commit=True,
+            )
             return "lunas"
+        if payment.paid_at is not None and order.status == "Dibatalkan":
+            # Settlement setelah pesanan batal sudah ditandai untuk penanganan admin; callback berikutnya idempoten.
+            audit.catat(
+                "midtrans_notifikasi_duplikat", "order", order.id,
+                "Notifikasi settlement ulang untuk pesanan batal yang sudah ditandai perlu penanganan.",
+                actor_role="gateway", outcome="duplicate", severity="low", commit=True,
+            )
+            return "perlu_penanganan"
         payment.gateway_status = ts[:30]
         payment.gateway_payment_type = str(data.get("payment_type") or "")[:40] or None
         payment.gateway_transaction_id = str(data.get("transaction_id") or "")[:64] or None
         hasil = "menunggu"
-        if ts in LUNAS or (ts == "capture" and fraud == "accept"):
+        if ts == "capture" and fraud != "accept":
+            # Capture berstatus challenge/reject (atau tanpa fraud_status) tidak boleh dianggap lunas.
+            payment.review_note = "Capture Midtrans belum diterima oleh fraud check; perlu peninjauan admin."
+            audit.catat(
+                "midtrans_fraud_status_tidak_diterima", "order", order.id,
+                "Capture Midtrans ditahan karena fraud_status bukan accept.",
+                actor_role="gateway", outcome="flagged", severity="high",
+                context={"fraud_status": fraud[:30] or "missing"},
+            )
+            hasil = "perlu_penanganan"
+        elif ts in LUNAS or (ts == "capture" and fraud == "accept"):
             if order.status == "Menunggu pembayaran":
                 payment.status, payment.paid_at = "Disetujui", datetime.now(timezone.utc)
                 payment.review_note = f"Lunas via Midtrans ({payment.gateway_payment_type or 'online'})."
                 order.status = "Diproses"
-                audit.catat("midtrans_lunas", "order", order.id, order.order_number)
+                audit.catat("midtrans_lunas", "order", order.id, order.order_number, actor_role="gateway")
+                if order.certificate_delivery is None:
+                    db.session.add(CertificateEmailDelivery(order=order, status="pending"))
                 hasil = "lunas"
             else:   # dibayar setelah pesanan dibatalkan/kedaluwarsa: stok sudah dilepas, butuh keputusan admin
                 payment.paid_at = datetime.now(timezone.utc)
                 payment.review_note = "Dibayar setelah pesanan dibatalkan; perlu penanganan admin (refund/aktifkan ulang)."
-                audit.catat("midtrans_bayar_setelah_batal", "order", order.id, order.order_number)
+                audit.catat("midtrans_bayar_setelah_batal", "order", order.id, order.order_number, actor_role="gateway", outcome="flagged", severity="high")
                 hasil = "perlu_penanganan"
         elif ts in GAGAL_BATAL and order.status == "Menunggu pembayaran":
             LayananPesanan.kembalikan_stok(order)
             order.status = "Dibatalkan"
             payment.status = "Kedaluwarsa" if ts == "expire" else "Dibatalkan"
             payment.review_note = f"Transaksi Midtrans {ts}."
-            audit.catat(f"midtrans_{ts}", "order", order.id, order.order_number)
+            audit.catat(f"midtrans_{ts}", "order", order.id, order.order_number, actor_role="gateway")
             hasil = "dibatalkan"
         db.session.commit()
+        if hasil == "lunas":
+            # Email berjalan setelah transaksi pembayaran commit; kegagalan SMTP tidak membatalkan pembayaran.
+            from app.services.certificate_delivery_service import kirim_sertifikat_untuk_order
+            kirim_sertifikat_untuk_order(order.id)
         return hasil
 
     @staticmethod

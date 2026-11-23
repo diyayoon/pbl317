@@ -77,15 +77,11 @@ class LayananPembayaran:
             raise LookupError("Pembayaran tidak ditemukan.")
         if payment.method == "Midtrans" or (payment.order and payment.order.payment_method == "Midtrans"):
             audit.catat(
-                "midtrans_persetujuan_manual_diblokir",
-                "payment",
-                payment.id,
-                (
-                    "Upaya peninjauan manual diblokir. "
-                    "Pembayaran Midtrans hanya dapat disetujui "
-                    "melalui status gateway terverifikasi."
-                ),
-                actor=admin,
+                "midtrans_persetujuan_manual_diblokir", "payment", payment.id,
+                "Upaya peninjauan manual diblokir; pembayaran Midtrans hanya dapat disetujui melalui status gateway terverifikasi.",
+                actor=admin, category="payment", event_action="payment.manual_approval.blocked",
+                outcome="rejected", severity="high",
+                context={"attempted_action": str(action)[:20], "order_id": payment.order.order_number if payment.order else ""},
                 commit=True,
             )
             raise ValueError("Pembayaran Midtrans tidak dapat disetujui atau ditolak secara manual. Status hanya diperbarui dari verifikasi server-to-server Midtrans.")
@@ -110,4 +106,7 @@ class LayananPembayaran:
             payment.status = "Ditolak"
             payment.order.status = "Menunggu pembayaran"
         db.session.commit()
+        if action == "approve":
+            from app.services.certificate_delivery_service import kirim_sertifikat_untuk_order
+            kirim_sertifikat_untuk_order(payment.order_id)
         return payment

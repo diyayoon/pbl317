@@ -61,12 +61,9 @@ def api_batalkan_pesanan(order_id: int):
         other = db.session.get(Order, order_id)
         if other is not None and other.user_id != current_user.id:
             audit.catat(
-                "akses_ditolak",
-                "order",
-                order_id,
-                "Customer mencoba mengunggah bukti untuk pesanan milik akun lain.",
-                actor=current_user,
-                commit=True,
+                "akses_ditolak", "order", order_id, "Customer mencoba membatalkan pesanan milik akun lain.",
+                category="payment", event_action="payment.unauthorized_access", outcome="blocked", severity="high",
+                actor_role="customer", context={"attempted_action": "cancel_order"}, commit=True,
             )
         return jsonify(error="Pesanan tidak ditemukan."), 404
     midtrans = order.payment_method == "Midtrans" and order.payment is not None and bool(order.payment.snap_redirect_url)
@@ -118,12 +115,9 @@ def api_upload_payment_proof(order_id: int):
         other = db.session.get(Order, order_id)
         if other is not None and other.user_id != current_user.id:
             audit.catat(
-                "akses_ditolak",
-                "order",
-                order_id,
-                "Customer mencoba mengunggah bukti untuk pesanan milik akun lain.",
-                actor=current_user,
-                commit=True,
+                "akses_ditolak", "order", order_id, "Customer mencoba mengunggah bukti untuk pesanan milik akun lain.",
+                category="payment", event_action="payment.unauthorized_access", outcome="blocked", severity="high",
+                actor_role="customer", context={"attempted_action": "upload_proof"}, commit=True,
             )
         return jsonify(error="Pesanan tidak ditemukan."), 404
     try:

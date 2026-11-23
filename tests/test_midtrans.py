@@ -55,7 +55,7 @@ def _notif(order, status="settlement", fraud="accept", gross=None, salah=False):
 
 def _kirim_notif(client, mid, order, **kw):
     data = _notif(order, **kw)
-    mid.status_resp = {k: v for k, v in data.items() if k != "signature_key"}
+    mid.status_resp = {k: v for k, v in data.items() if k != "signature_key"}   # status resmi dari Midtrans
     return client.post("/midtrans/notifikasi", json=data)
 
 
@@ -294,3 +294,26 @@ def test_notifikasi_terlalu_besar_ditolak(app, client, mid):
     app.config["MIDTRANS_SERVER_KEY"] = KUNCI
     besar = {"order_id": "X", "padding": "a" * 25000}
     assert app.test_client().post("/midtrans/notifikasi", json=besar).status_code == 400
+
+
+def test_pembayaran_midtrans_tidak_bisa_disetujui_manual_oleh_admin(app, client, mid):
+    from app.models import AuditLog, Payment
+    daftar_dan_login(client)
+    order = _pesan(client, "Midtrans")
+    with app.app_context():
+        row = Order.query.filter_by(order_number=order["orderNumber"]).one()
+        payment_id = row.payment.id
+        order_id = row.id
+
+    admin = app.test_client()
+    login_admin(admin)
+    response = admin.post(f"/admin/api/pembayaran/{payment_id}/tinjau", json={"aksi": "approve"})
+    assert response.status_code == 422
+    assert "tidak dapat" in response.get_json()["error"].lower()
+    with app.app_context():
+        payment = db.session.get(Payment, payment_id)
+        row = db.session.get(Order, order_id)
+        assert payment.status == "Menunggu pembayaran"
+        assert row.status == "Menunggu pembayaran"
+        event = AuditLog.query.filter_by(event_action="payment.manual_approval.blocked").one()
+        assert event.severity == "high" and event.outcome == "rejected"
