@@ -2,7 +2,7 @@
 import json
 
 from app.extensions import db
-from app.models import AuditLog
+from app.models import AuditLog, User
 from tests.conftest import buat_alamat, daftar_dan_login, login_admin
 
 
@@ -137,3 +137,83 @@ def test_akses_bukti_pembayaran_customer_lain_ditandai_high(client, app, midtran
         assert row.severity == "high"
         assert row.outcome == "blocked"
         assert len(rows) == 1  # tidak dibuat lagi sebagai generic HTTP 403
+
+def test_perubahan_profil_customer_dicatat_di_audit_log(client, app):
+    email = "profil-audit@test.local"
+    daftar_dan_login(client, email=email, nama="Profil Audit")
+
+    with app.app_context():
+        user = User.query.filter_by(email=email).one()
+
+        event_sebelum = {
+            row.event_id
+            for row in AuditLog.query.filter_by(
+                event_action="customer.profile.updated",
+                actor_id=user.id,
+                target_id=str(user.id),
+            ).all()
+        }
+
+    response = client.put("/customer/api/profile", json={
+        "nama": "Profil Audit Baru",
+        "email": email,
+        "telepon": "081234567891",
+    })
+
+    assert response.status_code == 200
+
+    with app.app_context():
+        rows = AuditLog.query.filter_by(
+            event_action="customer.profile.updated",
+            actor_id=user.id,
+            target_id=str(user.id),
+        ).all()
+
+        event_baru = [
+            row for row in rows
+            if row.event_id not in event_sebelum
+        ]
+
+        assert len(event_baru) == 1
+
+        row = event_baru[0]
+        assert row.event_category == "commerce"
+        assert row.actor_role == "customer"
+        assert row.target_type == "user"
+        assert row.context_data["changed_fields"] == ["nama", "telepon"]
+
+
+def test_perubahan_alamat_customer_dicatat_di_audit_log(client, app):
+    daftar_dan_login(
+        client,
+        email="alamat-audit@test.local",
+        nama="Alamat Audit",
+    )
+
+    response = client.put("/customer/api/addresses", json={
+        "daftar": [{
+            "id": "",
+            "label": "Rumah",
+            "penerima": "Alamat Audit",
+            "telepon": "081234567890",
+            "kodePos": "29461",
+            "provinsi": "Kepulauan Riau",
+            "kota": "Batam",
+            "kecamatan": "Batam Kota",
+            "lengkap": "Jl. Contoh No. 1 Batam",
+        }],
+        "utamaId": "",
+    })
+
+    assert response.status_code == 200
+
+    with app.app_context():
+        row = AuditLog.query.filter_by(
+            event_action="customer.addresses.updated"
+        ).one()
+
+        assert row.event_category == "commerce"
+        assert row.actor_role == "customer"
+        assert row.target_type == "user"
+        assert row.context_data["address_count"] == 1
+        assert row.context_data["has_primary_address"] is True
