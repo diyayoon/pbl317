@@ -8,6 +8,7 @@ from app.models import Order, User
 from app.services.customer_service import LayananPelanggan
 from app.services.order_service import LayananPesanan
 from app.utils.decorators import role_required
+from app.utils import audit
 from app.utils.uploads import simpan_gambar_upload
 from . import customer_bp
 
@@ -74,7 +75,12 @@ def api_update_profile():
     upload_baru = None
     avatar_path = None
     hapus_foto = str(payload.pop("hapus_foto", "")).strip().lower() in {"1", "true", "yes"}
-    avatar_lama = user.avatar_data
+    profil_sebelum = {
+    "nama": user.nama,
+    "telepon": user.telepon,
+    "avatar": user.avatar_data,
+    }
+    avatar_lama = profil_sebelum["avatar"]
 
     try:
         foto = request.files.get("foto") if multipart else None
@@ -111,6 +117,27 @@ def api_update_profile():
 
     if avatar_lama and avatar_lama != hasil["foto"]:
         _hapus_avatar_lama(avatar_lama)
+
+    changed_fields = [
+        field
+        for field, old_value, new_value in [
+            ("nama", profil_sebelum["nama"], hasil["nama"]),
+            ("telepon", profil_sebelum["telepon"], hasil["telepon"]),
+            ("avatar", profil_sebelum["avatar"], hasil["foto"]),
+        ]
+        if old_value != new_value
+    ]
+
+    if changed_fields:
+        audit.catat(
+            "profil_diubah",
+            "user",
+            current_user.id,
+            "Customer memperbarui profil.",
+            context={"changed_fields": changed_fields},
+            commit=True,
+        )
+
     return jsonify(message="Profil disimpan.", profile=hasil)
 
 
@@ -127,6 +154,17 @@ def api_addresses():
 def api_replace_addresses():
     try:
         data = LayananPelanggan.simpan_daftar_alamat(current_user, request.get_json(silent=True) or {})
+        audit.catat(
+            "alamat_diperbarui",
+            "user",
+            current_user.id,
+            "Customer memperbarui daftar alamat.",
+            context={
+                "address_count": len(data.get("daftar", [])),
+                "has_primary_address": data.get("utamaId") is not None,
+            },
+            commit=True,
+        )
         return jsonify(message="Alamat berhasil disimpan.", **data)
     except ValueError as exc:
         db.session.rollback()
