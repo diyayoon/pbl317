@@ -2,7 +2,7 @@
 # Image aplikasi Flask Albis Antique (gunicorn). Tidak dibuka ke luar:
 # nginx yang menerima trafik lalu meneruskannya ke sini (port 5000).
 # ======================================================================
-FROM python:3.13-slim
+FROM python:3.15-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
