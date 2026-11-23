@@ -4,13 +4,22 @@ from flask_login import current_user, login_required
 from app.extensions import db
 from app.models import Order
 from app.services.midtrans_service import ErrorMidtrans, LayananMidtrans
-from app.utils import audit
 from app.utils.decorators import role_required, terverifikasi_required
+from app.utils import audit
 from . import customer_bp
 
 
 def _order_milik_sendiri(order_id: int) -> Order | None:
-    return db.session.scalar(db.select(Order).where(Order.id == order_id, Order.user_id == current_user.id))
+    order = db.session.scalar(db.select(Order).where(Order.id == order_id, Order.user_id == current_user.id))
+    if order is None:
+        other = db.session.get(Order, order_id)
+        if other is not None and other.user_id != current_user.id:
+            audit.catat(
+                "akses_ditolak", "order", order_id, "Customer mencoba mengakses status pesanan milik akun lain.",
+                category="payment", event_action="payment.unauthorized_access", outcome="blocked", severity="high",
+                actor_role="customer", context={"attempted_action": "read_payment_status"}, commit=True,
+            )
+    return order
 
 
 @customer_bp.post("/api/orders/<int:order_id>/midtrans")
@@ -19,26 +28,7 @@ def _order_milik_sendiri(order_id: int) -> Order | None:
 @terverifikasi_required
 def api_bayar_midtrans(order_id: int):
     order = _order_milik_sendiri(order_id)
-
     if order is None:
-        target = db.session.get(Order, order_id)
-
-        if target is not None and target.user_id != current_user.id:
-            audit.catat(
-                "akses_ditolak",
-                "order",
-                order_id,
-                "Customer mencoba mengakses transaksi Midtrans milik akun lain.",
-                actor=current_user,
-                category="payment",
-                event_action="payment.unauthorized_access",
-                outcome="blocked",
-                severity="high",
-                actor_role="customer",
-                context={"attempted_action": "read_payment_status"},
-                commit=True,
-            )
-
         return jsonify(error="Pesanan tidak ditemukan."), 404
     try:
         return jsonify(redirectUrl=LayananMidtrans.buat_transaksi(order))

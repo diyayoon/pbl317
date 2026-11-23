@@ -4,6 +4,7 @@ import smtplib
 import ssl
 from email.message import EmailMessage
 from flask import current_app
+from werkzeug.utils import secure_filename
 
 
 def smtp_terkonfigurasi() -> bool:
@@ -34,4 +35,71 @@ def kirim_email(tujuan: str, subjek: str, isi: str) -> bool:
     except (smtplib.SMTPException, OSError) as exc:
         kode = getattr(exc, "smtp_code", "")  # kode numerik SMTP saja (mis. 535); pesan server bisa memuat data sensitif
         current_app.logger.error("Gagal mengirim email verifikasi (%s %s).", type(exc).__name__, kode)
+        return False
+
+def kirim_email_dengan_lampiran(
+    tujuan: str,
+    subjek: str,
+    isi: str,
+    lampiran: list[dict],
+) -> bool:
+    """Kirim email beserta lampiran bytes tanpa mencatat nama atau konten lampiran."""
+    if not smtp_terkonfigurasi():
+        current_app.logger.warning(
+            "Email sertifikat tidak dikirim: SMTP belum dikonfigurasi (MAIL_*)."
+        )
+        return False
+
+    c = current_app.config
+    pesan = EmailMessage()
+    pesan["From"], pesan["To"], pesan["Subject"] = (
+        c["MAIL_FROM"], tujuan, subjek
+    )
+    pesan.set_content(isi)
+
+    for item in lampiran:
+        filename = secure_filename(
+            str(item.get("filename") or "sertifikat.pdf")
+        ) or "sertifikat.pdf"
+
+        content = item.get("data")
+        if not isinstance(content, (bytes, bytearray)):
+            raise ValueError("Konten lampiran email harus berupa bytes.")
+
+        maintype = str(item.get("maintype") or "application").split("/", 1)[0]
+        subtype = str(item.get("subtype") or "pdf").split("/", 1)[-1]
+
+        pesan.add_attachment(
+            bytes(content),
+            maintype=maintype,
+            subtype=subtype,
+            filename=filename,
+        )
+
+    konteks = ssl.create_default_context()
+
+    try:
+        if c["MAIL_SECURITY"] == "ssl":
+            server = smtplib.SMTP_SSL(
+                c["MAIL_SERVER"], c["MAIL_PORT"],
+                timeout=15, context=konteks,
+            )
+        else:
+            server = smtplib.SMTP(
+                c["MAIL_SERVER"], c["MAIL_PORT"], timeout=15
+            )
+            server.starttls(context=konteks)
+
+        with server:
+            server.login(c["MAIL_USERNAME"], c["MAIL_PASSWORD"])
+            server.send_message(pesan)
+
+        return True
+
+    except (smtplib.SMTPException, OSError) as exc:
+        kode = getattr(exc, "smtp_code", "")
+        current_app.logger.error(
+            "Gagal mengirim email sertifikat (%s %s).",
+            type(exc).__name__, kode,
+        )
         return False
