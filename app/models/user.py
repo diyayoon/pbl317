@@ -31,7 +31,12 @@ class User(UserMixin, db.Model):
 
     addresses = db.relationship("Address", back_populates="user", cascade="all, delete-orphan", order_by="Address.id")
     cart = db.relationship("Cart", back_populates="user", uselist=False, cascade="all, delete-orphan")
-    orders = db.relationship("Order", back_populates="user", cascade="save-update, merge")
+    orders = db.relationship(
+        "Order",
+        back_populates="user",
+        foreign_keys="Order.user_id",
+        cascade="save-update, merge",
+    )
     reviews = db.relationship("Review", back_populates="user", cascade="all, delete-orphan", foreign_keys="Review.user_id")
 
     def get_id(self) -> str:
