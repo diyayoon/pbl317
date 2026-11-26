@@ -1,2 +1,17 @@
 Flask-Migrate / Alembic migrations for Albis Antique.
-Use `flask --app run db upgrade` only after verifying DATABASE_URL points to the intended test database and a backup exists if it contains useful data.
+
+Sebelum menjalankan perintah migrasi, pastikan target database sudah benar.
+
+Konfigurasi koneksi:
+- Jika MIGRATION_DATABASE_URL tersedia, migrations/env.py menggunakan URL tersebut.
+- Jika MIGRATION_DATABASE_URL tidak tersedia, migrasi menggunakan koneksi SQLAlchemy aplikasi dari DATABASE_URL.
+
+Gunakan database khusus testing untuk pengujian migrasi.
+Jangan menjalankan downgrade pada database utama yang berisi data penting.
+Buat backup sebelum melakukan perubahan skema pada database yang berisi data penting.
+
+Perintah Flask CLI:
+python -m flask --app run:app db current
+python -m flask --app run:app db heads
+python -m flask --app run:app db upgrade
+python -m flask --app run:app db downgrade <revision>

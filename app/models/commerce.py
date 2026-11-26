@@ -52,10 +52,36 @@ class Order(db.Model):
     address_snapshot = db.Column(db.JSON, nullable=False)
     created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utcnow, index=True)
     updated_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utcnow, onupdate=utcnow)
-    user = db.relationship("User", back_populates="orders")
+    review_required = db.Column(
+        db.Boolean,
+        nullable=False,
+        default=False,
+        server_default=db.false(),
+        index=True,
+    )
+    review_reason = db.Column(db.String(300), nullable=True)
+    review_verified_by = db.Column(
+        db.Integer,
+        db.ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    review_verified_at = db.Column(
+        db.DateTime(timezone=True),
+        nullable=True,
+    )
+    user = db.relationship(
+        "User",
+        back_populates="orders",
+        foreign_keys=[user_id],
+    )
     items = db.relationship("OrderItem", back_populates="order", cascade="all, delete-orphan", order_by="OrderItem.id")
     payment = db.relationship("Payment", back_populates="order", uselist=False, cascade="all, delete-orphan")
     certificate_delivery = db.relationship("CertificateEmailDelivery", back_populates="order", uselist=False, cascade="all, delete-orphan")
+
+    @property
+    def ditahan(self) -> bool:
+        """True bila pesanan ditandai tidak wajar dan belum diverifikasi admin."""
+        return bool(self.review_required) and self.review_verified_at is None
 
     @property
     def batas_bayar(self):
@@ -83,6 +109,9 @@ class Order(db.Model):
             "items": [item.to_dict() for item in self.items],
             "buktiBayar": bukti,
             "emailSertifikat": self.certificate_delivery.status if self.certificate_delivery else "belum_dikirim",
+            "ditahan": self.ditahan,
+            "alasanTahan": self.review_reason or "",
+            "terverifikasi": bool(self.review_required) and self.review_verified_at is not None,
         }
 
 
