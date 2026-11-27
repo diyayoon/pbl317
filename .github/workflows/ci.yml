@@ -79,8 +79,7 @@ jobs:
 
       - name: Test PostgreSQL Migration Downgrade
         run: |
-          python -m flask --app run:app db downgrade -1
-
+          python -m flask --app run:app db downgrade 20261124_0013
       - name: Test PostgreSQL Migration Re-Upgrade
         run: |
           python -m flask --app run:app db upgrade
