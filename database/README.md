@@ -25,9 +25,9 @@ Get-Content database/02_data_awal.sql -Raw | docker exec -i albis-db psql -U pos
 
 ## WAJIB setelah import
 Dump ini berhenti di revisi `20261017_0003`. Setelah memuat `01_schema.sql` dan `02_data_awal.sql`, jalankan
-`python -m flask --app run:app db upgrade` agar revisi berikutnya (status akun, verifikasi email, sesi, Midtrans, refund, audit terstruktur, sertifikat, dan penahanan pesanan anti-penipuan) ikut terpasang.
+`python -m flask --app run:app db upgrade` agar revisi berikutnya (status akun, verifikasi email, sesi, Midtrans, refund, audit terstruktur, sertifikat, idempotensi pengembalian stok dan penahanan pesanan anti-penipuan) ikut terpasang.
 
-Pada branch ini, head migrasi adalah `20261124_0013`.
+Pada branch ini, migration head terbaru adalah `20261127_0014` (idempotensi pengembalian stok).
 
 ## Catatan
 - **Jangan** import ke database yang sudah punya tabel (mis. dari versi lama). Cek dulu `select * from alembic_version;`

@@ -69,6 +69,12 @@ class Order(db.Model):
         db.DateTime(timezone=True),
         nullable=True,
     )
+    stock_returned = db.Column(
+        db.Boolean,
+        nullable=False,
+        default=False,
+        server_default=db.false(),
+    )
     user = db.relationship(
         "User",
         back_populates="orders",
