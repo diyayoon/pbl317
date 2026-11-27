@@ -1,4 +1,3 @@
-
 name: Albis Antique CI
 
 on:
@@ -20,6 +19,22 @@ jobs:
     name: test
     runs-on: ubuntu-latest
     timeout-minutes: 20
+
+    # PostgreSQL 16 untuk pengujian migration.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: albis_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ci -d albis_db"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     env:
       APP_ENV: development
@@ -51,6 +66,24 @@ jobs:
       - name: Check Python Syntax
         run: |
           python -m compileall -q app tests run.py
+
+      # Validasi migration menggunakan PostgreSQL 16.
+      - name: Validate PostgreSQL Migration Heads
+        run: |
+          python -m flask --app run:app db heads
+
+      - name: Upgrade PostgreSQL Migrations
+        run: |
+          python -m flask --app run:app db upgrade
+          python -m flask --app run:app db current
+
+      - name: Test PostgreSQL Migration Downgrade
+        run: |
+          python -m flask --app run:app db downgrade 20261124_0013
+      - name: Test PostgreSQL Migration Re-Upgrade
+        run: |
+          python -m flask --app run:app db upgrade
+          python -m flask --app run:app db current
 
       - name: Run Automated Tests
         run: |
